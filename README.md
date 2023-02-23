@@ -33,7 +33,7 @@ Install it into your ProjectName/Plugins Directory (Engine level hasn't worked s
 
 **Option 2 (More up to date - preferred if possible):**
 
--   Clone Or Download Zip and extract this repository to a folder named "VRExpansionPlugin" in your "ProjectName/Plugins" directory, create this directory if it is missing.
+-   Clone Or Download Zip and extract this repository into your "ProjectName/Plugins" directory, create this directory if it is missing.
 
 -   Add the VRExpansionPlugin to your projects PublicDependencyModuleNames in the projects build.cs if you have c++ code included.
 
