@@ -149,6 +149,9 @@ UGripMotionControllerComponent::UGripMotionControllerComponent(const FObjectInit
 
 	SetIsReplicatedByDefault(true);
 
+	// Epic never initializes this variable, so I need to
+	CurrentTrackingStatus = ETrackingStatus::NotTracked;
+
 	// Default 100 htz update rate, same as the 100htz update rate of rep_notify, will be capped to 90/45 though because of vsync on HMD
 	//bReplicateControllerTransform = true;
 	ControllerNetUpdateRate = 100.0f; // 100 htz is default
@@ -3736,11 +3739,14 @@ void UGripMotionControllerComponent::Drop_Implementation(const FBPActorGripInfor
 				{
 					if (IsValid(LocallyGrippedObjects[i].GrippedObject) && LocallyGrippedObjects[i].GrippedObject->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
 					{
-						EGripInterfaceTeleportBehavior TeleportBehavior = IVRGripInterface::Execute_TeleportBehavior(LocallyGrippedObjects[i].GrippedObject);
-						if (TeleportBehavior == EGripInterfaceTeleportBehavior::DeltaTeleportation)
+						if (LocallyGrippedObjects[i].GripCollisionType != EGripCollisionType::CustomGrip && LocallyGrippedObjects[i].GripCollisionType != EGripCollisionType::EventsOnly)
 						{
-							bNeedsPhysicsTick = true;
-							break;
+							EGripInterfaceTeleportBehavior TeleportBehavior = IVRGripInterface::Execute_TeleportBehavior(LocallyGrippedObjects[i].GrippedObject);
+							if (TeleportBehavior == EGripInterfaceTeleportBehavior::DeltaTeleportation)
+							{
+								bNeedsPhysicsTick = true;
+								break;
+							}
 						}
 					}
 				}
@@ -3751,11 +3757,14 @@ void UGripMotionControllerComponent::Drop_Implementation(const FBPActorGripInfor
 					{
 						if (IsValid(GrippedObjects[i].GrippedObject) && GrippedObjects[i].GrippedObject->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
 						{
-							EGripInterfaceTeleportBehavior TeleportBehavior = IVRGripInterface::Execute_TeleportBehavior(GrippedObjects[i].GrippedObject);
-							if (TeleportBehavior == EGripInterfaceTeleportBehavior::DeltaTeleportation)
+							if (GrippedObjects[i].GripCollisionType != EGripCollisionType::CustomGrip && GrippedObjects[i].GripCollisionType != EGripCollisionType::EventsOnly)
 							{
-								bNeedsPhysicsTick = true;
-								break;
+								EGripInterfaceTeleportBehavior TeleportBehavior = IVRGripInterface::Execute_TeleportBehavior(GrippedObjects[i].GrippedObject);
+								if (TeleportBehavior == EGripInterfaceTeleportBehavior::DeltaTeleportation)
+								{
+									bNeedsPhysicsTick = true;
+									break;
+								}
 							}
 						}
 					}
@@ -4335,6 +4344,12 @@ bool UGripMotionControllerComponent::TeleportMoveGrip_Impl(FBPActorGripInformati
 		}
 	}
 
+	// We don't teleport these two grip types at all
+	if (Grip.GripCollisionType == EGripCollisionType::AttachmentGrip || Grip.GripCollisionType == EGripCollisionType::EventsOnly)
+	{
+		return false;
+	}
+
 	FTransform WorldTransform;
 	FTransform ParentTransform = GetPivotTransform();
 
@@ -4458,15 +4473,18 @@ bool UGripMotionControllerComponent::TeleportMoveGrip_Impl(FBPActorGripInformati
 			FTransform newTrans = Handle->COMPosition * (Handle->RootBoneRotation * physicsTrans);
 			if (pInstance && pInstance->IsValidBodyInstance())
 			{
-				//FPhysicsCommand::ExecuteWrite(ActorHandle, [&](const FPhysicsActorHandle& Actor)
-				FPhysicsCommand::ExecuteWrite(pInstance->GetPhysicsScene(), [&]()
+				if (FPhysScene* PhysicalScene = pInstance->GetPhysicsScene())
+				{
+					//FPhysicsCommand::ExecuteWrite(ActorHandle, [&](const FPhysicsActorHandle& Actor)
+					FPhysicsCommand::ExecuteWrite(PhysicalScene, [&]()
 					{
-						if (FPhysicsInterface::IsValid(ActorHandle) && FPhysicsInterface::GetCurrentScene(ActorHandle))
+						if (FPhysicsInterface::IsValid(ActorHandle))
 						{
 							FPhysicsInterface::SetKinematicTarget_AssumesLocked(ActorHandle, newTrans);
 							FPhysicsInterface::SetGlobalPose_AssumesLocked(ActorHandle, newTrans);
 						}
 					});
+				}
 			}
 		}
 	}
@@ -4582,7 +4600,7 @@ void UGripMotionControllerComponent::UpdateTracking(float DeltaTime)
 			{
 				GripViewExtension = FSceneViewExtensions::NewExtension<FGripViewExtension>(this);
 			}
-
+			
 			float WorldToMeters = GetWorld() ? GetWorld()->GetWorldSettings()->WorldToMeters : 100.0f;
 			ETrackingStatus LastTrackingStatus = CurrentTrackingStatus;
 			const bool bNewTrackedState = GripPollControllerState(Position, Orientation, WorldToMeters);
