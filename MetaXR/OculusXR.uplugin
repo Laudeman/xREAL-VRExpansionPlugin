@@ -12,6 +12,7 @@
 	"SupportURL": "https://forums.oculusvr.com/developer",
 	"EngineVersion": "5.1.0",
 	"CanContainContent": true,
+  	"EnabledByDefault": true,
 	"Installed": true,
 	"SupportedTargetPlatforms": [
 		"Win64",
