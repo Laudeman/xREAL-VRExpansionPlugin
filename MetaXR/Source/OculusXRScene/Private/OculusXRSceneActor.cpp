@@ -4,6 +4,8 @@
 #include "OculusXRSceneModule.h"
 #include "OculusXRHMDModule.h"
 #include "OculusXRAnchorManager.h"
+#include "OculusXRAnchorTypes.h"
+#include "OculusXRAnchorBPFunctionLibrary.h"
 #include "OculusXRDelegates.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/AssetManager.h"
@@ -115,19 +117,21 @@ bool AOculusXRSceneActor::QuerySpatialAnchors(const bool bRoomLayoutOnly)
 	queryInfo.MaxQuerySpaces = MaxQueries;
 	queryInfo.FilterType = EOculusXRSpaceQueryFilterType::FilterByComponentType;
 
+	EOculusXRAnchorResult::Type AnchorQueryResult;
+
 	if (bRoomLayoutOnly)
 	{		
 		queryInfo.ComponentFilter.Add(EOculusXRSpaceComponentType::RoomLayout);
-		bResult = OculusXRAnchors::FOculusXRAnchors::QueryAnchorsAdvanced(queryInfo, FOculusXRAnchorQueryDelegate::CreateUObject(this, &AOculusXRSceneActor::AnchorQueryComplete_Handler));
+		bResult = OculusXRAnchors::FOculusXRAnchors::QueryAnchorsAdvanced(queryInfo, FOculusXRAnchorQueryDelegate::CreateUObject(this, &AOculusXRSceneActor::AnchorQueryComplete_Handler), AnchorQueryResult);
 	}	
 	else
 	{
 		queryInfo.ComponentFilter.Add(EOculusXRSpaceComponentType::ScenePlane);
-		bResult = OculusXRAnchors::FOculusXRAnchors::QueryAnchorsAdvanced(queryInfo, FOculusXRAnchorQueryDelegate::CreateUObject(this, &AOculusXRSceneActor::AnchorQueryComplete_Handler));
+		bResult = OculusXRAnchors::FOculusXRAnchors::QueryAnchorsAdvanced(queryInfo, FOculusXRAnchorQueryDelegate::CreateUObject(this, &AOculusXRSceneActor::AnchorQueryComplete_Handler), AnchorQueryResult);
 
 		queryInfo.ComponentFilter.Empty();
 		queryInfo.ComponentFilter.Add(EOculusXRSpaceComponentType::SceneVolume);
-		bResult &= OculusXRAnchors::FOculusXRAnchors::QueryAnchorsAdvanced(queryInfo, FOculusXRAnchorQueryDelegate::CreateUObject(this, &AOculusXRSceneActor::AnchorQueryComplete_Handler));
+		bResult &= OculusXRAnchors::FOculusXRAnchors::QueryAnchorsAdvanced(queryInfo, FOculusXRAnchorQueryDelegate::CreateUObject(this, &AOculusXRSceneActor::AnchorQueryComplete_Handler), AnchorQueryResult);
 	}
 
 	return bResult;
@@ -233,7 +237,8 @@ bool AOculusXRSceneActor::SpawnSceneAnchor(const FOculusXRUInt64& Space, const F
 	sceneAnchorComponent->CreationMethod = EComponentCreationMethod::Instance;
 	newActor->AddOwnedComponent(sceneAnchorComponent);
 
-	OculusXRAnchors::FOculusXRAnchors::SetAnchorComponentStatus(sceneAnchorComponent, EOculusXRSpaceComponentType::Locatable, true, 0.0f, FOculusXRAnchorSetComponentStatusDelegate());
+	EOculusXRAnchorResult::Type Result;
+	OculusXRAnchors::FOculusXRAnchors::SetAnchorComponentStatus(sceneAnchorComponent, EOculusXRSpaceComponentType::Locatable, true, 0.0f, FOculusXRAnchorSetComponentStatusDelegate(), Result);
 
 	sceneAnchorComponent->RegisterComponent();
 	sceneAnchorComponent->InitializeComponent();
@@ -398,16 +403,16 @@ TArray<AActor*> AOculusXRSceneActor::GetActorsBySemanticLabel(const FString Sema
 
 
 // DELEGATE HANDLERS
-void AOculusXRSceneActor::AnchorQueryComplete_Handler(bool Success, const TArray<FOculusXRSpaceQueryResult>& Results)
+void AOculusXRSceneActor::AnchorQueryComplete_Handler(EOculusXRAnchorResult::Type AnchorResult, const TArray<FOculusXRSpaceQueryResult>& QueryResults)
 {
-	for (auto& Result : Results)
+	for (auto& QueryResult : QueryResults)
 	{
 		// Call the existing logic for each result
-		SpatialAnchorQueryResult_Handler(0, Result.Space, Result.UUID);
+		SpatialAnchorQueryResult_Handler(0, QueryResult.Space, QueryResult.UUID);
 	}
 
 	// Call the complete handler at the end to check if we need to do room layout stuff
-	SpatialAnchorQueryComplete_Handler(0, Success);
+	SpatialAnchorQueryComplete_Handler(0, UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(AnchorResult));
 }
 
 void AOculusXRSceneActor::SpatialAnchorQueryResult_Handler(FOculusXRUInt64 RequestId, FOculusXRUInt64 Space, FOculusXRUUID Uuid)
@@ -421,9 +426,10 @@ void AOculusXRSceneActor::SpatialAnchorQueryResult_Handler(FOculusXRUInt64 Reque
 	bool bOutPending = false;
 	bool bIsRoomLayout = false;
 
-	bResult = OculusXRAnchors::FOculusXRAnchorManager::GetSpaceComponentStatus(Space.Value, EOculusXRSpaceComponentType::RoomLayout, bIsRoomLayout, bOutPending);
+	EOculusXRAnchorResult::Type Result = OculusXRAnchors::FOculusXRAnchorManager::GetSpaceComponentStatus(Space.Value, EOculusXRSpaceComponentType::RoomLayout, bIsRoomLayout, bOutPending);
+	bool ResultSuccess = UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(Result);
 
-	if (bResult && bIsRoomLayout)
+	if (ResultSuccess && bIsRoomLayout)
 	{
 		if (bVerboseLog)
 		{
@@ -458,8 +464,8 @@ void AOculusXRSceneActor::SpatialAnchorQueryResult_Handler(FOculusXRUInt64 Reque
 				}
 
 				// We found a valid room, we can now query all ScenePlane/SceneVolume anchors
-				bResult = QuerySpatialAnchors(false);
-				if (bResult)
+				ResultSuccess = QuerySpatialAnchors(false);
+				if (ResultSuccess)
 				{
 					if (bVerboseLog)
 					{
@@ -483,8 +489,9 @@ void AOculusXRSceneActor::SpatialAnchorQueryResult_Handler(FOculusXRUInt64 Reque
 	{
 		// Is it a ScenePlane anchor?
 		bool bIsScenePlane = false;
-		bResult = OculusXRAnchors::FOculusXRAnchorManager::GetSpaceComponentStatus(Space.Value, EOculusXRSpaceComponentType::ScenePlane, bIsScenePlane, bOutPending);
-		if (bResult && bIsScenePlane)
+		Result = OculusXRAnchors::FOculusXRAnchorManager::GetSpaceComponentStatus(Space.Value, EOculusXRSpaceComponentType::ScenePlane, bIsScenePlane, bOutPending);
+		ResultSuccess = UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(Result);
+		if (ResultSuccess && bIsScenePlane)
 		{
 			if (bVerboseLog)
 			{
@@ -493,8 +500,8 @@ void AOculusXRSceneActor::SpatialAnchorQueryResult_Handler(FOculusXRUInt64 Reque
 
 			FVector scenePlanePos;
 			FVector scenePlaneSize;
-			bResult = OculusXRAnchors::FOculusXRAnchors::GetSpaceScenePlane(Space.Value, scenePlanePos, scenePlaneSize);
-			if (bResult)
+			ResultSuccess = OculusXRAnchors::FOculusXRAnchors::GetSpaceScenePlane(Space.Value, scenePlanePos, scenePlaneSize, Result);
+			if (ResultSuccess)
 			{
 				if (bVerboseLog)
 				{
@@ -509,8 +516,8 @@ void AOculusXRSceneActor::SpatialAnchorQueryResult_Handler(FOculusXRUInt64 Reque
 			}
 
 			TArray<FString> semanticClassifications;
-			bResult = OculusXRAnchors::FOculusXRAnchors::GetSpaceSemanticClassification(Space.Value, semanticClassifications);
-			if (bResult)
+			ResultSuccess = OculusXRAnchors::FOculusXRAnchors::GetSpaceSemanticClassification(Space.Value, semanticClassifications, Result);
+			if (ResultSuccess)
 			{
 				if (bVerboseLog)
 				{
@@ -535,8 +542,10 @@ void AOculusXRSceneActor::SpatialAnchorQueryResult_Handler(FOculusXRUInt64 Reque
 		{
 			// Is it a scenevolume anchor?
 			bool bIsSceneVolume = false;
-			bResult = OculusXRAnchors::FOculusXRAnchorManager::GetSpaceComponentStatus(Space.Value, EOculusXRSpaceComponentType::SceneVolume, bIsSceneVolume, bOutPending);
-			if (bResult && bIsSceneVolume)
+			Result = OculusXRAnchors::FOculusXRAnchorManager::GetSpaceComponentStatus(Space.Value, EOculusXRSpaceComponentType::SceneVolume, bIsSceneVolume, bOutPending);
+			ResultSuccess = UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(Result);
+
+			if (ResultSuccess && bIsSceneVolume)
 			{
 				if (bVerboseLog)
 				{
@@ -545,8 +554,8 @@ void AOculusXRSceneActor::SpatialAnchorQueryResult_Handler(FOculusXRUInt64 Reque
 
 				FVector sceneVolumePos;
 				FVector sceneVolumeSize;
-				bResult = OculusXRAnchors::FOculusXRAnchors::GetSpaceSceneVolume(Space.Value, sceneVolumePos, sceneVolumeSize);
-				if (bResult)
+				ResultSuccess = OculusXRAnchors::FOculusXRAnchors::GetSpaceSceneVolume(Space.Value, sceneVolumePos, sceneVolumeSize, Result);
+				if (ResultSuccess)
 				{
 					if (bVerboseLog)
 					{
@@ -561,8 +570,8 @@ void AOculusXRSceneActor::SpatialAnchorQueryResult_Handler(FOculusXRUInt64 Reque
 				}
 
 				TArray<FString> semanticClassifications;
-				bResult = OculusXRAnchors::FOculusXRAnchors::GetSpaceSemanticClassification(Space.Value, semanticClassifications);
-				if (bResult)
+				ResultSuccess = OculusXRAnchors::FOculusXRAnchors::GetSpaceSemanticClassification(Space.Value, semanticClassifications, Result);
+				if (ResultSuccess)
 				{
 					if (bVerboseLog)
 					{

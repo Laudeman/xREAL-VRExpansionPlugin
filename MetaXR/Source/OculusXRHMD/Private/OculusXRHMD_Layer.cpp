@@ -423,14 +423,9 @@ bool FLayer::ShapeNeedsTextures(ovrpShape shape)
 			(shape != ovrpShape_SurfaceProjectedPassthrough));
 }
 
-void FLayer::SetEyeLayerDesc(const ovrpLayerDesc_EyeFov& InEyeLayerDesc, const ovrpRecti InViewportRect[ovrpEye_Count])
+void FLayer::SetEyeLayerDesc(const ovrpLayerDesc_EyeFov& InEyeLayerDesc)
 {
 	OvrpLayerDesc.EyeFov = InEyeLayerDesc;
-
-	for(int eye = 0; eye < ovrpEye_Count; eye++)
-	{
-		OvrpLayerSubmit.ViewportRect[eye] = InViewportRect[eye];
-	}
 
 	bHasDepth = InEyeLayerDesc.DepthFormat != ovrpTextureFormat_None;
 }
@@ -612,13 +607,7 @@ bool FLayer::Initialize_RenderThread(const FSettings* Settings, FCustomPresent* 
 	else
 	{
 		bool bLayerCreated = false;
-#ifdef WITH_OCULUS_BRANCH 
 		bool bValidFoveationTextures = true;
-#else
-		// UE 5.1 crashes creating renderpass when using the FragmentDensityMap Extension
-		// This is fixed in 5.1.1
-		bool bValidFoveationTextures = false;
-#endif
 		TArray<ovrpTextureHandle> ColorTextures;
 		TArray<ovrpTextureHandle> DepthTextures;
 		TArray<ovrpTextureHandle> FoveationTextures;
@@ -984,13 +973,13 @@ void FLayer::UpdatePassthrough_RenderThread(FCustomPresent* CustomPresent, FRHIC
 	}
 }
 
-static void InvertTextureAlpha_RenderThread(FCustomPresent* CustomPresent, FRHICommandListImmediate& RHICmdList, FRHITexture* Texture, FRHITexture* TempTexture, const ovrpRecti& ViewportRect)
+static void InvertTextureAlpha_RenderThread(FCustomPresent* CustomPresent, FRHICommandListImmediate& RHICmdList, FRHITexture* Texture, FRHITexture* TempTexture, const FIntRect& ViewportRect)
 {
 	{
 		FRHITexture* SrcTexture = Texture;
 		FRHITexture* DstTexture = TempTexture;
-		const FIntRect SrcRect(ViewportRect.Pos.x, ViewportRect.Pos.y, ViewportRect.Pos.x + ViewportRect.Size.w, ViewportRect.Pos.y + ViewportRect.Size.h);
-		const FIntRect DstRect(0, 0, ViewportRect.Size.w, ViewportRect.Size.h);
+		const FIntRect SrcRect(ViewportRect);
+		const FIntRect DstRect(0, 0, ViewportRect.Size().X, ViewportRect.Size().Y);
 
 		const bool bAlphaPremultiply = false;
 		const bool bNoAlphaWrite = false;
@@ -1003,9 +992,9 @@ static void InvertTextureAlpha_RenderThread(FCustomPresent* CustomPresent, FRHIC
 
 	{
 		FRHICopyTextureInfo CopyInfo;
-		CopyInfo.Size = FIntVector(ViewportRect.Size.w, ViewportRect.Size.h, 1);
+		CopyInfo.Size = FIntVector(ViewportRect.Size().X, ViewportRect.Size().Y, 1);
 		CopyInfo.SourcePosition = FIntVector::ZeroValue;
-		CopyInfo.DestPosition = FIntVector(ViewportRect.Pos.x, ViewportRect.Pos.y, 0);
+		CopyInfo.DestPosition = FIntVector(ViewportRect.Min.X, ViewportRect.Min.Y,0);
 
 		FRHITexture* SrcTexture = TempTexture;
 		FRHITexture* DstTexture = Texture;
@@ -1017,7 +1006,7 @@ static void InvertTextureAlpha_RenderThread(FCustomPresent* CustomPresent, FRHIC
 	}
 }
 
-void FLayer::UpdateTexture_RenderThread(FCustomPresent* CustomPresent, FRHICommandListImmediate& RHICmdList)
+void FLayer::UpdateTexture_RenderThread(const FSettings* Settings, FCustomPresent* CustomPresent, FRHICommandListImmediate& RHICmdList)
 {
 	CheckInRenderThread();
 
@@ -1068,17 +1057,15 @@ void FLayer::UpdateTexture_RenderThread(FCustomPresent* CustomPresent, FRHIComma
 	{
 		// Left
 		{
-			const ovrpRecti& OvrpViewportRect = OvrpLayerSubmit.ViewportRect[ovrpEye_Left];
 			FRHITexture* EyeTexture = SwapChain->GetTexture();
-			InvertTextureAlpha_RenderThread(CustomPresent, RHICmdList, EyeTexture, InvAlphaTexture, OvrpViewportRect);
+			InvertTextureAlpha_RenderThread(CustomPresent, RHICmdList, EyeTexture, InvAlphaTexture, Settings->EyeRenderViewport[ovrpEye_Left]);
 		}
 
 		// Right
 		if(OvrpLayerDesc.Layout != ovrpLayout_Mono)
 		{
-			const ovrpRecti& OvrpViewportRect = OvrpLayerSubmit.ViewportRect[ovrpEye_Right];
 			FRHITexture* EyeTexture = RightSwapChain.IsValid() ? RightSwapChain->GetTexture() : SwapChain->GetTexture();
-			InvertTextureAlpha_RenderThread(CustomPresent, RHICmdList, EyeTexture, InvAlphaTexture, OvrpViewportRect);
+			InvertTextureAlpha_RenderThread(CustomPresent, RHICmdList, EyeTexture, InvAlphaTexture, Settings->EyeRenderViewport[ovrpEye_Right]);
 		}
 	}  
 
@@ -1229,15 +1216,8 @@ const ovrpLayerSubmit* FLayer::UpdateLayer_RHIThread(const FSettings* Settings, 
 		OvrpLayerSubmit.EyeFov.DepthFar = 0;
 		OvrpLayerSubmit.EyeFov.DepthNear = Frame->NearClippingPlane / 100.f; //physical scale is 100UU/meter
 		OvrpLayerSubmit.LayerSubmitFlags = ovrpLayerSubmitFlag_ReverseZ;
-
-		if (Settings->Flags.bPixelDensityAdaptive)
-		{
-			for (int eye = 0; eye < ovrpEye_Count; eye++)
-			{
-				OvrpLayerSubmit.ViewportRect[eye] = ToOvrpRecti(Settings->EyeRenderViewport[eye]);
-			}
-		}
-
+		OvrpLayerSubmit.ViewportRect[0] = ToOvrpRecti(Settings->EyeRenderViewport[0]);
+		OvrpLayerSubmit.ViewportRect[1] = ToOvrpRecti(Settings->EyeRenderViewport[1]);
 		OvrpLayerSubmit.EyeFov.Fov[0] = Frame->Fov[0];
 		OvrpLayerSubmit.EyeFov.Fov[1] = Frame->Fov[1];
 

@@ -26,12 +26,14 @@ UOculusXRHMDRuntimeSettings::UOculusXRHMDRuntimeSettings(const FObjectInitialize
 	PixelDensityMin = DefaultSettings.PixelDensityMin;
 	PixelDensityMax = DefaultSettings.PixelDensityMax;
 	bFocusAware = DefaultSettings.Flags.bFocusAware;
+	bDynamicResolution = DefaultSettings.Flags.bPixelDensityAdaptive;
 	XrApi = DefaultSettings.XrApi;
 	ColorSpace = DefaultSettings.ColorSpace;
 	ControllerPoseAlignment = DefaultSettings.ControllerPoseAlignment;
 	bRequiresSystemKeyboard = DefaultSettings.Flags.bRequiresSystemKeyboard;
 	HandTrackingSupport = DefaultSettings.HandTrackingSupport;
 	HandTrackingFrequency = DefaultSettings.HandTrackingFrequency;
+	HandTrackingVersion = DefaultSettings.HandTrackingVersion;
 	bInsightPassthroughEnabled = DefaultSettings.Flags.bInsightPassthroughEnabled;
 	bBodyTrackingEnabled = DefaultSettings.Flags.bBodyTrackingEnabled;
 	bEyeTrackingEnabled = DefaultSettings.Flags.bEyeTrackingEnabled;
@@ -50,8 +52,9 @@ UOculusXRHMDRuntimeSettings::UOculusXRHMDRuntimeSettings(const FObjectInitialize
 	FoveatedRenderingLevel = EOculusXRFoveatedRenderingLevel::Off;
 	bDynamicFoveatedRendering = false;
 	bSupportEyeTrackedFoveatedRendering = false;
-	PixelDensityMin = 0.5f;
-	PixelDensityMax = 1.0f;
+	PixelDensityMin = 0.8f;
+	PixelDensityMax = 1.2f;
+	bDynamicResolution = false;
 	bFocusAware = true;
 	XrApi = EOculusXRXrApi::OVRPluginOpenXR;
 	bLateLatching = false;
@@ -60,6 +63,7 @@ UOculusXRHMDRuntimeSettings::UOculusXRHMDRuntimeSettings(const FObjectInitialize
 	bRequiresSystemKeyboard = false;
 	HandTrackingSupport = EOculusXRHandTrackingSupport::ControllersOnly;
 	HandTrackingFrequency = EOculusXRHandTrackingFrequency::Low;
+	HandTrackingVersion = EOculusXRHandTrackingVersion::Default;
 	bInsightPassthroughEnabled = false;
 	bSupportExperimentalFeatures = false;
 	bBodyTrackingEnabled = false;
@@ -84,8 +88,6 @@ bool UOculusXRHMDRuntimeSettings::CanEditChange(const FProperty* InProperty) con
 // Disable settings for marketplace release that are only compatible with the Oculus engine fork
 #ifndef WITH_OCULUS_BRANCH
 		if (PropertyName == GET_MEMBER_NAME_CHECKED(UOculusXRHMDRuntimeSettings, FoveatedRenderingMethod) ||
-			PropertyName == GET_MEMBER_NAME_CHECKED(UOculusXRHMDRuntimeSettings, FoveatedRenderingLevel) ||
-			PropertyName == GET_MEMBER_NAME_CHECKED(UOculusXRHMDRuntimeSettings, bDynamicFoveatedRendering) ||
 			PropertyName == GET_MEMBER_NAME_CHECKED(UOculusXRHMDRuntimeSettings, bSupportEyeTrackedFoveatedRendering))
 		{
 			bIsEditable = false;

@@ -58,12 +58,16 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = PC)
 	bool bHQDistortion;
 
+	/** Maximum allowed pixel density. */
+	UPROPERTY(config, EditAnywhere, Category = "Mobile|Dynamic Resolution", DisplayName = "Enable Dynamic Resolution")
+	bool bDynamicResolution;
+
 	/** Minimum allowed pixel density. */
-	UPROPERTY(config, EditAnywhere, Category = PC)
+	UPROPERTY(config, EditAnywhere, Category = "Mobile|Dynamic Resolution")
 	float PixelDensityMin;
 
 	/** Maximum allowed pixel density. */
-	UPROPERTY(config, EditAnywhere, Category = PC)
+	UPROPERTY(config, EditAnywhere, Category = "Mobile|Dynamic Resolution")
 	float PixelDensityMax;
 
 	/** Default CPU level controlling CPU frequency on the mobile device */
@@ -123,6 +127,10 @@ public:
 	/** Note that a higher tracking frequency will reserve some performance headroom from the application's budget. */
 	UPROPERTY(config, EditAnywhere, Category = Mobile)
 	EOculusXRHandTrackingFrequency HandTrackingFrequency;
+
+	/** The version of hand tracking algorithm */
+	UPROPERTY(config, EditAnywhere, Category = Mobile)
+	EOculusXRHandTrackingVersion HandTrackingVersion;
 
 	/** Whether passthrough functionality can be used with the app */
 	UPROPERTY(config, EditAnywhere, Category = Mobile, meta = (DisplayName = "Passthrough Enabled"))

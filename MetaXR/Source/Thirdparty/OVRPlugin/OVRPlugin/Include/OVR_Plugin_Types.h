@@ -28,7 +28,7 @@
 #endif
 
 #define OVRP_MAJOR_VERSION 1
-#define OVRP_MINOR_VERSION 81
+#define OVRP_MINOR_VERSION 82
 #define OVRP_PATCH_VERSION 0
 
 #define OVRP_VERSION OVRP_MAJOR_VERSION, OVRP_MINOR_VERSION, OVRP_PATCH_VERSION
@@ -173,6 +173,8 @@ typedef enum {
 
 
 
+  /// Allow OVRPlugin (OpenXR backend) runs with non-Oculus OpenXR runtime
+  ovrpPreinitializeFlag_SupportNonOculusRuntime = (1 << 3),
   ovrpPreinitializeFlag_EnumSize = 0x7fffffff
 } ovrpPreinitializeFlags;
 
@@ -1964,6 +1966,16 @@ typedef enum ovrpEventType_ {
 
 
 
+
+
+
+
+
+
+
+
+
+
 } ovrpEventType;
 
 // biggest event that OVRPlugin can use
@@ -2084,9 +2096,6 @@ typedef enum {
   ovrpRenderModelFlags_SupportsGltf20Subset2 = 2,
   ovrpRenderModelFlags_EnumSize = 0x7fffffff
 } ovrpRenderModelFlags;
-
-
-
 
 
 
@@ -2467,6 +2476,19 @@ typedef struct ovrpEventSpaceQueryComplete_ {
   ovrpResult result;
 } ovrpEventSpaceQueryComplete;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 typedef struct ovrpEventSpaceStorageSaveResult_ {
   ovrpEventType EventType;
   ovrpUInt64 requestId;
@@ -2601,6 +2623,36 @@ typedef struct ovrpSceneCaptureRequest_ {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 typedef enum {
   ovrpInteractionProfile_None = 0,
   ovrpInteractionProfile_Touch = 1,
@@ -2610,6 +2662,61 @@ typedef enum {
 
   ovrpInteractionProfile_EnumSize = 0x7fffffff
 } ovrpInteractionProfile;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

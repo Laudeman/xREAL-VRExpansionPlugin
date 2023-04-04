@@ -61,7 +61,8 @@ void UOculusXRAnchorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	if (HasValidHandle())
 	{
-		OculusXRAnchors::FOculusXRAnchors::DestroyAnchor(AnchorHandle.GetValue());
+		EOculusXRAnchorResult::Type AnchorResult;
+		OculusXRAnchors::FOculusXRAnchors::DestroyAnchor(AnchorHandle.GetValue(), AnchorResult);
 	}
 }
 
@@ -107,7 +108,10 @@ void UOculusXRAnchorComponent::SetUUID(FOculusXRUUID NewUUID)
 
 bool UOculusXRAnchorComponent::IsStoredAtLocation(EOculusXRSpaceStorageLocation Location) const
 {
-	UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Anchor UUID: %s  -  Saved Local: %d"), *GetUUID().ToString(), StorageLocations & static_cast<int32>(EOculusXRSpaceStorageLocation::Local));
+	UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Anchor UUID: %s  -  Saved Local: %d  -  Saved Cloud: %d"),
+		*GetUUID().ToString(),
+		StorageLocations & static_cast<int32>(EOculusXRSpaceStorageLocation::Local),
+		StorageLocations & static_cast<int32>(EOculusXRSpaceStorageLocation::Cloud));
 
 	return (StorageLocations & static_cast<int32>(Location)) > 0;
 }
@@ -123,7 +127,10 @@ void UOculusXRAnchorComponent::SetStoredLocation(EOculusXRSpaceStorageLocation L
 		StorageLocations = StorageLocations & ~static_cast<int32>(Location);
 	}
 
-	UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Anchor UUID: %s  -  Saved Local: %d"), *GetUUID().ToString(), StorageLocations & static_cast<int32>(EOculusXRSpaceStorageLocation::Local));
+	UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Anchor UUID: %s  -  Saved Local: %d  -  Saved Cloud: %d"),
+		*GetUUID().ToString(),
+		StorageLocations & static_cast<int32>(EOculusXRSpaceStorageLocation::Local),
+		StorageLocations & static_cast<int32>(EOculusXRSpaceStorageLocation::Cloud));
 }
 
 bool UOculusXRAnchorComponent::IsSaved() const

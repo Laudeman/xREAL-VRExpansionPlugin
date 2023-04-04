@@ -45,9 +45,10 @@ public:
 	~FLayer();
 
 	uint32 GetId() const { return Id; }
+	int GetOvrpId() const { return OvrpLayerId; }
 	void SetDesc(const IStereoLayers::FLayerDesc& InDesc);
 	const IStereoLayers::FLayerDesc& GetDesc() const { return Desc; }
-	void SetEyeLayerDesc(const ovrpLayerDesc_EyeFov& InEyeLayerDesc, const ovrpRecti InViewportRect[ovrpEye_Count]);
+	void SetEyeLayerDesc(const ovrpLayerDesc_EyeFov& InEyeLayerDesc);
 	const FXRSwapChainPtr& GetSwapChain() const { return SwapChain; }
 	const FXRSwapChainPtr& GetRightSwapChain() const { return RightSwapChain; }
 	const FXRSwapChainPtr& GetDepthSwapChain() const { return DepthSwapChain; }
@@ -68,7 +69,7 @@ public:
 
 	bool CanReuseResources(const FLayer* InLayer) const;
 	bool Initialize_RenderThread(const FSettings* Settings, FCustomPresent* CustomPresent, FDeferredDeletionQueue* DeferredDeletion, FRHICommandListImmediate& RHICmdList, const FLayer* InLayer = nullptr);
-	void UpdateTexture_RenderThread(FCustomPresent* CustomPresent, FRHICommandListImmediate& RHICmdList);
+	void UpdateTexture_RenderThread(const FSettings* Settings, FCustomPresent* CustomPresent, FRHICommandListImmediate& RHICmdList);
 	void UpdatePassthrough_RenderThread(FCustomPresent* CustomPresent, FRHICommandListImmediate& RHICmdList,const FGameFrame* Frame);
 
 	const ovrpLayerSubmit* UpdateLayer_RHIThread(const FSettings* Settings, const FGameFrame* Frame, const int LayerIndex);

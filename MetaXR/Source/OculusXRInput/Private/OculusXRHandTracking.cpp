@@ -317,6 +317,8 @@ void FOculusHandTracking::InitializeHandMesh(USkeletalMesh* SkeletalMesh, const 
 	for (uint32_t VertexIndex = 0; VertexIndex < OvrMesh->NumVertices; VertexIndex++)
 	{
 		FSoftSkinVertex SoftVertex;
+		FMemory::Memset(SoftVertex.InfluenceWeights, 0, MAX_TOTAL_INFLUENCES * sizeof(uint8));
+		FMemory::Memset(SoftVertex.InfluenceBones, 0, MAX_TOTAL_INFLUENCES * sizeof(FBoneIndexType));
 		
 		// Update vertex data
 		SoftVertex.Color = FColor::White;
@@ -410,6 +412,9 @@ void FOculusHandTracking::InitializeHandMesh(USkeletalMesh* SkeletalMesh, const 
 	TMap<int32, TArray<int32>> OverlappingVertices;
 	for (uint32_t VertexIndex = 0; VertexIndex < OvrMesh->NumVertices; VertexIndex++)
 	{
+		FMemory::Memset(InWeights[VertexIndex].InfluenceWeights, 0, MAX_TOTAL_INFLUENCES * sizeof(uint8));
+		FMemory::Memset(InWeights[VertexIndex].InfluenceBones, 0, MAX_TOTAL_INFLUENCES * sizeof(FBoneIndexType));
+
 		// Initialize vertex data
 		FModelVertex ModelVertex;
 

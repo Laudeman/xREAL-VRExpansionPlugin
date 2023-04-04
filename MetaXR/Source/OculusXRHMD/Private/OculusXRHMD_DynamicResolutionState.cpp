@@ -36,12 +36,8 @@ void FDynamicResolutionState::SetupMainViewFamily(class FSceneViewFamily& ViewFa
 	check(IsInGameThread());
 	check(ViewFamily.EngineShowFlags.ScreenPercentage == true);
 
-	if (ViewFamily.Views.Num() > 0 && IsEnabled())
+	if (IsEnabled())
 	{
-		// We can assume both eyes have the same fraction
-		const FSceneView& View = *ViewFamily.Views[0];
-		check(View.UnconstrainedViewRect == View.UnscaledViewRect);
-
 		// Compute desired resolution fraction range
 		float MinResolutionFraction = Settings->PixelDensityMin;
 		float MaxResolutionFraction = Settings->PixelDensityMax;
@@ -49,17 +45,6 @@ void FDynamicResolutionState::SetupMainViewFamily(class FSceneViewFamily& ViewFa
 		// Clamp resolution fraction to what the renderer can do.
 		MinResolutionFraction = FMath::Max(MinResolutionFraction, ISceneViewFamilyScreenPercentage::kMinResolutionFraction);
 		MaxResolutionFraction = FMath::Min(MaxResolutionFraction, ISceneViewFamilyScreenPercentage::kMaxResolutionFraction);
-
-		if (View.AntiAliasingMethod == AAM_TSR)
-		{
-			MinResolutionFraction = FMath::Max(MinResolutionFraction, ISceneViewFamilyScreenPercentage::kMinTSRResolutionFraction);
-			MaxResolutionFraction = FMath::Min(MaxResolutionFraction, ISceneViewFamilyScreenPercentage::kMaxTSRResolutionFraction);
-		}
-		else if (View.AntiAliasingMethod == AAM_TemporalAA)
-		{
-			MinResolutionFraction = FMath::Max(MinResolutionFraction, ISceneViewFamilyScreenPercentage::kMinTAAUpsampleResolutionFraction);
-			MaxResolutionFraction = FMath::Min(MaxResolutionFraction, ISceneViewFamilyScreenPercentage::kMaxTAAUpsampleResolutionFraction);
-		}
 
 		ResolutionFraction = FMath::Clamp(Settings->PixelDensity, MinResolutionFraction, MaxResolutionFraction);
 		ResolutionFractionUpperBound = MaxResolutionFraction;

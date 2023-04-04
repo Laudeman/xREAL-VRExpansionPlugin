@@ -114,6 +114,13 @@ static TAutoConsoleVariable<int32> CVarOculusDynamicFoveatedRendering(
 	TEXT("1 Enable Dynamic Foveated Rendering at runtime.\n"),
 	ECVF_Scalability | ECVF_RenderThreadSafe);
 
+static TAutoConsoleVariable<float> CVarOculusDynamicResolutionPixelDensity(
+	TEXT("r.Oculus.DynamicResolution.PixelDensity"),
+	0,
+	TEXT("0 Static Pixel Density corresponding to Pixel Density 1.0 (default)\n")
+	TEXT(">0 Manual Pixel Density Override\n"),
+	ECVF_Scalability | ECVF_RenderThreadSafe);
+
 #define OCULUS_PAUSED_IDLE_FPS 10
 
 namespace OculusXRHMD
@@ -554,6 +561,7 @@ namespace OculusXRHMD
 
 	bool FOculusXRHMD::IsHeadTrackingAllowed() const
 	{
+		bool bNeedEnableStereo = false;
 		CheckInGameThread();
 
 		if (!FOculusXRHMDModule::GetPluginWrapper().GetInitialized())
@@ -561,7 +569,13 @@ namespace OculusXRHMD
 			return false;
 		}
 
-		return FHeadMountedDisplayBase::IsHeadTrackingAllowed();
+#if PLATFORM_WINDOWS
+		//TODO: This is a temp fix of the case that callers wants to use IsHeadTrackingAllowed() to do something in UGameEngine::Start().
+		// Settings->Flags.bStereoEnabled won't be true until Window.IsValid() and UGameEngine::Tick() starts which is very late.
+		// We might need a better mechanism to decouple Window.IsValid() and Settings->Flags.bStereoEnabled.
+		bNeedEnableStereo = !GIsEditor && Flags.bNeedEnableStereo;
+#endif			
+		return (FHeadMountedDisplayBase::IsHeadTrackingAllowed() || bNeedEnableStereo);
 	}
 
 
@@ -1428,20 +1442,38 @@ namespace OculusXRHMD
 	void FOculusXRHMD::SetFinalViewRect(FRHICommandListImmediate& RHICmdList, const int32 ViewIndex, const FIntRect& FinalViewRect)
 	{
 		CheckInRenderThread();
-
-		if (Settings_RenderThread.IsValid() && Settings_RenderThread->Flags.bPixelDensityAdaptive)
+		if (ViewIndex == INDEX_NONE || ViewIndex < 0 || ViewIndex >= ovrpEye_Count)
 		{
-			Settings_RenderThread->EyeRenderViewport[ViewIndex] = FinalViewRect;
+			return;
+		}
+
+		FIntRect AsymmetricViewRect = FinalViewRect;
+		if (Settings_RenderThread.IsValid() && Frame_RenderThread.IsValid()) {
+			const ovrpFovf& EyeBufferFov = Frame_RenderThread->Fov[ViewIndex];
+			const ovrpFovf& FrameFov = Frame_RenderThread->SymmetricFov[ViewIndex];
+			const int32 ViewPixelSize = AsymmetricViewRect.Size().X;
+
+			// if using symmetric rendering, only send UVs of the asymmetrical subrect (the rest isn't useful) to the VR runtime
+			const float symTanSize = FrameFov.LeftTan + FrameFov.RightTan;
+
+			AsymmetricViewRect.Min.X += (FrameFov.LeftTan - EyeBufferFov.LeftTan) * (ViewPixelSize / symTanSize);
+			AsymmetricViewRect.Max.X -= (FrameFov.RightTan - EyeBufferFov.RightTan) * (ViewPixelSize / symTanSize);
+		}
+
+
+		if (Settings_RenderThread.IsValid())
+		{
+			Settings_RenderThread->EyeRenderViewport[ViewIndex] = AsymmetricViewRect;
 		}
 
 		// Called after RHIThread has already started.  Need to update Settings_RHIThread as well.
-		ExecuteOnRHIThread_DoNotWait([this, ViewIndex, FinalViewRect]()
+		ExecuteOnRHIThread_DoNotWait([this, ViewIndex, AsymmetricViewRect]()
 		{
 			CheckInRHIThread();
 
-			if (Settings_RHIThread.IsValid() && Settings_RHIThread->Flags.bPixelDensityAdaptive)
+			if (Settings_RHIThread.IsValid())
 			{
-				Settings_RHIThread->EyeRenderViewport[ViewIndex] = FinalViewRect;
+				Settings_RHIThread->EyeRenderViewport[ViewIndex] = AsymmetricViewRect;
 			}
 		});
 	}
@@ -2647,6 +2679,16 @@ namespace OculusXRHMD
 
 		FOculusXRHMDModule::GetPluginWrapper().Update3(ovrpStep_Render, 0, 0.0);
 
+		if (Settings->Flags.bPixelDensityAdaptive)
+		{
+			static const auto DynamicResOperationCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.DynamicRes.OperationMode"));
+			if (DynamicResOperationCVar)
+			{
+				DynamicResOperationCVar->Set(2);
+			}
+			GEngine->ChangeDynamicResolutionStateAtNextFrame(MakeShareable(new FDynamicResolutionState(Settings)));
+		}
+
 		UpdateHmdRenderInfo();
 		UpdateStereoRenderingParams();
 
@@ -2826,10 +2868,12 @@ namespace OculusXRHMD
 
 		if (Settings->Flags.bPixelDensityAdaptive)
 		{
-			float AdaptiveGpuPerformanceScale = 1.0f;
-			FOculusXRHMDModule::GetPluginWrapper().GetAdaptiveGpuPerformanceScale2(&AdaptiveGpuPerformanceScale);
-			float NewPixelDensity = Settings->PixelDensity * FMath::Sqrt(AdaptiveGpuPerformanceScale);
-			NewPixelDensity = FMath::RoundToFloat(NewPixelDensity * 1024.0f) / 1024.0f;
+			float NewPixelDensity = 1.0;
+			const float PixelDensityCVarOverride = CVarOculusDynamicResolutionPixelDensity.GetValueOnAnyThread();
+			if (PixelDensityCVarOverride > 0)
+			{
+				NewPixelDensity = PixelDensityCVarOverride;
+			}
 			Settings->SetPixelDensity(NewPixelDensity);
 		}
 		else
@@ -2860,16 +2904,6 @@ namespace OculusXRHMD
 		}
 
 #if PLATFORM_ANDROID
-		static const auto CVarMobileHDR = IConsoleManager::Get().FindTConsoleVariableDataInt(TEXT("r.MobileHDR"));
-		const bool bMobileHDR = CVarMobileHDR && CVarMobileHDR->GetValueOnAnyThread() == 1;
-
-		if (bMobileHDR)
-		{
-			static bool bDisplayedHDRError = false;
-			UE_CLOG(!bDisplayedHDRError, LogHMD, Error, TEXT("Mobile HDR is not supported on Oculus Mobile HMD devices."));
-			bDisplayedHDRError = true;
-		} 
-
 		if (!bIsUsingMobileMultiView && Settings->bLateLatching)
 		{
 			UE_CLOG(true, LogHMD, Error, TEXT("LateLatching can't be used when Multiview is off, force disabling."));
@@ -2935,20 +2969,25 @@ namespace OculusXRHMD
 				EyeLayerDesc.TextureSize.w = EyeLayerDesc.MaxViewportSize.w = numberTiles * 96;
 			}
 
-			// Update viewports
 			// Scaling for DynamicResolution will happen later - see FSceneRenderer::PrepareViewRectsForRendering.
 			// If scaling does occur, EyeRenderViewport will be updated in FOculusXRHMD::SetFinalViewRect.
-			ovrpRecti vpRect[2];
-			FOculusXRHMDModule::GetPluginWrapper().CalculateEyeViewportRect(EyeLayerDesc, ovrpEye_Left, 1.0f, &vpRect[0]);
-			FOculusXRHMDModule::GetPluginWrapper().CalculateEyeViewportRect(EyeLayerDesc, ovrpEye_Right, 1.0f, &vpRect[1]);
-
+			FIntPoint UnscaledViewportSize = FIntPoint(EyeLayerDesc.MaxViewportSize.w, EyeLayerDesc.MaxViewportSize.h);
 			if (Settings->Flags.bPixelDensityAdaptive)
 			{
-				vpRect[0].Size.w = vpRect[1].Size.w = ((int)(vpRect[0].Size.w / Settings->PixelDensityMax) + 3) & ~3;
-				vpRect[0].Size.h = vpRect[1].Size.h = ((int)(vpRect[0].Size.h / Settings->PixelDensityMax) + 3) & ~3;
+				FIntPoint ViewRect = FIntPoint(
+					FMath::CeilToInt(EyeLayerDesc.MaxViewportSize.w / Settings->PixelDensityMax),
+					FMath::CeilToInt(EyeLayerDesc.MaxViewportSize.h / Settings->PixelDensityMax));
+				UnscaledViewportSize = ViewRect;
 
-				EyeLayerDesc.MaxViewportSize.w = ((int)(vpRect[0].Size.w * Settings->PixelDensityMax) + 3) & ~3;
-				EyeLayerDesc.MaxViewportSize.h = ((int)(vpRect[0].Size.h * Settings->PixelDensityMax) + 3) & ~3;
+				FIntPoint UpperViewRect = FIntPoint(
+					FMath::CeilToInt(ViewRect.X * Settings->PixelDensityMax),
+					FMath::CeilToInt(ViewRect.Y * Settings->PixelDensityMax));
+
+				FIntPoint TextureSize;
+				QuantizeSceneBufferSize(UpperViewRect, TextureSize);
+
+				EyeLayerDesc.MaxViewportSize.w = TextureSize.X;
+				EyeLayerDesc.MaxViewportSize.h = TextureSize.Y;
 			}
 
 			// Unreal assumes no gutter between eyes
@@ -2957,29 +2996,17 @@ namespace OculusXRHMD
 
 			if (Layout == ovrpLayout_DoubleWide)
 			{
-				vpRect[1].Pos.x = vpRect[0].Size.w;
 				EyeLayerDesc.TextureSize.w *= 2;
 			}
 
-			{
-				// if using symmetric rendering, only send UVs of the asymmetrical subrect (the rest isn't useful) to the VR runtime
-				const float asymTanSize = EyeLayerDesc.Fov[0].RightTan + EyeLayerDesc.Fov[0].LeftTan;
-				const float symTanSize = FrameFov[0].RightTan + FrameFov[0].LeftTan;
-
-				ovrpRecti vpRectSubmit[2] = { vpRect[0], vpRect[1] };
-				vpRectSubmit[0].Pos.x += (FrameFov[0].LeftTan - EyeLayerDesc.Fov[0].LeftTan) * EyeLayerDesc.TextureSize.w / symTanSize;
-				vpRectSubmit[1].Pos.x += (FrameFov[1].LeftTan - EyeLayerDesc.Fov[1].LeftTan) * EyeLayerDesc.TextureSize.w / symTanSize;
-				vpRectSubmit[0].Size.w *= asymTanSize / symTanSize;
-				vpRectSubmit[1].Size.w *= asymTanSize / symTanSize;
-				EyeLayer->SetEyeLayerDesc(EyeLayerDesc, vpRectSubmit);
-			}
+			EyeLayer->SetEyeLayerDesc(EyeLayerDesc);
 			EyeLayer->bNeedsTexSrgbCreate = Settings->Flags.bsRGBEyeBuffer;
 
 			Settings->RenderTargetSize = FIntPoint(EyeLayerDesc.TextureSize.w, EyeLayerDesc.TextureSize.h);
-			Settings->EyeRenderViewport[0].Min = FIntPoint(vpRect[0].Pos.x, vpRect[0].Pos.y);
-			Settings->EyeRenderViewport[0].Max = Settings->EyeRenderViewport[0].Min + FIntPoint(vpRect[0].Size.w, vpRect[0].Size.h);
-			Settings->EyeRenderViewport[1].Min = FIntPoint(vpRect[1].Pos.x, vpRect[1].Pos.y);
-			Settings->EyeRenderViewport[1].Max = Settings->EyeRenderViewport[1].Min + FIntPoint(vpRect[1].Size.w, vpRect[1].Size.h);
+			Settings->EyeRenderViewport[0].Min = FIntPoint::ZeroValue;
+			Settings->EyeRenderViewport[0].Max = UnscaledViewportSize;
+			Settings->EyeRenderViewport[1].Min = FIntPoint(Layout == ovrpLayout_DoubleWide ? UnscaledViewportSize.X : 0, 0);
+			Settings->EyeRenderViewport[1].Max = Settings->EyeRenderViewport[1].Min + UnscaledViewportSize;
 
 			Settings->EyeUnscaledRenderViewport[0] = Settings->EyeRenderViewport[0];
 			Settings->EyeUnscaledRenderViewport[1] = Settings->EyeRenderViewport[1];
@@ -2998,6 +3025,8 @@ namespace OculusXRHMD
 			{
 				Frame->Fov[0] = EyeLayerDesc.Fov[0];
 				Frame->Fov[1] = EyeLayerDesc.Fov[1];
+				Frame->SymmetricFov[0] = FrameFov[0];
+				Frame->SymmetricFov[1] = FrameFov[1];
 			}
 
 			// Flag if need to recreate render targets
@@ -3611,11 +3640,6 @@ namespace OculusXRHMD
 				{
 					GEngine->SetMaxFPS(10);
 				}
-
-				// Hook up dynamic res
-#if !PLATFORM_ANDROID
-				GEngine->ChangeDynamicResolutionStateAtNextFrame(MakeShareable(new FDynamicResolutionState(Settings)));
-#endif
 			}
 			else
 			{
@@ -3634,11 +3658,6 @@ namespace OculusXRHMD
 				FVector2D size = Window->GetSizeInScreen();
 				SceneVP->SetViewportSize(size.X, size.Y);
 				Window->SetViewportSizeDrivenByWindow(true);
-
-				// Restore default dynamic res
-#if !PLATFORM_ANDROID
-				GEngine->ChangeDynamicResolutionStateAtNextFrame(FDynamicResolutionHeuristicProxy::CreateDefaultState());
-#endif
 			}
 		}
 
@@ -3917,7 +3936,7 @@ namespace OculusXRHMD
 				{
 					for (int32 LayerIndex = 0; LayerIndex < Layers_RenderThread.Num(); LayerIndex++)
 					{
-						Layers_RenderThread[LayerIndex]->UpdateTexture_RenderThread(CustomPresent, RHICmdList);
+						Layers_RenderThread[LayerIndex]->UpdateTexture_RenderThread(Settings_RenderThread.Get(), CustomPresent, RHICmdList);
 						Layers_RenderThread[LayerIndex]->UpdatePassthrough_RenderThread(CustomPresent, RHICmdList, Frame_RenderThread.Get());
 					}
 				}
@@ -4173,6 +4192,7 @@ namespace OculusXRHMD
 		Settings->Flags.bCompositeDepth = HMDSettings->bCompositesDepth;
 		Settings->Flags.bHQDistortion = HMDSettings->bHQDistortion;
 		Settings->Flags.bInsightPassthroughEnabled = HMDSettings->bInsightPassthroughEnabled;
+		Settings->Flags.bPixelDensityAdaptive = HMDSettings->bDynamicResolution;
 		Settings->SuggestedCpuPerfLevel = HMDSettings->SuggestedCpuPerfLevel;
 		Settings->SuggestedGpuPerfLevel = HMDSettings->SuggestedGpuPerfLevel;
 		Settings->FoveatedRenderingMethod = HMDSettings->FoveatedRenderingMethod;

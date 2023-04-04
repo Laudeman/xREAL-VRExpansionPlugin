@@ -14,6 +14,27 @@
 #include "Interfaces/IPluginManager.h"
 #include "ShaderCore.h"
 
+#if !PLATFORM_ANDROID
+#if !UE_BUILD_SHIPPING
+namespace {
+void __cdecl OvrpLogCallback2(ovrpLogLevel InLevel, const char* Message, int Length)
+{
+	ELogVerbosity::Type OutLevel;
+	switch (InLevel)
+	{
+		case ovrpLogLevel_Debug: OutLevel = ELogVerbosity::Log; break;
+		case ovrpLogLevel_Info:  OutLevel = ELogVerbosity::Display; break;
+		case ovrpLogLevel_Error: OutLevel = ELogVerbosity::Error; break;
+		default:
+			OutLevel = ELogVerbosity::NoLogging;
+	}
+	const FString MessageStr(Length, Message);
+	GLog->CategorizedLogf(TEXT("LogOVRPlugin"), OutLevel, TEXT("%s"), *MessageStr);
+}
+}  // namespace anonymous
+#endif  // !UE_BUILD_SHIPPING
+#endif  // !PLATFORM_ANDROID
+
 //-------------------------------------------------------------------------------------------------
 // FOculusXRHMDModule
 //-------------------------------------------------------------------------------------------------
@@ -110,6 +131,12 @@ bool FOculusXRHMDModule::PreInit()
 			void* Activity = nullptr;
 	#endif
 
+	#if !PLATFORM_ANDROID
+	#if !UE_BUILD_SHIPPING
+			PluginWrapper.SetLogCallback2(OvrpLogCallback2);
+	#endif  // !UE_BUILD_SHIPPING
+	#endif  // !PLATFORM_ANDROID
+
 			if (OVRP_FAILURE(PluginWrapper.PreInitialize5(Activity, PreinitApiType, ovrpPreinitializeFlags::ovrpPreinitializeFlag_None)))
 			{
 				UE_LOG(LogHMD, Log, TEXT("Failed initializing OVRPlugin %s"), TEXT(OVRP_VERSION_STR));
@@ -120,7 +147,7 @@ bool FOculusXRHMDModule::PreInit()
 #endif
 			}
 
-	#if PLATFORM_WINDOWS
+#if PLATFORM_WINDOWS
 			bPreInitCalled = true;
 			const LUID* DisplayAdapterId;
 			if (OVRP_SUCCESS(PluginWrapper.GetDisplayAdapterId2((const void**)&DisplayAdapterId)) && DisplayAdapterId)
@@ -151,7 +178,7 @@ bool FOculusXRHMDModule::PreInit()
 			{
 				UE_LOG(LogHMD, Log, TEXT("Could not determine HMD audio output device"));
 			}
-	#endif
+#endif
 
 			float ModulePriority;
 			if (!GConfig->GetFloat(TEXT("HMDPluginPriority"), *GetModuleKeyName(), ModulePriority, GEngineIni))
@@ -293,10 +320,8 @@ FString FOculusXRHMDModule::GetDeviceSystemName()
 			default:
 				return FString("Oculus Quest2");
 
-	#ifdef WITH_OCULUS_BRANCH
 			case ovrpSystemHeadset_Meta_Quest_Pro:
 				return FString("Meta Quest Pro");
-	#endif // WITH_OCULUS_BRANCH
 		}
 	}
 	return FString();

@@ -82,7 +82,7 @@ OVRP_EXPORT ovrpResult ovrp_GetNativeSDKVersion2(char const** nativeSDKVersion);
 /// (e.g. ovrSession in CAPI, ovrMobile* in VRAPI, XrSession* in OpenXR).
 OVRP_EXPORT ovrpResult ovrp_GetNativeSDKPointer2(void** nativeSDKPointer);
 
-/// Retreive the current XR API being used by OVRPlugin
+/// Retrieve the current XR API being used by OVRPlugin
 OVRP_EXPORT ovrpResult ovrp_GetNativeXrApiType(ovrpXrApi* xrApi);
 
 /// Retrive XrInstance / XrSession when OpenXR is being used
@@ -834,8 +834,6 @@ OVRP_EXPORT ovrpResult ovrp_GetSystemKeyboardDescription(
 
 
 
-
-
 /// Gets the current recent pose, acceleration, and velocity of the given node for the current time without any
 /// prediction
 OVRP_EXPORT ovrpResult ovrp_GetNodePoseStateImmediate(ovrpNode nodeId, ovrpPoseStatef* nodePoseState);
@@ -917,6 +915,15 @@ OVRP_EXPORT ovrpResult ovrp_GetSpaceRoomLayout(const ovrpSpace* space, ovrpRoomL
 OVRP_EXPORT ovrpResult ovrp_GetSpaceBoundary2D(const ovrpSpace* space, ovrpBoundary2D* boundary);
 
 OVRP_EXPORT ovrpResult ovrp_RequestSceneCapture(const ovrpSceneCaptureRequest* request, ovrpUInt64* requestId);
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1013,6 +1020,25 @@ OVRP_EXPORT ovrpResult ovrp_SetLocalDimming(ovrpBool localDimmingMode);
 OVRP_EXPORT ovrpResult ovrp_GetLocalDimming(ovrpBool* localDimmingMode);
 
 OVRP_EXPORT ovrpResult ovrp_GetCurrentInteractionProfile(ovrpHand hand, ovrpInteractionProfile* interactionProfile);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

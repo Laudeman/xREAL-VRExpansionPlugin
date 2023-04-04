@@ -111,22 +111,26 @@ enum class EOculusXRColorSpace : uint8
 	Unknown = 0,
 	/// No color correction, not recommended for production use. See documentation for more info
 	Unmanaged = 1,
-	/// Preferred color space for standardized color across all Oculus HMDs with D65 white point
+	/// Color space for standardized color across all Oculus HMDs with D65 white point
 	Rec_2020 = 2,
 	/// Rec. 709 is used on Oculus Go and shares the same primary color coordinates as sRGB
 	Rec_709 = 3,
 	/// Oculus Rift CV1 uses a unique color space, see documentation for more info
-	Rift_CV1 = 4	UMETA(DisplayName = "Rift CV1 (Recommended)"),
+	Rift_CV1 = 4	UMETA(DisplayName = "Rift CV1"),
 	/// Oculus Rift S uses a unique color space, see documentation for more info
 	Rift_S = 5,
 	/// Oculus Quest's native color space is slightly different than Rift CV1
 	Quest = 6		UMETA(DisplayName = "Quest 1"),
-	/// Similar to DCI-P3. See documentation for more details on P3
-	P3 = 7,
+	/// DCI-P3 color space. See documentation for more details
+	P3 = 7			UMETA(DisplayName = "P3 (Recommended)"),
 	/// Similar to sRGB but with deeper greens using D65 white point
 	Adobe_RGB = 8,
 };
 
+/*
+* Hand tracking settings. Please check https://developer.oculus.com/documentation/unreal/unreal-hand-tracking/
+* for detailed information.
+*/
 UENUM(BlueprintType)
 enum class EOculusXRHandTrackingSupport : uint8
 {
@@ -141,6 +145,14 @@ enum class EOculusXRHandTrackingFrequency : uint8
 	LOW,
 	HIGH,
 	MAX,
+};
+
+UENUM(BlueprintType)
+enum class EOculusXRHandTrackingVersion : uint8
+{
+	Default,
+	V1,
+	V2,
 };
 
 UENUM(BlueprintType)

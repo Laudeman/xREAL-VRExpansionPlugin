@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.81.0",
+	"VersionName": "1.82.0",
 	"FriendlyName": "Meta XR",
 	"Description": "Support for Meta Quest headsets and controllers",
 	"Category": "Virtual Reality",
@@ -12,7 +12,6 @@
 	"SupportURL": "https://forums.oculusvr.com/developer",
 	"EngineVersion": "5.1.0",
 	"CanContainContent": true,
-  	"EnabledByDefault": true,
 	"Installed": true,
 	"SupportedTargetPlatforms": [
 		"Win64",

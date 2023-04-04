@@ -34,6 +34,7 @@ public:
 	bool bDynamicFoveatedRendering;								// OnStartGameFrame
 
 	ovrpFovf Fov[ovrpEye_Count];	// UpdateStereoRenderingParams
+	ovrpFovf SymmetricFov[ovrpEye_Count];    // UpdateStereoRenderingParams, symmetric FOV if frame is using symmetricFOV.
 
 	union
 	{

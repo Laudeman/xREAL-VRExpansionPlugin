@@ -72,7 +72,8 @@ bool UOculusXRAnchorBPFunctionLibrary::GetAnchorComponentStatus(AActor* TargetAc
 	bool bOutIsEnabled = false;
 	bool bIsChangePending = false;
 
-	bool bDidCallStart = OculusXRAnchors::FOculusXRAnchors::GetAnchorComponentStatus(AnchorComponent, ComponentType, bOutIsEnabled, bIsChangePending);
+	EOculusXRAnchorResult::Type AnchorResult;
+	bool bDidCallStart = OculusXRAnchors::FOculusXRAnchors::GetAnchorComponentStatus(AnchorComponent, ComponentType, bOutIsEnabled, bIsChangePending, AnchorResult);
 	if (!bDidCallStart)
 	{
 		UE_LOG(LogOculusXRAnchors, Warning, TEXT("Failed to start call to internal GetAnchorComponentStatus"));
@@ -137,4 +138,12 @@ FOculusXRUUID UOculusXRAnchorBPFunctionLibrary::StringToAnchorUUID(const FString
 	HexToBytes(Value, newID.data);
 
 	return FOculusXRUUID(newID.data);
+}
+
+bool UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(EOculusXRAnchorResult::Type result)
+{
+#if OCULUS_HMD_SUPPORTED_PLATFORMS
+	return OVRP_SUCCESS(result);
+#endif
+	return false;
 }

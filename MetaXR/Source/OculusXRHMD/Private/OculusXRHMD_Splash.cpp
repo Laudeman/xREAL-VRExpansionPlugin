@@ -296,7 +296,7 @@ void FSplash::RenderFrame_RenderThread(FRHICommandListImmediate& RHICmdList)
 
 	for (int32 LayerIndex = 0; LayerIndex < Layers_RenderThread.Num(); LayerIndex++)
 	{
-		Layers_RenderThread[LayerIndex]->UpdateTexture_RenderThread(CustomPresent, RHICmdList);
+		Layers_RenderThread[LayerIndex]->UpdateTexture_RenderThread(XSettings.Get(), CustomPresent, RHICmdList);
 	}
 
 	// This submit is required since splash happens before the game is rendering, so layers won't be submitted with game render commands

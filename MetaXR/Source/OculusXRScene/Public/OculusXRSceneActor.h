@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "OculusXRRoomLayoutManagerComponent.h"
 #include "OculusXRAnchorComponent.h"
+#include "OculusXRFunctionLibrary.h"
 #include "OculusXRSceneAnchorComponent.h"
 #include "OculusXRSceneActor.generated.h"
 
@@ -123,7 +124,7 @@ public:
 
 private:
 	// Event delegate handlers
-	void AnchorQueryComplete_Handler(bool Success, const TArray<FOculusXRSpaceQueryResult>& Results);
+	void AnchorQueryComplete_Handler(EOculusXRAnchorResult::Type AnchorResult, const TArray<FOculusXRSpaceQueryResult>& QueryResults);
 
 	void SpatialAnchorQueryResult_Handler(FOculusXRUInt64 RequestId, FOculusXRUInt64 Space, FOculusXRUUID Uuid);
 	void SpatialAnchorQueryComplete_Handler(FOculusXRUInt64 RequestId, bool bResult);

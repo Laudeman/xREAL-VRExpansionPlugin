@@ -92,11 +92,11 @@ public:
 	FQuat BaseOrientation; // base orientation
 
 	/** Viewports for each eye, in render target texture coordinates */
-	FIntRect EyeRenderViewport[2];
+	FIntRect EyeRenderViewport[ovrpEye_Count];
 	/** Viewports for each eye, without DynamicResolution scaling applied */
-	FIntRect EyeUnscaledRenderViewport[2];
+	FIntRect EyeUnscaledRenderViewport[ovrpEye_Count];
 
-	ovrpMatrix4f EyeProjectionMatrices[2]; // 0 - left, 1 - right same as Views
+	ovrpMatrix4f EyeProjectionMatrices[ovrpEye_Count]; // 0 - left, 1 - right same as Views
 	ovrpMatrix4f MonoProjectionMatrix;
 
 	FIntPoint RenderTargetSize;
@@ -122,6 +122,7 @@ public:
 
 	EOculusXRHandTrackingSupport HandTrackingSupport;
 	EOculusXRHandTrackingFrequency HandTrackingFrequency;
+	EOculusXRHandTrackingVersion HandTrackingVersion;
 
 	ovrpVector4f ColorScale, ColorOffset;
 	bool bApplyColorScaleAndOffsetToAllLayers;

@@ -59,6 +59,9 @@ namespace OculusXRAnchors
 		case EOculusXRSpaceStorageLocation::Local:
 			Result.location = ovrpSpaceStorageLocation_Local;
 			break;
+		case EOculusXRSpaceStorageLocation::Cloud:
+			Result.location = ovrpSpaceStorageLocation_Cloud;
+			break;
 		}
 
 		switch (UEQueryInfo.FilterType)
@@ -90,6 +93,9 @@ namespace OculusXRAnchors
 			{
 			case EOculusXRSpaceComponentType::Locatable:
 				componentType = ovrpSpaceComponentType_Locatable;
+				break;
+			case EOculusXRSpaceComponentType::Sharable:
+				componentType = ovrpSpaceComponentType_Sharable;
 				break;
 			case EOculusXRSpaceComponentType::Storable:
 				componentType = ovrpSpaceComponentType_Storable;
@@ -134,6 +140,9 @@ namespace OculusXRAnchors
 		case EOculusXRSpaceComponentType::Locatable:
 			ovrpType = ovrpSpaceComponentType_Locatable;
 			break;
+		case EOculusXRSpaceComponentType::Sharable:
+			ovrpType = ovrpSpaceComponentType_Sharable;
+			break;
 		case EOculusXRSpaceComponentType::Storable:
 			ovrpType = ovrpSpaceComponentType_Storable;
 			break;
@@ -165,6 +174,9 @@ namespace OculusXRAnchors
 		{
 		case ovrpSpaceComponentType_Locatable:
 			ue4ComponentType = EOculusXRSpaceComponentType::Locatable;
+			break;
+		case ovrpSpaceComponentType_Sharable:
+			ue4ComponentType = EOculusXRSpaceComponentType::Sharable;
 			break;
 		case ovrpSpaceComponentType_Storable:
 			ue4ComponentType = EOculusXRSpaceComponentType::Storable;
@@ -207,7 +219,7 @@ namespace OculusXRAnchors
 			
 				FOculusXRAnchorEventDelegates::OculusSpatialAnchorCreateComplete.Broadcast(RequestId, AnchorCreateEvent.result, Space, BPUUID);
 
-				UE_LOG(LogOculusXRAnchors, Log, TEXT("ovrpEventType_SpatialAnchorCreateComplete Request ID: %llu  --  Space: %llu  --  UUID: %s  --  Result: %d"),
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("ovrpEventType_SpatialAnchorCreateComplete Request ID: %llu  --  Space: %llu  --  UUID: %s  --  Result: %d"),
 					RequestId.GetValue(),
 					Space.GetValue(),
 					*BPUUID.ToString(),
@@ -237,7 +249,7 @@ namespace OculusXRAnchors
 					bEnabled
 				);
 
-				UE_LOG(LogOculusXRAnchors, Log, TEXT("ovrpEventType_SpaceSetComponentStatusComplete Request ID: %llu  --  Type: %d  --  Enabled: %d  --  Space: %llu  --  Result: %d"), 
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("ovrpEventType_SpaceSetComponentStatusComplete Request ID: %llu  --  Type: %d  --  Enabled: %d  --  Space: %llu  --  Result: %d"), 
 					SetStatusEvent.requestId,
 					SetStatusEvent.componentType,
 					SetStatusEvent.enabled,
@@ -278,7 +290,7 @@ namespace OculusXRAnchors
 
 				for(auto queryResultElement: ovrpResults)
 				{
-					UE_LOG(LogOculusXRAnchors, Log, TEXT("ovrpEventType_SpaceQueryResult Space: %llu  --  Result: %d"), queryResultElement.space, bGetQueryDataResult);
+					UE_LOG(LogOculusXRAnchors, Verbose, TEXT("ovrpEventType_SpaceQueryResult Space: %llu  --  Result: %d"), queryResultElement.space, bGetQueryDataResult);
 
 					//translate types 
 					FOculusXRUInt64 Space(queryResultElement.space);
@@ -297,9 +309,9 @@ namespace OculusXRAnchors
 				const FOculusXRUInt64 RequestId(QueryCompleteEvent.requestId);
 				const bool bSucceeded = QueryCompleteEvent.result >= 0;
             
-                FOculusXRAnchorEventDelegates::OculusSpaceQueryComplete.Broadcast(RequestId, bSucceeded);
+                FOculusXRAnchorEventDelegates::OculusSpaceQueryComplete.Broadcast(RequestId, QueryCompleteEvent.result);
 
-				UE_LOG(LogOculusXRAnchors, Log, TEXT("ovrpEventType_SpaceQueryComplete Request ID: %llu  --  Result: %d"), QueryCompleteEvent.requestId, QueryCompleteEvent.result);
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("ovrpEventType_SpaceQueryComplete Request ID: %llu  --  Result: %d"), QueryCompleteEvent.requestId, QueryCompleteEvent.result);
 
 				break;
 			}
@@ -316,11 +328,22 @@ namespace OculusXRAnchors
 
 				FOculusXRAnchorEventDelegates::OculusSpaceSaveComplete.Broadcast(FRequest, FSpace, bResult, StorageResult.result, uuid);
                 
-				UE_LOG(LogOculusXRAnchors, Log, TEXT("ovrpEventType_SpaceSaveComplete  Request ID: %llu  --  Space: %llu  --  Result: %d"), StorageResult.requestId, StorageResult.space, StorageResult.result);
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("ovrpEventType_SpaceSaveComplete  Request ID: %llu  --  Space: %llu  --  Result: %d"), StorageResult.requestId, StorageResult.space, StorageResult.result);
 
                 break;
 			}
+			case ovrpEventType_SpaceListSaveResult:
+			{
+				ovrpEventSpaceListSaveResult SpaceListSaveResult;
+				GetEventData(buf, SpaceListSaveResult);
 
+				FOculusXRUInt64 RequestId(SpaceListSaveResult.requestId);
+
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("ovrpEventType_SpaceListSaveResult  Request ID: %llu  --  Result: %d"), SpaceListSaveResult.requestId, SpaceListSaveResult.result);
+				FOculusXRAnchorEventDelegates::OculusSpaceListSaveComplete.Broadcast(RequestId, SpaceListSaveResult.result);
+
+				break;
+			}
 			case ovrpEventType_SpaceEraseComplete:
 			{
 				ovrpEventSpaceStorageEraseResult SpaceEraseEvent;
@@ -332,12 +355,31 @@ namespace OculusXRAnchors
 				const FOculusXRUInt64 FResult(SpaceEraseEvent.result);
 				const EOculusXRSpaceStorageLocation BPLocation = (SpaceEraseEvent.location == ovrpSpaceStorageLocation_Local) ? EOculusXRSpaceStorageLocation::Local : EOculusXRSpaceStorageLocation::Invalid;
 				
-				UE_LOG(LogOculusXRAnchors, Log, TEXT("ovrpEventType_SpaceEraseComplete  Request ID: %llu  --  Result: %d  -- UUID: %s"), SpaceEraseEvent.requestId, SpaceEraseEvent.result, *UOculusXRAnchorBPFunctionLibrary::AnchorUUIDToString(SpaceEraseEvent.uuid.data));
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("ovrpEventType_SpaceEraseComplete  Request ID: %llu  --  Result: %d  -- UUID: %s"), SpaceEraseEvent.requestId, SpaceEraseEvent.result, *UOculusXRAnchorBPFunctionLibrary::AnchorUUIDToString(SpaceEraseEvent.uuid.data));
 
-				FOculusXRAnchorEventDelegates::OculusSpaceEraseComplete.Broadcast(FRequestId,FResult.Value,uuid,BPLocation);
+				FOculusXRAnchorEventDelegates::OculusSpaceEraseComplete.Broadcast(FRequestId, FResult.Value, uuid, BPLocation);
 				break;
 			}
-			
+			case ovrpEventType_SpaceShareResult:
+			{
+				unsigned char* BufData = buf.EventData;
+				ovrpUInt64 OvrpRequestId = 0;
+				memcpy(&OvrpRequestId, BufData, sizeof(OvrpRequestId));
+
+				ovrpEventSpaceShareResult SpaceShareSpaceResult;
+				GetEventData(buf, SpaceShareSpaceResult);
+
+				FOculusXRUInt64 RequestId(SpaceShareSpaceResult.requestId);
+
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("ovrpEventType_SpaceShareSpaceResult  Request ID: %llu  --  Result: %d"),
+					SpaceShareSpaceResult.requestId,
+					SpaceShareSpaceResult.result
+				);
+
+				FOculusXRAnchorEventDelegates::OculusSpaceShareComplete.Broadcast(RequestId, SpaceShareSpaceResult.result);
+
+				break;
+			}
 			default:
 			{
 				EventPollResult = false;
@@ -348,19 +390,14 @@ namespace OculusXRAnchors
 		EventPollResult = true;
 	}
 
-	/**
-	 * @brief Creates a spatial anchor
-	 * @param InTransform The transform of the object
-	 * @param OutRequestId the handle of the spatial anchor created
-	 * @return True if the async call started successfully
-	 */
-	bool FOculusXRAnchorManager::CreateAnchor(const FTransform& InTransform, uint64 &OutRequestId, const FTransform& CameraTransform)
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::CreateAnchor(const FTransform& InTransform, uint64 &OutRequestId, const FTransform& CameraTransform)
 	{
 		bool bValidHMD;
 		OculusXRHMD::FOculusXRHMD* HMD = GetHMD(bValidHMD);
 		if (!bValidHMD)
 		{
-			return false;
+			UE_LOG(LogOculusXRAnchors, Warning, TEXT("FOculusAnchorManager::CreateAnchor failed to retrieve HMD."));
+			return EOculusXRAnchorResult::Failure;
 		}
 		
 		ovrpTrackingOrigin TrackingOriginType;
@@ -382,7 +419,8 @@ namespace OculusXRAnchors
 		const bool bGetPose = HMD->GetCurrentPose(HMD->HMDDeviceId, OutHeadOrientation, OutHeadPosition);
 		if (!bGetPose)
 		{
-			return false;
+			UE_LOG(LogOculusXRAnchors, Warning, TEXT("FOculusAnchorManager::CreateAnchor failed to get current headset pose."));
+			return EOculusXRAnchorResult::Failure;
 		}
 
 		OculusXRHMD::FPose HeadPose(OutHeadOrientation, OutHeadPosition);
@@ -400,7 +438,8 @@ namespace OculusXRAnchors
 
 		if (!bConverted)
 		{
-			return false;
+			UE_LOG(LogOculusXRAnchors, Warning, TEXT("FOculusAnchorManager::CreateAnchor failed to convert pose."));
+			return EOculusXRAnchorResult::Failure;
 		}
 		
 		FOculusXRHMDModule::GetPluginWrapper().GetTrackingOriginType2(&TrackingOriginType);
@@ -413,69 +452,46 @@ namespace OculusXRAnchors
 		};
 
 		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().CreateSpatialAnchor(&SpatialAnchorCreateInfo, &OutRequestId);
-		if(Result == ovrpFailure)
+		UE_LOG(LogOculusXRAnchors, Verbose, TEXT("CreateAnchor Request ID: %llu"), OutRequestId);
+
+		if (!OVRP_SUCCESS(Result))
 		{
-			UE_LOG(LogOculusXRAnchors, Warning, TEXT("FOculusXRHMD::CreateAnchor failed"));
-			return false;
+			UE_LOG(LogOculusXRAnchors, Error, TEXT("FOculusAnchorManager::CreateAnchor failed. Result: %d"), Result);
 		}
 
-		UE_LOG(LogOculusXRAnchors, Log, TEXT("CreateAnchor  Request ID: %llu"), OutRequestId);
-
-		return true;
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
 	}
 
-	/**
-	 * @brief Destroys the given space;
-	 * @param Space The space handle.
-	 * @return True if the space was destroyed successfully.
-	 */
-	bool FOculusXRAnchorManager::DestroySpace(uint64 Space)
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::DestroySpace(uint64 Space)
 	{
 		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().DestroySpace(static_cast<ovrpSpace*>(&Space));
 
-		UE_LOG(LogOculusXRAnchors, Log, TEXT("DestroySpace  Space ID: %llu"), Space);
+		UE_LOG(LogOculusXRAnchors, Verbose, TEXT("DestroySpace  Space ID: %llu"), Space);
 
-		return (Result != ovrpFailure);
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
 	}
 
-	/**
-	 * @brief Sets the given component status on an anchor
-	 * @param Space The space handle
-	 * @param SpaceComponentType The component type to change  
-	 * @param Enable true or false
-	 * @param Timeout Timeout for the command
-	 * @param OutRequestId The requestId returned from the system
-	 * @return True if the async call started successfully
-	 */
-	bool FOculusXRAnchorManager::SetSpaceComponentStatus(uint64 Space, EOculusXRSpaceComponentType SpaceComponentType, bool Enable, float Timeout, uint64& OutRequestId)
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::SetSpaceComponentStatus(uint64 Space, EOculusXRSpaceComponentType SpaceComponentType, bool Enable, float Timeout, uint64& OutRequestId)
 	{
 		ovrpSpaceComponentType ovrpType = ConvertToOvrpComponentType(SpaceComponentType);
 		ovrpUInt64 OvrpOutRequestId = 0;
 
 		const ovrpUInt64 OVRPSpace = Space;
-		const bool bSuccess = FOculusXRHMDModule::GetPluginWrapper().GetInitialized() && OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().SetSpaceComponentStatus(
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().SetSpaceComponentStatus(
 			&OVRPSpace,
 			ovrpType,
 			Enable,
 			Timeout,
-			&OvrpOutRequestId));
+			&OvrpOutRequestId);
 
 		memcpy(&OutRequestId, &OvrpOutRequestId, sizeof(uint64));
 
-		UE_LOG(LogOculusXRAnchors, Log, TEXT("SetSpaceComponentStatus  Request ID: %llu"), OutRequestId);
+		UE_LOG(LogOculusXRAnchors, Verbose, TEXT("SetSpaceComponentStatus  Request ID: %llu"), OutRequestId);
 
-		return bSuccess;
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
 	}
 
-	/**
-	 * @brief 
-	 * @param Space The space handle for the space to determine the component status on
-	 * @param SpaceComponentType The space component type
-	 * @param OutEnabled true if the component is enabled 
-	 * @param OutChangePending true if there are pending changes
-	 * @return True if the async call started successfully
-	 */
-	bool FOculusXRAnchorManager::GetSpaceComponentStatus(uint64 Space, EOculusXRSpaceComponentType SpaceComponentType, bool& OutEnabled, bool& OutChangePending)
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::GetSpaceComponentStatus(uint64 Space, EOculusXRSpaceComponentType SpaceComponentType, bool& OutEnabled, bool& OutChangePending)
 	{
 		const ovrpUInt64 OVRPSpace = Space;
 		ovrpBool OutOvrpEnabled = ovrpBool_False;;
@@ -483,28 +499,20 @@ namespace OculusXRAnchors
 		
 		ovrpSpaceComponentType ovrpType = ConvertToOvrpComponentType(SpaceComponentType);
 
-		const bool bSuccess = FOculusXRHMDModule::GetPluginWrapper().GetInitialized() && OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetSpaceComponentStatus(
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().GetSpaceComponentStatus(
 			&OVRPSpace,
 			ovrpType,
 			&OutOvrpEnabled,
 			&OutOvrpChangePending
-			));
+			);
 
 		OutEnabled = (OutOvrpEnabled == ovrpBool_True);
 		OutChangePending = (OutOvrpChangePending == ovrpBool_True);
 	
-		return bSuccess;
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
 	}
 	
-	/**
-	 * @brief Saves a space to the given storage location
-	 * @param Space The space handle
-	 * @param StorageLocation Which location to store the anchor
-	 * @param StoragePersistenceMode Storage persistence, not valid for cloud storage.
-	 * @param OutRequestId The requestId returned by the system
-	 * @return True if the async call started successfully
-	 */
-	bool FOculusXRAnchorManager::SaveAnchor(uint64 Space,
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::SaveAnchor(uint64 Space,
 		EOculusXRSpaceStorageLocation StorageLocation,
 		EOculusXRSpaceStoragePersistenceMode StoragePersistenceMode, uint64& OutRequestId)
 	{
@@ -516,6 +524,9 @@ namespace OculusXRAnchors
 			break;
 		case EOculusXRSpaceStorageLocation::Local:
 			OvrpStorageLocation = ovrpSpaceStorageLocation_Local;
+			break;
+		case EOculusXRSpaceStorageLocation::Cloud:
+			OvrpStorageLocation = ovrpSpaceStorageLocation_Cloud;
 			break;
 		default: 
 			break;
@@ -535,29 +546,58 @@ namespace OculusXRAnchors
 		}
 		
 		ovrpUInt64 OvrpOutRequestId = 0;
-		const ovrpResult bSuccess = FOculusXRHMDModule::GetPluginWrapper().SaveSpace(&Space, OvrpStorageLocation, OvrpStoragePersistenceMode, &OvrpOutRequestId);
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().SaveSpace(&Space, OvrpStorageLocation, OvrpStoragePersistenceMode, &OvrpOutRequestId);
 		
-		UE_LOG(LogOculusXRAnchors, Log, TEXT("Saving space with: SpaceID: %llu  --  Location: %d  --  Persistence: %d  --  OutID: %llu"), Space, OvrpStorageLocation, OvrpStoragePersistenceMode, OvrpOutRequestId);
+		UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Saving space with: SpaceID: %llu  --  Location: %d  --  Persistence: %d  --  OutID: %llu"), Space, OvrpStorageLocation, OvrpStoragePersistenceMode, OvrpOutRequestId);
 
 		memcpy(&OutRequestId,&OvrpOutRequestId,sizeof(uint64));
 
-		if(bSuccess == ovrpFailure)
+		if (!OVRP_SUCCESS(Result))
 		{
 			UE_LOG(LogOculusXRAnchors, Warning, TEXT("FOculusXRHMD::SaveAnchor failed with: SpaceID: %llu  --  Location: %d  --  Persistence: %d"), Space, OvrpStorageLocation, OvrpStoragePersistenceMode);
-			return false;
 		}
 
-		return true;
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
 	}
 
-	/**
-	 * @brief Erases a space from the given storage location
-	 * @param Handle The handle of the space to erase
-	 * @param StorageLocation Where the space to erase is stored
-	 * @param OutRequestId The requestId returned by the system
-	 * @return True if the async call started successfully
-	 */
-	bool FOculusXRAnchorManager::EraseAnchor(uint64 AnchorHandle,
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::SaveAnchorList(const TArray<uint64>& Spaces, EOculusXRSpaceStorageLocation StorageLocation, uint64& OutRequestId)
+	{
+		ovrpSpaceStorageLocation OvrpStorageLocation = ovrpSpaceStorageLocation_Local;
+		switch (StorageLocation)
+		{
+		case EOculusXRSpaceStorageLocation::Invalid:
+			OvrpStorageLocation = ovrpSpaceStorageLocation_Invalid;
+			break;
+		case EOculusXRSpaceStorageLocation::Local:
+			OvrpStorageLocation = ovrpSpaceStorageLocation_Local;
+			break;
+		case EOculusXRSpaceStorageLocation::Cloud:
+			OvrpStorageLocation = ovrpSpaceStorageLocation_Cloud;
+			break;
+		default:
+			break;
+		}
+
+		ovrpUInt64 OvrpOutRequestId = 0;
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().SaveSpaceList(Spaces.GetData(), Spaces.Num(), OvrpStorageLocation, &OvrpOutRequestId);
+
+		UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Saving space list: Location: %d --  OutID: %llu"), OvrpStorageLocation, OvrpOutRequestId);
+		for (auto& it : Spaces)
+		{
+			UE_LOG(LogOculusXRAnchors, Verbose, TEXT("\tSpaceID: %llu"), it);
+		}
+
+		memcpy(&OutRequestId, &OvrpOutRequestId, sizeof(uint64));
+
+		if (!OVRP_SUCCESS(Result))
+		{
+			UE_LOG(LogOculusXRAnchors, Warning, TEXT("SaveSpaceList failed -- Result: %d"), Result);
+		}
+
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
+	}
+
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::EraseAnchor(uint64 AnchorHandle,
 		EOculusXRSpaceStorageLocation StorageLocation,uint64 &OutRequestId)
 	{
 		ovrpSpaceStorageLocation ovrpStorageLocation = ovrpSpaceStorageLocation_Local;
@@ -573,25 +613,15 @@ namespace OculusXRAnchors
 		}
 		
 		ovrpUInt64 OvrpOutRequestId = 0;
-		const ovrpResult bSuccess = FOculusXRHMDModule::GetPluginWrapper().EraseSpace(&AnchorHandle, ovrpStorageLocation, &OvrpOutRequestId);
-		memcpy(&OutRequestId,&OvrpOutRequestId,sizeof(uint64));
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().EraseSpace(&AnchorHandle, ovrpStorageLocation, &OvrpOutRequestId);
+		memcpy(&OutRequestId, &OvrpOutRequestId, sizeof(uint64));
 
 		UE_LOG(LogOculusXRAnchors, Log, TEXT("Erasing anchor -- Handle: %llu  --  Location: %d  --  OutID: %llu"), AnchorHandle, ovrpStorageLocation, OvrpOutRequestId);
 
-		if(bSuccess == ovrpFailure)
-		{
-			return false;
-		}
-		return true;
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
 	}
 
-	/**
-	 * @brief Queries for spaces given a set of query parameters
-	 * @param QueryInfo The query parameters.
-	 * @param OutRequestId An async work tracking ID.
-	 * @return True if the async call started successfully
-	 */
-	bool FOculusXRAnchorManager::QuerySpaces(const FOculusXRSpaceQueryInfo& QueryInfo, uint64& OutRequestId)
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::QuerySpaces(const FOculusXRSpaceQueryInfo& QueryInfo, uint64& OutRequestId)
 	{
 		ovrpSpaceQueryInfo ovrQueryInfo = ConvertToOVRPSpaceQueryInfo(QueryInfo);
 
@@ -599,96 +629,114 @@ namespace OculusXRAnchors
 		const ovrpResult QuerySpacesResult = FOculusXRHMDModule::GetPluginWrapper().QuerySpaces(&ovrQueryInfo, &OvrpOutRequestId);
 		memcpy(&OutRequestId, &OvrpOutRequestId, sizeof(uint64));
 
-		UE_LOG(LogOculusXRAnchors, Log, TEXT("Query Spaces\n ovrpSpaceQueryInfo:\n\tQueryType: %d\n\tMaxQuerySpaces: %d\n\tTimeout: %f\n\tLocation: %d\n\tActionType: %d\n\tFilterType: %d\n\n\tRequest ID: %llu"), 
+		UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Query Spaces\n ovrpSpaceQueryInfo:\n\tQueryType: %d\n\tMaxQuerySpaces: %d\n\tTimeout: %f\n\tLocation: %d\n\tActionType: %d\n\tFilterType: %d\n\n\tRequest ID: %llu"), 
 			ovrQueryInfo.queryType, ovrQueryInfo.maxQuerySpaces, (float)ovrQueryInfo.timeout, ovrQueryInfo.location, ovrQueryInfo.actionType, ovrQueryInfo.filterType, OutRequestId);
 
 		if (QueryInfo.FilterType == EOculusXRSpaceQueryFilterType::FilterByIds)
 		{
-			UE_LOG(LogOculusXRAnchors, Log, TEXT("Query contains %d UUIDs"), QueryInfo.IDFilter.Num());
+			UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Query contains %d UUIDs"), QueryInfo.IDFilter.Num());
 			for (auto& it : QueryInfo.IDFilter)
 			{
-				UE_LOG(LogOculusXRAnchors, Log, TEXT("UUID: %s"), *it.ToString());
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("UUID: %s"), *it.ToString());
 			}
 		}
 		else if (QueryInfo.FilterType == EOculusXRSpaceQueryFilterType::FilterByComponentType)
 		{
-			UE_LOG(LogOculusXRAnchors, Log, TEXT("Query contains %d Component Types"), QueryInfo.ComponentFilter.Num());
+			UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Query contains %d Component Types"), QueryInfo.ComponentFilter.Num());
 			for (auto& it : QueryInfo.ComponentFilter)
 			{
-				UE_LOG(LogOculusXRAnchors, Log, TEXT("ComponentType: %s"), *UEnum::GetValueAsString(it));
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("ComponentType: %s"), *UEnum::GetValueAsString(it));
 			}
 		}
 
-		return OVRP_SUCCESS(QuerySpacesResult);
+		return static_cast<EOculusXRAnchorResult::Type>(QuerySpacesResult);
 	}
 
-	/**
-	 * @brief Gets bounds of a specific space
-	 * @param Handle The handle of the space
-	 * @param OutPos Position of the rectangle (in local frame of reference).  Since it's 2D, X member will be 0.f.
-	 * @param OutSize Size of the rectangle (in local frame of reference).  Since it's 2D, X member will be 0.f.
-	 * @return True if successfully retrieved space scene plane
-	 */
-	bool FOculusXRAnchorManager::GetSpaceScenePlane(uint64 Space, FVector& OutPos, FVector& OutSize)
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::ShareSpaces(const TArray<uint64>& Spaces, const TArray<uint64>& UserIds, uint64& OutRequestId)
+	{
+		TArray<const char*> stringStorage;
+		TArray<ovrpUser> OvrpUsers;
+		for (const auto& UserId : UserIds)
+		{
+			ovrpUser OvrUser;
+			ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().CreateSpaceUser(&UserId, &OvrUser);
+			if (!OVRP_SUCCESS(Result))
+			{
+				UE_LOG(LogOculusXRAnchors, Warning, TEXT("Failed to create space user from ID  -  %llu"), UserId);
+				continue;
+			}
+
+			OvrpUsers.Add(OvrUser);
+		}
+
+		ovrpUInt64 OvrpOutRequestId = 0;
+		const ovrpResult ShareSpacesResult = FOculusXRHMDModule::GetPluginWrapper().ShareSpaces(Spaces.GetData(), Spaces.Num(), OvrpUsers.GetData(), OvrpUsers.Num(), &OvrpOutRequestId);
+
+		UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Sharing space list  --  OutID: %llu"), OvrpOutRequestId);
+		for (auto& User : OvrpUsers)
+		{
+			UE_LOG(LogOculusXRAnchors, Verbose, TEXT("\tOvrpUser: %llu"), User);
+			ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().DestroySpaceUser(&User);
+			if (!OVRP_SUCCESS(Result))
+			{
+				UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Failed to destroy space user: %llu"), User);
+				continue;
+			}
+		}
+
+		for (auto& it : Spaces)
+		{
+			UE_LOG(LogOculusXRAnchors, Verbose, TEXT("\tSpaceID: %llu"), it);
+		}
+
+		memcpy(&OutRequestId, &OvrpOutRequestId, sizeof(uint64));
+
+		return static_cast<EOculusXRAnchorResult::Type>(ShareSpacesResult);
+	}
+
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::GetSpaceScenePlane(uint64 Space, FVector& OutPos, FVector& OutSize)
 	{
 		OutPos.X = OutPos.Y = OutPos.Z = 0.f;
 		OutSize.X = OutSize.Y = OutSize.Z = 0.f;
 
 		ovrpRectf rect;
-		const ovrpResult bSuccess = FOculusXRHMDModule::GetPluginWrapper().GetSpaceBoundingBox2D(&Space, &rect);
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().GetSpaceBoundingBox2D(&Space, &rect);
 
-		if (bSuccess == ovrpFailure)
+		if (OVRP_SUCCESS(Result))
 		{
-			return false;
+			// Convert to UE4's coordinates system
+			OutPos.Y = rect.Pos.x;
+			OutPos.Z = rect.Pos.y;
+			OutSize.Y = rect.Size.w;
+			OutSize.Z = rect.Size.h;
 		}
 
-		// Convert to UE4's coordinates system
-		OutPos.Y = rect.Pos.x;
-		OutPos.Z = rect.Pos.y;
-		OutSize.Y = rect.Size.w;
-		OutSize.Z = rect.Size.h;
-
-		return true;
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
 	}
 
-	/**
-	 * @brief Gets bounds of a specific space
-	 * @param Handle The handle of the space
-	 * @param OutPos Position of the rectangle (in local frame of reference)
-	 * @param OutSize Size of the rectangle (in local frame of reference)
-	 * @return True if successfully retrieved space scene volume
-	 */
-	bool FOculusXRAnchorManager::GetSpaceSceneVolume(uint64 Space, FVector& OutPos, FVector& OutSize)
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::GetSpaceSceneVolume(uint64 Space, FVector& OutPos, FVector& OutSize)
 	{
 		OutPos.X = OutPos.Y = OutPos.Z = 0.f;
 		OutSize.X = OutSize.Y = OutSize.Z = 0.f;
 
 		ovrpBoundsf bounds;
-		const ovrpResult bSuccess = FOculusXRHMDModule::GetPluginWrapper().GetSpaceBoundingBox3D(&Space, &bounds);
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().GetSpaceBoundingBox3D(&Space, &bounds);
 
-		if (bSuccess == ovrpFailure)
+		if (OVRP_SUCCESS(Result))
 		{
-			return false;
+			// Convert to UE4's coordinates system
+			OutPos.X = bounds.Pos.z;
+			OutPos.Y = bounds.Pos.x;
+			OutPos.Z = bounds.Pos.y;
+			OutSize.X = bounds.Size.d;
+			OutSize.Y = bounds.Size.w;
+			OutSize.Z = bounds.Size.h;
 		}
 
-		// Convert to UE4's coordinates system
-		OutPos.X = bounds.Pos.z;
-		OutPos.Y = bounds.Pos.x;
-		OutPos.Z = bounds.Pos.y;
-		OutSize.X = bounds.Size.d;
-		OutSize.Y = bounds.Size.w;
-		OutSize.Z = bounds.Size.h;
-
-		return true;
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
 	}
 
-	/**
-	 * @brief Gets semantic classification associated with a specific space
-	 * @param Handle The handle of the space
-	 * @param OutSemanticClassifications Array of the semantic classification associated with Space	 
-	 * @return returns true if successfully retrieved the semantic classification
-	 */
-	bool FOculusXRAnchorManager::GetSpaceSemanticClassification(uint64 Space, TArray<FString>& OutSemanticClassifications)
+	EOculusXRAnchorResult::Type FOculusXRAnchorManager::GetSpaceSemanticClassification(uint64 Space, TArray<FString>& OutSemanticClassifications)
 	{
 		OutSemanticClassifications.Empty();
 
@@ -699,17 +747,15 @@ namespace OculusXRAnchors
 		labels.byteCapacityInput = maxByteSize;
 		labels.labels = labelsChars;
 
-		const ovrpResult bSuccess = FOculusXRHMDModule::GetPluginWrapper().GetSpaceSemanticLabels(&Space, &labels);
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().GetSpaceSemanticLabels(&Space, &labels);
 
-		if (bSuccess == ovrpFailure)
+		if (OVRP_SUCCESS(Result))
 		{
-			return false;
+			FString labelsStr(labels.byteCountOutput, labels.labels);
+			labelsStr.ParseIntoArray(OutSemanticClassifications, TEXT(",")); \
 		}
 
-		FString labelsStr(labels.byteCountOutput, labels.labels);
-		labelsStr.ParseIntoArray(OutSemanticClassifications, TEXT(","));
-		
-		return true;
+		return static_cast<EOculusXRAnchorResult::Type>(Result);
 	}
 }
 

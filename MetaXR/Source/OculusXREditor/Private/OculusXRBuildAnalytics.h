@@ -35,7 +35,7 @@ public:
 	void OnLauncherWorkerStarted(ILauncherWorkerPtr LauncherWorker, ILauncherProfileRef Profile);
 	void OnStageCompleted(const FString& StageName, double Time);
 	void OnStageStarted(const FString& StageName);
-	void OnBuildOutputRecieved(const FString& Message);
+	void OnBuildOutputReceived(const FString& Message);
 	void OnCompleted(bool Succeeded, double TotalTime, int32 ErrorCode);
 	void SendBuildCompleteEvent(float TotalTime);
 

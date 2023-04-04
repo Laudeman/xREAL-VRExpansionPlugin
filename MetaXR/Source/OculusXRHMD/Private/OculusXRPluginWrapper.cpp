@@ -63,6 +63,7 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 		OCULUS_BIND_ENTRY_POINT(GetInitialized),
 		OCULUS_BIND_ENTRY_POINT(Initialize7),
 		OCULUS_BIND_ENTRY_POINT(Shutdown2),
+		OCULUS_BIND_ENTRY_POINT(SetLogCallback2),
 		OCULUS_BIND_ENTRY_POINT(GetVersion2),
 		OCULUS_BIND_ENTRY_POINT(GetNativeSDKVersion2),
 		OCULUS_BIND_ENTRY_POINT(GetNativeSDKPointer2),
@@ -92,7 +93,6 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 		OCULUS_BIND_ENTRY_POINT(DestroyLayer),
 		OCULUS_BIND_ENTRY_POINT(CalculateLayerDesc),
 		OCULUS_BIND_ENTRY_POINT(CalculateEyeLayerDesc2),
-		OCULUS_BIND_ENTRY_POINT(CalculateEyeViewportRect),
 		OCULUS_BIND_ENTRY_POINT(CalculateEyePreviewRect),
 		OCULUS_BIND_ENTRY_POINT(SetupMirrorTexture2),
 		OCULUS_BIND_ENTRY_POINT(DestroyMirrorTexture2),
@@ -237,6 +237,7 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 		OCULUS_BIND_ENTRY_POINT(GetLocalDimmingSupported),
 		OCULUS_BIND_ENTRY_POINT(SetLocalDimming),
 		OCULUS_BIND_ENTRY_POINT(GetCurrentInteractionProfile),
+
 #ifndef OVRPLUGIN_JNI_LIB_EXCLUDED
 		OCULUS_BIND_ENTRY_POINT(GetSystemVolume2),
 		OCULUS_BIND_ENTRY_POINT(GetSystemHeadphonesPresent2),
@@ -254,6 +255,10 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 		OCULUS_BIND_ENTRY_POINT(SaveSpace),
 		OCULUS_BIND_ENTRY_POINT(EraseSpace),
 		OCULUS_BIND_ENTRY_POINT(GetSpaceUuid),
+		OCULUS_BIND_ENTRY_POINT(SaveSpaceList),
+		OCULUS_BIND_ENTRY_POINT(ShareSpaces),
+		OCULUS_BIND_ENTRY_POINT(CreateSpaceUser),
+		OCULUS_BIND_ENTRY_POINT(DestroySpaceUser),
 
 		// Scene
 		OCULUS_BIND_ENTRY_POINT(GetSpaceContainer),     

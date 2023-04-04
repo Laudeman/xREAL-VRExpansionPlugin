@@ -1184,11 +1184,15 @@ bool FOculusXRInput::GetControllerOrientationAndPosition(const int32 ControllerI
 	}
 
 	auto bSuccess = false;
-	UOculusXRInputFunctionLibrary::HandMovementFilter.Broadcast(
-		MotionSourceMap[MotionSource].ControllerHand,
-		&OutPosition,
-		&OutOrientation,
-		&bSuccess);
+	EControllerHand ControllerHand;
+	if (GetHandEnumForSourceName(MotionSource, ControllerHand))
+	{
+		UOculusXRInputFunctionLibrary::HandMovementFilter.Broadcast(
+			ControllerHand,
+			&OutPosition,
+			&OutOrientation,
+			&bSuccess);
+	}
 	return bSuccess;
 }
 

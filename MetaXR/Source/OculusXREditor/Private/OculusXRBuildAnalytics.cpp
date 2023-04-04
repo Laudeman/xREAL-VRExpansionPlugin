@@ -93,7 +93,7 @@ void FOculusBuildAnalytics::OnLauncherWorkerStarted(ILauncherWorkerPtr LauncherW
 
 			// Assign callbacks for stages
 			LauncherWorker.Get()->OnStageCompleted().AddRaw(this, &FOculusBuildAnalytics::OnStageCompleted);
-			LauncherWorker.Get()->OnOutputReceived().AddRaw(this, &FOculusBuildAnalytics::OnBuildOutputRecieved);
+			LauncherWorker.Get()->OnOutputReceived().AddRaw(this, &FOculusBuildAnalytics::OnBuildOutputReceived);
 			LauncherWorker.Get()->OnStageStarted().AddRaw(this, &FOculusBuildAnalytics::OnStageStarted);
 			LauncherWorker.Get()->OnCompleted().AddRaw(this, &FOculusBuildAnalytics::OnCompleted);
 
@@ -225,7 +225,7 @@ void FOculusBuildAnalytics::OnStageStarted(const FString& StageName)
 	}
 }
 
-void FOculusBuildAnalytics::OnBuildOutputRecieved(const FString& Message)
+void FOculusBuildAnalytics::OnBuildOutputReceived(const FString& Message)
 {
 	if (CurrentBuildPlatform.Equals("Android_ASTC") && (CurrentBuildStage == DEPLOY_STAGE || CurrentBuildStage == PACKAGE_STAGE))
 	{

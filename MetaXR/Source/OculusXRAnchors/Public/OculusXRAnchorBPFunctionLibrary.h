@@ -44,4 +44,7 @@ public:
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "FOculusXRUUID equal", CompactNodeTitle = "==", Keywords = "equal", BlueprintAutocast), Category = "OculusXR|SpatialAnchor")
 	static bool IsEqual_FOculusXRUUID(const FOculusXRUUID& Left, const FOculusXRUUID& Right) { return Left.IsEqual(Right); };
+
+	UFUNCTION(BlueprintCallable, Category = "OculusXR|SpatialAnchor")
+	static bool IsAnchorResultSuccess(EOculusXRAnchorResult::Type result);
 };

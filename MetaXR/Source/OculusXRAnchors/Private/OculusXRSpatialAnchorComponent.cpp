@@ -17,15 +17,18 @@ UOculusXRSpatialAnchorComponent::UOculusXRSpatialAnchorComponent(const FObjectIn
 
 bool UOculusXRSpatialAnchorComponent::Create(const FTransform& NewAnchorTransform, AActor* OwningActor, const FOculusXRSpatialAnchorCreateDelegate& Callback)
 {
-	return OculusXRAnchors::FOculusXRAnchors::CreateSpatialAnchor(NewAnchorTransform, OwningActor, Callback);
+	EOculusXRAnchorResult::Type AnchorResult;
+	return OculusXRAnchors::FOculusXRAnchors::CreateSpatialAnchor(NewAnchorTransform, OwningActor, Callback, AnchorResult);
 }
 
 bool UOculusXRSpatialAnchorComponent::Erase(const FOculusXRAnchorEraseDelegate& Callback)
 {
-	return OculusXRAnchors::FOculusXRAnchors::EraseAnchor(this, Callback);
+	EOculusXRAnchorResult::Type AnchorResult;
+	return OculusXRAnchors::FOculusXRAnchors::EraseAnchor(this, Callback, AnchorResult);
 }
 
 bool UOculusXRSpatialAnchorComponent::Save(EOculusXRSpaceStorageLocation Location, const FOculusXRAnchorSaveDelegate& Callback)
 {
-	return OculusXRAnchors::FOculusXRAnchors::SaveAnchor(this, Location, Callback);
+	EOculusXRAnchorResult::Type AnchorResult;
+	return OculusXRAnchors::FOculusXRAnchors::SaveAnchor(this, Location, Callback, AnchorResult);
 }

@@ -42,6 +42,10 @@
 		<setBoolFromProperty result="bRequiresSystemKeyboard" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="bRequiresSystemKeyboard" default="false"/>
 		<setStringFromProperty result="HandTrackingSupport" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="HandTrackingSupport" default="ControllersOnly"/>
 		<setStringFromProperty result="HandTrackingFrequency" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="HandTrackingFrequency" default="LOW"/>
+		<setStringFromProperty result="HandTrackingVersion" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="HandTrackingVersion" default="Default"/>
+		<setBoolIsEqual result="bHandTrackingVersionDefault" arg1="$S(HandTrackingVersion)" arg2="Default"/>
+		<setBoolIsEqual result="bHandTrackingVersionV1" arg1="$S(HandTrackingVersion)" arg2="V1"/>
+		<setBoolIsEqual result="bHandTrackingVersionV2" arg1="$S(HandTrackingVersion)" arg2="V2"/>
 		<setStringFromProperty result="ColorSpace" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="ColorSpace" default="Rec_709"/>
 		<setBoolIsEqual result="bColorSpaceUnmanaged" arg1="$S(ColorSpace)" arg2="Unmanaged"/>
 		<setBoolIsEqual result="bColorSpaceRec2020" arg1="$S(ColorSpace)" arg2="Rec_2020"/>
@@ -315,6 +319,26 @@
 					<addAttribute tag="$handTrackingFrequency" name="android:name" value="com.oculus.handtracking.frequency" />
 					<addAttribute tag="$handTrackingFrequency" name="android:value" value="$S(HandTrackingFrequency)" />
 					<addElement tag="application" name="handTrackingFrequency"/>
+					<if condition="bHandTrackingVersionDefault">
+						<false>
+							<if condition="bHandTrackingVersionV1">
+								<true>
+									<setElement result="handTrackingVersion" value="meta-data" />
+									<addAttribute tag="$handTrackingVersion" name="android:name" value="com.oculus.handtracking.version" />
+									<addAttribute tag="$handTrackingVersion" name="android:value" value="V1.0" />
+									<addElement tag="application" name="handTrackingVersion"/>
+								</true>
+							</if>
+							<if condition="bHandTrackingVersionV2">
+								<true>
+									<setElement result="handTrackingVersion" value="meta-data" />
+									<addAttribute tag="$handTrackingVersion" name="android:name" value="com.oculus.handtracking.version" />
+									<addAttribute tag="$handTrackingVersion" name="android:value" value="V2.0" />
+									<addElement tag="application" name="handTrackingVersion"/>
+								</true>
+							</if>
+						</false>
+					</if>
 				</true>
 			</if>
 

@@ -14,6 +14,38 @@ LICENSE file in the root directory of this source tree.
 
 typedef uint8 ovrpXRUuidArray[OCULUSXR_UUID_SIZE];
 
+UENUM(BlueprintType)
+namespace EOculusXRAnchorResult
+{
+	enum Type
+	{
+		Success = 0,
+		Success_EventUnavailable = 1,
+		Success_Pending = 2,
+
+		/// Failure
+		Failure = -1000,
+		Failure_InvalidParameter = -1001,
+		Failure_NotInitialized = -1002,
+		Failure_InvalidOperation = -1003,
+		Failure_Unsupported = -1004,
+		Failure_NotYetImplemented = -1005,
+		Failure_OperationFailed = -1006,
+		Failure_InsufficientSize = -1007,
+		Failure_DataIsInvalid = -1008,
+		Failure_DeprecatedOperation = -1009,
+		Failure_ErrorLimitReached = -1010,
+		Failure_ErrorInitializationFailed = -1011,
+
+		/// Space error cases
+		Failure_SpaceCloudStorageDisabled = -2000,
+		Failure_SpaceMappingInsufficient = -2001,
+		Failure_SpaceLocalizationFailed = -2002,
+		Failure_SpaceNetworkTimeout = -2003,
+		Failure_SpaceNetworkRequestFailed = -2004
+	};
+}
+
 USTRUCT(BlueprintType)
 struct OCULUSXRANCHORS_API FOculusXRUUID
 {
@@ -102,7 +134,8 @@ UENUM(BlueprintType)
 enum class EOculusXRSpaceStorageLocation : uint8
 {
 	Invalid = 0		UMETA(DisplayName = "Invalid"),
-	Local = 1 << 0 	UMETA(DisplayName = "Local")
+	Local = 1 << 0 	UMETA(DisplayName = "Local"),
+	Cloud = 1 << 1 	UMETA(DisplayName = "Cloud")
 };
 
 UENUM(BlueprintType)
@@ -117,6 +150,7 @@ enum class EOculusXRSpaceComponentType : uint8
 {
 	Locatable = 0				UMETA(DisplayName = "Locatable"),
 	Storable = 1				UMETA(DisplayName = "Storable"),
+	Sharable = 2                UMETA(DisplayName = "Sharable"),
 	ScenePlane = 3				UMETA(DisplayName = "ScenePlane"),
 	SceneVolume = 4				UMETA(DisplayName = "SceneVolume"),
 	SemanticClassification = 5	UMETA(DisplayName = "SemanticClassification"),
