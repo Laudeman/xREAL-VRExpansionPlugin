@@ -16,6 +16,7 @@
 #include "EngineGlobals.h"
 #include "MaterialShared.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialRenderProxy.h"
 #include "Engine/Engine.h"
 //#include "Widgets/SWindow.h"
 #include "Engine/TextureRenderTarget2D.h"
@@ -637,12 +638,13 @@ void UVRStereoWidgetComponent::TickComponent(float DeltaTime, enum ELevelTick Ti
 	if (bIsDirty)
 	{
 		// OpenXR doesn't take the transforms scale component into account for the stereo layer, so we need to scale the buffer instead
-		bool bScaleBuffer = false;
+		// Fixed? In 5.2, leaving code commented out in case I need to bring it back
+		/*bool bScaleBuffer = false;
 		static FName SystemName(TEXT("OpenXR"));
 		if (GEngine->XRSystem.IsValid() && (GEngine->XRSystem->GetSystemName() == SystemName))
 		{
 			bScaleBuffer = true;
-		}
+		}*/
 
 		IStereoLayers::FLayerDesc LayerDsec;
 		LayerDsec.Priority = Priority;
@@ -652,18 +654,18 @@ void UVRStereoWidgetComponent::TickComponent(float DeltaTime, enum ELevelTick Ti
 		if (bDelayForRenderThread && !LastTransform.Equals(FTransform::Identity))
 		{
 			LayerDsec.Transform = LastTransform;
-			if (bScaleBuffer)
+			/*if (bScaleBuffer)
 			{
 				LayerDsec.QuadSize = FVector2D(DrawSize) * FVector2D(LastTransform.GetScale3D());
-			}
+			}*/
 		}
 		else
 		{
 			LayerDsec.Transform = Transform;
-			if (bScaleBuffer)
+			/*if (bScaleBuffer)
 			{
 				LayerDsec.QuadSize = FVector2D(DrawSize) * FVector2D(Transform.GetScale3D());
-			}
+			}*/
 		}
 
 		if (RenderTarget)
