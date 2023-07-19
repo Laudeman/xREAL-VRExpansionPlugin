@@ -169,13 +169,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VRExpansionLibrary")
 	TEnumAsByte<ECollisionChannel> WalkingCollisionOverride;
 
-	/*ECollisionChannel GetVRCollisionObjectType()
+	bool bIsOverridingCollision = false;
+	TEnumAsByte<ECollisionChannel> OriginalCollision = ECollisionChannel::ECC_Pawn;
+
+	void SetCollisionOverride(bool bOverrideCollision)
 	{
-		if (bUseWalkingCollisionOverride)
-			return WalkingCollisionOverride;
-		else
-			return GetCollisionObjectType();
-	}*/
+		if (bOverrideCollision && !bIsOverridingCollision)
+		{
+			OriginalCollision = this->GetCollisionObjectType();
+			SetCollisionObjectType(WalkingCollisionOverride);
+			bIsOverridingCollision = true;
+		}
+		else if (!bOverrideCollision && bIsOverridingCollision)
+		{
+			SetCollisionObjectType(OriginalCollision);
+			bIsOverridingCollision = false;
+		}
+	}
 
 	FVector curCameraLoc;
 	FRotator curCameraRot;
@@ -257,7 +267,7 @@ void inline UVRRootComponent::GenerateOffsetToWorld(bool bUpdateBounds, bool bGe
 	}
 	else
 	{
-		OffsetComponentToWorld = FTransform(CamRotOffset.Quaternion(), FVector(curCameraLoc.X, curCameraLoc.Y, bCenterCapsuleOnHMD ? curCameraLoc.Z : CapsuleHalfHeight) + CamRotOffset.RotateVector(FVector(0.0f, 0.0f, VRCapsuleOffset.Z)), FVector(1.0f)) * GetComponentTransform();
+		OffsetComponentToWorld = FTransform(CamRotOffset.Quaternion(), FVector(curCameraLoc.X, curCameraLoc.Y, bCenterCapsuleOnHMD ? curCameraLoc.Z : CapsuleHalfHeight) + CamRotOffset.RotateVector(VRCapsuleOffset), FVector(1.0f)) * GetComponentTransform();
 	}
 
 	if (owningVRChar)

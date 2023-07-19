@@ -115,11 +115,12 @@ public:
 		TArray<FTransform> SkeletalTransforms;
 
 	// If true we will assume that the target skeleton does not have the metacarpal bones and we will not replicate them
+	// Only really used for the old UE4 skeleton
 	UPROPERTY(EditAnywhere, NotReplicated, BlueprintReadWrite, Category = Default)
 		bool bEnableUE4HandRepSavings;
 
-	UPROPERTY(BlueprintReadOnly, NotReplicated, Transient, Category = Default)
-		TArray<FTransform> OldSkeletalTransforms;
+	//UPROPERTY(BlueprintReadOnly, NotReplicated, Transient, Category = Default)
+		//TArray<FTransform> OldSkeletalTransforms;
 
 	// The rotation required to rotate the finger bones back to X+
 	// The animation node attempts to auto calculate it, if you have a non standard hand you may need to fill
@@ -140,7 +141,7 @@ public:
 		WorldScaleOverride = 0.0f;
 		bAllowDeformingMesh = true;
 		bMirrorLeftRight = false;
-		bEnableUE4HandRepSavings = true;
+		bEnableUE4HandRepSavings = false;
 		TargetHand = EVRSkeletalHandIndex::EActionHandIndex_Right;
 		bHasValidData = false;
 		LastHandGestureIndex = INDEX_NONE;

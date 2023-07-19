@@ -6,6 +6,7 @@
 //#include "Runtime/Engine/Private/EnginePrivate.h"
 //#include "WorldCollision.h"
 #include "PhysicsPublic.h"
+#include "Engine/ScopedMovementUpdate.h"
 //#include "DrawDebugHelpers.h"
 #include "IHeadMountedDisplay.h"
 #include "IXRTrackingSystem.h"
@@ -457,8 +458,11 @@ void UVRRootComponent::UpdateCharacterCapsuleOffset()
 	if (owningVRChar && !owningVRChar->bRetainRoomscale)
 	{
 		if (!FMath::IsNearlyEqual(LastCapsuleHalfHeight, CapsuleHalfHeight))
-		{	
+		{
 			owningVRChar->NetSmoother->SetRelativeLocation(GetTargetHeightOffset(), false, nullptr, ETeleportType::TeleportPhysics);
+
+			// Update our last sample value
+			LastCapsuleHalfHeight = CapsuleHalfHeight;
 		}
 	}
 }
@@ -551,26 +555,19 @@ void UVRRootComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, 
 
 			bCalledUpdateTransform = false;
 
-			// If the character movement doesn't exist or is not active/ticking
-			if (!CharMove || !CharMove->IsComponentTickEnabled() || !CharMove->IsActive())
+			if (owningVRChar->bRetainRoomscale)
 			{
-				OnUpdateTransform(EUpdateTransformFlags::None, ETeleportType::None);
+				// If the character movement doesn't exist or is not active/ticking
+				if (!CharMove || !CharMove->IsComponentTickEnabled() || !CharMove->IsActive())
+				{
+					OnUpdateTransform(EUpdateTransformFlags::None, ETeleportType::None);
+				}
+				else // Let the character movement move the capsule instead
+				{
+					// Skip physics update, let the movement component handle it instead
+					OnUpdateTransform(EUpdateTransformFlags::SkipPhysicsUpdate, ETeleportType::None);
+				}
 			}
-			else // Let the character movement move the capsule instead
-			{
-				// Skip physics update, let the movement component handle it instead
-				OnUpdateTransform(EUpdateTransformFlags::SkipPhysicsUpdate, ETeleportType::None);
-			}
-
-			// Get the correct next transform to use
-			/*FTransform NextTransform;
-			if (bOffsetByHMD) // Manually generate it, the current isn't correct
-			{
-				FVector Camdiff = curCameraLoc - lastCameraLoc;
-				NextTransform = FTransform(StoredCameraRotOffset.Quaternion(), FVector(Camdiff.X, Camdiff.Y, bCenterCapsuleOnHMD ? curCameraLoc.Z : CapsuleHalfHeight) + StoredCameraRotOffset.RotateVector(VRCapsuleOffset), FVector(1.0f)) * GetComponentTransform();
-			}
-			else
-				NextTransform = OffsetComponentToWorld;*/
 
 			FHitResult OutHit;
 			FCollisionQueryParams Params("RelativeMovementSweep", false, GetOwner());
@@ -580,9 +577,9 @@ void UVRRootComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, 
 			Params.bFindInitialOverlaps = true;
 			bool bBlockingHit = false;
 
-
-			if (bUseWalkingCollisionOverride)
+			if (bUseWalkingCollisionOverride && owningVRChar->bRetainRoomscale)
 			{
+				FVector TargetWorldLocation = OffsetComponentToWorld.GetLocation();
 				bool bAllowWalkingCollision = false;
 				if (CharMove != nullptr)
 				{
@@ -593,7 +590,7 @@ void UVRRootComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, 
 				// TODO: Needs not retained roomscale version that uses movement diff instead of offset to world
 				if (bAllowWalkingCollision)
 				{
-					bBlockingHit = GetWorld()->SweepSingleByChannel(OutHit, LastPosition, OffsetComponentToWorld.GetLocation()/*NextTransform.GetLocation()*/, FQuat::Identity, WalkingCollisionOverride, GetCollisionShape(), Params, ResponseParam);
+					bBlockingHit = GetWorld()->SweepSingleByChannel(OutHit, LastPosition, TargetWorldLocation, FQuat::Identity, WalkingCollisionOverride, GetCollisionShape(), Params, ResponseParam);
 				}
 
 				if (bBlockingHit && OutHit.Component.IsValid())
@@ -1467,6 +1464,8 @@ bool UVRRootComponent::IsLocallyControlled() const
 {
 	SCOPE_CYCLE_COUNTER(STAT_VRRootSetCapsuleSize);
 
+	FScopedMovementUpdate ScopedNetSmootherMovementUpdate(owningVRChar ? owningVRChar->NetSmoother : nullptr, EScopedUpdate::DeferredUpdates);
+
 	if (FMath::IsNearlyEqual(NewRadius, CapsuleRadius) && FMath::IsNearlyEqual(NewHalfHeight, CapsuleHalfHeight))
 	{
 		return;
@@ -1513,6 +1512,11 @@ bool UVRRootComponent::IsLocallyControlled() const
 		{
 			MoveComponent(this->GetComponentQuat().GetUpVector() * (Offset * this->GetComponentScale().Z), GetComponentQuat(), true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
 		}
+		/*else
+		{
+			// Generate final transform
+			GenerateOffsetToWorld();
+		}*/
 
 		if (!owningVRChar->bRetainRoomscale && !IsLocallyControlled())
 		{
@@ -1520,11 +1524,16 @@ bool UVRRootComponent::IsLocallyControlled() const
 			FNetworkPredictionData_Client_Character* ClientData = owningVRChar->GetCharacterMovement()->GetPredictionData_Client_Character();
 			if (ClientData)
 			{
-				ClientData->MeshTranslationOffset.Z -= (Offset * this->GetComponentScale().Z);// FVector::ZeroVector;// -= FVector(0.f, 0.f, Offset * this->GetComponentScale().Z);
+				ClientData->MeshTranslationOffset.Z += (Offset * this->GetComponentScale().Z);// FVector::ZeroVector;// -= FVector(0.f, 0.f, Offset * this->GetComponentScale().Z);
 				ClientData->OriginalMeshTranslationOffset.Z = ClientData->MeshTranslationOffset.Z;
 			}
 		}
 	}
+	/*else
+	{
+		// Generate final transform
+		GenerateOffsetToWorld();
+	}*/
 }
 
 void UVRRootComponent::UpdatePhysicsVolume(bool bTriggerNotifiers)

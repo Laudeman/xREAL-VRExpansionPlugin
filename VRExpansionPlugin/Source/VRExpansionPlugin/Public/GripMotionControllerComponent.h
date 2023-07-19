@@ -975,8 +975,8 @@ public:
 			EGripCollisionType GripCollisionType = EGripCollisionType::InteractiveCollisionWithPhysics,
 			EGripLateUpdateSettings GripLateUpdateSetting = EGripLateUpdateSettings::NotWhenCollidingOrDoubleGripping,
 			EGripMovementReplicationSettings GripMovementReplicationSetting = EGripMovementReplicationSettings::ForceClientSideMovement,
-			float GripStiffness = 1500.0f,
-			float GripDamping = 200.0f, bool bIsSlotGrip = false);
+			float GripStiffness = 2250.0f,
+			float GripDamping = 140.0f, bool bIsSlotGrip = false);
 
 
 	// Auto drop any uobject that is/root is a primitive component and has the VR Grip Interface	
@@ -997,6 +997,8 @@ public:
 	// If an object is passed in it will attempt to drop it, otherwise it will attempt to find and drop the given grip id
 	UFUNCTION(BlueprintCallable, Category = "GripMotionController")
 		bool DropObjectByInterface(UObject * ObjectToDrop = nullptr, uint8 GripIDToDrop = 0, FVector OptionalAngularVelocity = FVector::ZeroVector, FVector OptionalLinearVelocity = FVector::ZeroVector);
+
+	bool DropObjectByInterface_Implementation(UObject* ObjectToDrop = nullptr, uint8 GripIDToDrop = 0, FVector OptionalAngularVelocity = FVector::ZeroVector, FVector OptionalLinearVelocity = FVector::ZeroVector, bool bSkipNotify = false);
 
 	/* Grip an actor, these are stored in a Tarray that will prevent destruction of the object, you MUST ungrip an actor if you want to kill it
 	   The WorldOffset is the transform that it will remain away from the controller, if you use the world position of the actor then it will grab

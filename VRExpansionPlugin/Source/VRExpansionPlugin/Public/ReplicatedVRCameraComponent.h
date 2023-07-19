@@ -48,6 +48,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReplicatedCamera|ComponentVelocity")
 		bool bSampleVelocityInWorldSpace;
 
+	// If true we will sample relative position for replication instead of the tracked settings
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReplicatedCamera")
+		bool bFPSDebugMode = false;
+
 	// For non view target positional updates
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReplicatedCamera")
 	bool bSetPositionDuringTick;
@@ -85,7 +89,7 @@ public:
 		bool bLimitBounds;
 
 	// If we are limiting the maximum bounds, this is the maximum length of the vector from the center of the tracked space
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReplicatedCamera|Advanced|Tracking", meta = (ClampMin = "0.1", UIMin = "0.1", EditCondition = "bLimitMaxHeight"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReplicatedCamera|Advanced|Tracking", meta = (ClampMin = "0.1", UIMin = "0.1", EditCondition = "bLimitBounds"))
 		float MaximumTrackedBounds;
 
 	/** Sets lock to hmd automatically based on if the camera is currently locally controlled or not */
@@ -102,8 +106,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, ReplicatedUsing = OnRep_ReplicatedCameraTransform, Category = "ReplicatedCamera|Networking")
 	FBPVRComponentPosRep ReplicatedCameraTransform;
 
-	FVector LastUpdatesRelativePosition;
-	FRotator LastUpdatesRelativeRotation;
+	FVector LastUpdatesRelativePosition = FVector::ZeroVector;
+	FRotator LastUpdatesRelativeRotation = FRotator::ZeroRotator;
 
 	bool bLerpingPosition;
 	bool bReppedOnce;

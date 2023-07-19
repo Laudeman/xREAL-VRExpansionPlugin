@@ -456,10 +456,17 @@ public:
 	// Call to use an object
 	UPROPERTY(BlueprintAssignable, Category = "Seating")
 		FVRSeatThresholdChangedSignature OnSeatThreshholdChanged_Bind;
-	
+
+	virtual FVector GetTargetHeightOffset()
+	{
+		return FVector::ZeroVector;
+	}
+
 	void ZeroToSeatInformation()
 	{
+
 		SetSeatRelativeLocationAndRotationVR(FVector::ZeroVector);
+
 		NotifyOfTeleport();
 		//LeftMotionController->PostTeleportMoveGrippedObjects();
 		//RightMotionController->PostTeleportMoveGrippedObjects();

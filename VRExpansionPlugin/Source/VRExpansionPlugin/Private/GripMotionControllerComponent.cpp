@@ -48,6 +48,9 @@
 #include "Chaos/Sphere.h"
 #include "PhysicsProxy/SingleParticlePhysicsProxy.h"
 #include "Chaos/ChaosConstraintSettings.h"
+#include "Chaos/PhysicsObject.h"
+#include "PhysicsEngine/PhysicsObjectExternalInterface.h"
+#include "Chaos/PhysicsObjectInterface.h"
 
 #include "Misc/CollisionIgnoreSubsystem.h"
 
@@ -62,6 +65,8 @@ DECLARE_CYCLE_STAT(TEXT("GetGripWorldTransform ~ GettingTransform"), STAT_GetGri
 // Constraint multipliers for angular, to avoid having to have two sets of stiffness/damping variables
 const float ANGULAR_STIFFNESS_MULTIPLIER = 1.5f;
 const float ANGULAR_DAMPING_MULTIPLIER = 1.4f;
+const float ANGULAR_STIFFNESS_MULTIPLIER_CHAOS = 0.45f;
+const float ANGULAR_DAMPING_MULTIPLIER_CHAOS = 0.45f;
 
 // Multiplier for the Interactive Hybrid With Physics grip - When not colliding increases stiffness by this value
 const float HYBRID_PHYSICS_GRIP_MULTIPLIER = 10.0f;
@@ -1036,7 +1041,7 @@ void UGripMotionControllerComponent::SetGripCollisionType(const FBPActorGripInfo
 		{
 			LocallyGrippedObjects[fIndex].GripCollisionType = NewGripCollisionType;
 
-			if (GetNetMode() == ENetMode::NM_Client && !IsTornOff() && LocallyGrippedObjects[fIndex].GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
+			if (IsLocallyControlled() && !IsServer() && !IsTornOff() && LocallyGrippedObjects[fIndex].GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
 			{
 				FBPActorGripInformation GripInfo = LocallyGrippedObjects[fIndex];
 				Server_NotifyLocalGripAddedOrChanged(GripInfo);
@@ -1070,7 +1075,7 @@ void UGripMotionControllerComponent::SetGripLateUpdateSetting(const FBPActorGrip
 		{
 			LocallyGrippedObjects[fIndex].GripLateUpdateSetting = NewGripLateUpdateSetting;
 
-			if (GetNetMode() == ENetMode::NM_Client && !IsTornOff() && LocallyGrippedObjects[fIndex].GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
+			if (IsLocallyControlled() && !IsServer() && !IsTornOff() && LocallyGrippedObjects[fIndex].GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
 			{
 				FBPActorGripInformation GripInfo = LocallyGrippedObjects[fIndex];
 				Server_NotifyLocalGripAddedOrChanged(GripInfo);
@@ -1117,7 +1122,7 @@ void UGripMotionControllerComponent::SetGripRelativeTransform(
 				NotifyGripTransformChanged(Grip);
 			}
 
-			if (GetNetMode() == ENetMode::NM_Client && !IsTornOff() && LocallyGrippedObjects[fIndex].GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
+			if (IsLocallyControlled() && !IsServer() && !IsTornOff() && LocallyGrippedObjects[fIndex].GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
 			{
 				FBPActorGripInformation GripInfo = LocallyGrippedObjects[fIndex];
 				Server_NotifyLocalGripAddedOrChanged(GripInfo);
@@ -1200,7 +1205,7 @@ void UGripMotionControllerComponent::SetGripStiffnessAndDamping(
 				LocallyGrippedObjects[fIndex].AdvancedGripSettings.PhysicsSettings.AngularDamping = OptionalAngularDamping;
 			}
 
-			if (GetNetMode() == ENetMode::NM_Client && !IsTornOff() && LocallyGrippedObjects[fIndex].GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
+			if (IsLocallyControlled() && !IsServer() && !IsTornOff() && LocallyGrippedObjects[fIndex].GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
 			{
 				FBPActorGripInformation GripInfo = LocallyGrippedObjects[fIndex];
 				Server_NotifyLocalGripAddedOrChanged(GripInfo);
@@ -1405,7 +1410,12 @@ bool UGripMotionControllerComponent::GripObjectByInterface(UObject * ObjectToGri
 	return false;
 }
 
-bool UGripMotionControllerComponent::DropObjectByInterface(UObject * ObjectToDrop, uint8 GripIDToDrop, FVector OptionalAngularVelocity, FVector OptionalLinearVelocity)
+bool UGripMotionControllerComponent::DropObjectByInterface(UObject* ObjectToDrop, uint8 GripIDToDrop, FVector OptionalAngularVelocity, FVector OptionalLinearVelocity)
+{
+	return DropObjectByInterface_Implementation(ObjectToDrop, GripIDToDrop, OptionalAngularVelocity, OptionalLinearVelocity, false);
+}
+
+bool UGripMotionControllerComponent::DropObjectByInterface_Implementation(UObject * ObjectToDrop, uint8 GripIDToDrop, FVector OptionalAngularVelocity, FVector OptionalLinearVelocity, bool bSkipNotify)
 {
 	FBPActorGripInformation * GripInfo = nullptr;
 	if (ObjectToDrop != nullptr)
@@ -1435,18 +1445,18 @@ bool UGripMotionControllerComponent::DropObjectByInterface(UObject * ObjectToDro
 
 		if (PrimComp->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
 		{
-			return DropGrip_Implementation(*GripInfo, IVRGripInterface::Execute_SimulateOnDrop(PrimComp), OptionalAngularVelocity, OptionalLinearVelocity);
+			return DropGrip_Implementation(*GripInfo, IVRGripInterface::Execute_SimulateOnDrop(PrimComp), OptionalAngularVelocity, OptionalLinearVelocity, bSkipNotify);
 			//return DropComponent(PrimComp, IVRGripInterface::Execute_SimulateOnDrop(PrimComp), OptionalAngularVelocity, OptionalLinearVelocity);
 		}
 		else if (Owner->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
 		{
-			return DropGrip_Implementation(*GripInfo, IVRGripInterface::Execute_SimulateOnDrop(Owner), OptionalAngularVelocity, OptionalLinearVelocity);
+			return DropGrip_Implementation(*GripInfo, IVRGripInterface::Execute_SimulateOnDrop(Owner), OptionalAngularVelocity, OptionalLinearVelocity, bSkipNotify);
 			//return DropComponent(PrimComp, IVRGripInterface::Execute_SimulateOnDrop(Owner), OptionalAngularVelocity, OptionalLinearVelocity);
 		}
 		else
 		{
 			// Allowing for failsafe dropping here.
-			return DropGrip_Implementation(*GripInfo, true, OptionalAngularVelocity, OptionalLinearVelocity);
+			return DropGrip_Implementation(*GripInfo, true, OptionalAngularVelocity, OptionalLinearVelocity, bSkipNotify);
 			//return DropComponent(PrimComp, true, OptionalAngularVelocity, OptionalLinearVelocity);
 		}
 	}
@@ -1459,16 +1469,16 @@ bool UGripMotionControllerComponent::DropObjectByInterface(UObject * ObjectToDro
 
 		if (root->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
 		{
-			return DropGrip_Implementation(*GripInfo, IVRGripInterface::Execute_SimulateOnDrop(root), OptionalAngularVelocity, OptionalLinearVelocity);
+			return DropGrip_Implementation(*GripInfo, IVRGripInterface::Execute_SimulateOnDrop(root), OptionalAngularVelocity, OptionalLinearVelocity, bSkipNotify);
 		}
 		else if (Actor->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
 		{
-			return DropGrip_Implementation(*GripInfo, IVRGripInterface::Execute_SimulateOnDrop(Actor), OptionalAngularVelocity, OptionalLinearVelocity);
+			return DropGrip_Implementation(*GripInfo, IVRGripInterface::Execute_SimulateOnDrop(Actor), OptionalAngularVelocity, OptionalLinearVelocity, bSkipNotify);
 		}
 		else
 		{
 			// Failsafe drop here
-			return DropGrip_Implementation(*GripInfo, true, OptionalAngularVelocity, OptionalLinearVelocity);
+			return DropGrip_Implementation(*GripInfo, true, OptionalAngularVelocity, OptionalLinearVelocity, bSkipNotify);
 		}
 	}
 
@@ -1711,7 +1721,7 @@ bool UGripMotionControllerComponent::GripActor(
 				}
 			}
 
-			if (bIsLocalGrip && GetNetMode() == ENetMode::NM_Client && !IsTornOff() && newActorGrip.GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
+			if (bIsLocalGrip && IsLocallyControlled() && !IsServer() && !IsTornOff() && newActorGrip.GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
 			{
 				Index = LocallyGrippedObjects.IndexOfByKey(newActorGrip.GripID);
 				if (Index != INDEX_NONE)
@@ -1965,7 +1975,7 @@ bool UGripMotionControllerComponent::GripComponent(
 				}
 			}
 
-			if (bIsLocalGrip && GetNetMode() == ENetMode::NM_Client && !IsTornOff() && newComponentGrip.GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
+			if (bIsLocalGrip && IsLocallyControlled() && !IsServer() && !IsTornOff() && newComponentGrip.GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive)
 			{
 				Index = LocallyGrippedObjects.IndexOfByKey(newComponentGrip.GripID);
 				if (Index != INDEX_NONE)
@@ -2103,7 +2113,7 @@ bool UGripMotionControllerComponent::DropGrip_Implementation(const FBPActorGripI
 
 	if (bWasLocalGrip)
 	{
-		if (GetNetMode() == ENetMode::NM_Client)
+		if (IsLocallyControlled() && !IsServer()) //GetNetMode() == ENetMode::NM_Client)
 		{
 			if (!IsTornOff())
 			{
@@ -2274,7 +2284,7 @@ bool UGripMotionControllerComponent::DropAndSocketGrip_Implementation(const FBPA
 
 	if (bWasLocalGrip)
 	{
-		if (GetNetMode() == ENetMode::NM_Client)
+		if (IsLocallyControlled() && !IsServer())
 		{
 			if (!IsTornOff() && !bSkipServerNotify)
 			{
@@ -2367,9 +2377,9 @@ void UGripMotionControllerComponent::Server_NotifyDropAndSocketGrip_Implementati
 		Socket_Implementation(FoundGrip.GrippedObject, (PhysicsHandleIndex != INDEX_NONE), SocketingParent, OptionalSocketName, RelativeTransformToParent, bWeldBodies);
 	}
 
-	if (!DropAndSocketGrip_Implementation(FoundGrip, SocketingParent, OptionalSocketName, RelativeTransformToParent, bWeldBodies))
+	if (!DropAndSocketGrip_Implementation(FoundGrip, SocketingParent, OptionalSocketName, RelativeTransformToParent, bWeldBodies, true))
 	{
-		DropGrip_Implementation(FoundGrip, false);
+		DropGrip_Implementation(FoundGrip, false, FVector::ZeroVector, FVector::ZeroVector, true);
 	}
 
 }
@@ -2458,7 +2468,7 @@ void UGripMotionControllerComponent::NotifyDropAndSocket_Implementation(const FB
 	if ((NewDrop.GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive ||
 		NewDrop.GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive_NoRep) &&
 		IsLocallyControlled() &&
-		GetNetMode() == ENetMode::NM_Client)
+		!IsServer())
 	{
 
 		// If we still have the grip then the server is asking us to drop it even though it is locally controlled
@@ -2661,7 +2671,7 @@ void UGripMotionControllerComponent::DropAndSocket_Implementation(const FBPActor
 	int fIndex = 0;
 	if (LocallyGrippedObjects.Find(NewDrop, fIndex))
 	{
-		if (HasGripAuthority(NewDrop) || GetNetMode() < ENetMode::NM_Client)
+		if (HasGripAuthority(NewDrop) || IsServer())
 		{
 			LocallyGrippedObjects.RemoveAt(fIndex);
 		}
@@ -2676,7 +2686,7 @@ void UGripMotionControllerComponent::DropAndSocket_Implementation(const FBPActor
 		fIndex = 0;
 		if (GrippedObjects.Find(NewDrop, fIndex))
 		{
-			if (HasGripAuthority(NewDrop) || GetNetMode() < ENetMode::NM_Client)
+			if (HasGripAuthority(NewDrop) || IsServer())
 			{
 				GrippedObjects.RemoveAt(fIndex);
 			}
@@ -2744,7 +2754,7 @@ bool UGripMotionControllerComponent::NotifyGrip(FBPActorGripInformation &NewGrip
 				// Only doing this for actor grips
 				if (NewGrip.AdvancedGripSettings.bSetOwnerOnGrip)
 				{
-					if (GetNetMode() < ENetMode::NM_Client)
+					if (IsServer())
 					{
 						pActor->SetOwner(OwningPawn);
 					}
@@ -3329,7 +3339,7 @@ void UGripMotionControllerComponent::NotifyDrop_Implementation(const FBPActorGri
 	if ((NewDrop.GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive || 
 		NewDrop.GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive_NoRep) && 
 		IsLocallyControlled() && 
-		GetNetMode() == ENetMode::NM_Client)
+		!IsServer())
 	{
 		// If we still have the grip then the server is asking us to drop it even though it is locally controlled
 		if (FBPActorGripInformation * GripInfo = GetGripPtrByID(NewDrop.GripID))
@@ -3696,7 +3706,7 @@ void UGripMotionControllerComponent::Drop_Implementation(const FBPActorGripInfor
 	int fIndex = 0;
 	if (LocallyGrippedObjects.Find(NewDrop, fIndex))
 	{
-		if (HasGripAuthority(NewDrop) || GetNetMode() < ENetMode::NM_Client)
+		if (HasGripAuthority(NewDrop) || IsServer())
 		{
 			LocallyGrippedObjects.RemoveAt(fIndex);
 		}
@@ -3711,7 +3721,7 @@ void UGripMotionControllerComponent::Drop_Implementation(const FBPActorGripInfor
 		fIndex = 0;
 		if (GrippedObjects.Find(NewDrop, fIndex))
 		{
-			if (HasGripAuthority(NewDrop) || GetNetMode() < ENetMode::NM_Client)
+			if (HasGripAuthority(NewDrop) || IsServer())
 			{
 				GrippedObjects.RemoveAt(fIndex);
 			}
@@ -3982,7 +3992,7 @@ bool UGripMotionControllerComponent::AddSecondaryAttachmentToGrip(const FBPActor
 		}
 	}
 
-	if (GripToUse->GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive && GetNetMode() == ENetMode::NM_Client && !IsTornOff())
+	if (GripToUse->GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive && !IsServer() && !IsTornOff())
 	{
 		Server_NotifySecondaryAttachmentChanged(GripToUse->GripID, GripToUse->SecondaryGripInfo);
 	}
@@ -4154,7 +4164,7 @@ bool UGripMotionControllerComponent::RemoveSecondaryAttachmentFromGrip(const FBP
 		GripToUse->SecondaryGripInfo.SecondaryAttachment = nullptr;
 		GripToUse->SecondaryGripInfo.bHasSecondaryAttachment = false;
 
-		if (GripToUse->GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive && GetNetMode() == ENetMode::NM_Client)
+		if (GripToUse->GripMovementReplicationSetting == EGripMovementReplicationSettings::ClientSide_Authoritive && !IsServer())
 		{
 			switch (SecondaryType)
 			{
@@ -4542,7 +4552,7 @@ void UGripMotionControllerComponent::OnRep_ReplicatedControllerTransform()
 {
 	//ReplicatedControllerTransform.Unpack();
 
-	if (GetNetMode() < ENetMode::NM_Client && HasTrackingParameters())
+	if (IsServer() && HasTrackingParameters())
 	{
 		// Ensure that the client is sending valid boundries
 		ApplyTrackingParameters(ReplicatedControllerTransform.Position, true, false);
@@ -4717,7 +4727,7 @@ void UGripMotionControllerComponent::UpdateTracking(float DeltaTime)
 					// I would keep the torn off check here, except this can be checked on tick if they
 					// Set 100 htz updates, and in the TornOff case, it actually can't hurt any besides some small
 					// Perf difference.
-					if (GetNetMode() == NM_Client/* && !IsTornOff()*/)
+					if (!IsServer()/* && !IsTornOff()*/)
 					{
 						AVRBaseCharacter* OwningChar = Cast<AVRBaseCharacter>(GetOwner());
 						if (OverrideSendTransform != nullptr && OwningChar != nullptr)
@@ -5381,8 +5391,11 @@ void UGripMotionControllerComponent::HandleGripArray(TArray<FBPActorGripInformat
 
 							Grip->bColliding = true;
 						}
-						else if (GetWorld()->ComponentSweepMulti(Hits, root, root->GetComponentLocation(), WorldTransform.GetLocation(), WorldTransform.GetRotation(), Params))
+						else if (GetWorld()->ComponentSweepMulti(Hits, root, root->GetComponentLocation(), WorldTransform.GetLocation(), WorldTransform.GetRotation(), Params) && FHitResult::GetFirstBlockingHit(Hits) != nullptr)
 						{
+							// Assume true by default, will revert if checking ignored below
+							Grip->bColliding = true;
+
 							// Check if the two components are ignoring collisions with each other
 							UCollisionIgnoreSubsystem* CollisionIgnoreSubsystem = GetWorld()->GetSubsystem<UCollisionIgnoreSubsystem>();
 
@@ -5422,7 +5435,7 @@ void UGripMotionControllerComponent::HandleGripArray(TArray<FBPActorGripInformat
 								{
 									SetGripConstraintStiffnessAndDamping(Grip, false);
 								}
-								Grip->bColliding = true;
+								//Grip->bColliding = true;
 							}
 						}
 						else
@@ -5483,8 +5496,11 @@ void UGripMotionControllerComponent::HandleGripArray(TArray<FBPActorGripInformat
 							Grip->bColliding = true;
 						}
 						// Check our target rotation
-						else if (GetWorld()->ComponentSweepMulti(Hits, root, BaseTransform.GetLocation(), WorldTransform.GetLocation(), WorldTransform.GetRotation(), Params))
+						else if (GetWorld()->ComponentSweepMulti(Hits, root, BaseTransform.GetLocation(), WorldTransform.GetLocation(), WorldTransform.GetRotation(), Params) && FHitResult::GetFirstBlockingHit(Hits) != nullptr)
 						{
+							// Assume true by default, will revert if checking ignored below
+							Grip->bColliding = true;
+
 							// Check if the two components are ignoring collisions with each other
 							UCollisionIgnoreSubsystem* CollisionIgnoreSubsystem = GetWorld()->GetSubsystem<UCollisionIgnoreSubsystem>();
 							if (CollisionIgnoreSubsystem->HasCollisionIgnorePairs())
@@ -5517,17 +5533,13 @@ void UGripMotionControllerComponent::HandleGripArray(TArray<FBPActorGripInformat
 									}
 								}
 							}
-							else
-							{
-								if (FHitResult::GetFirstBlockingHit(Hits) != nullptr)
-								{
-									Grip->bColliding = true;
-								}
-							}
 						}
 						// Check the other rotation
-						else if (bLerpCollisions && GetWorld()->ComponentSweepMulti(Hits, root, BaseTransform.GetLocation(), WorldTransform.GetLocation(), root->GetComponentRotation(), Params))
+						else if (bLerpCollisions && GetWorld()->ComponentSweepMulti(Hits, root, BaseTransform.GetLocation(), WorldTransform.GetLocation(), root->GetComponentRotation(), Params) && FHitResult::GetFirstBlockingHit(Hits) != nullptr)
 						{
+							// Assume true by default, will revert if checking ignored below
+							Grip->bColliding = true;
+
 							// Check if the two components are ignoring collisions with each other
 							UCollisionIgnoreSubsystem* CollisionIgnoreSubsystem = GetWorld()->GetSubsystem<UCollisionIgnoreSubsystem>();
 
@@ -5543,13 +5555,6 @@ void UGripMotionControllerComponent::HandleGripArray(TArray<FBPActorGripInformat
 										Grip->bColliding = true;
 										break;
 									}
-								}
-							}
-							else
-							{
-								if (FHitResult::GetFirstBlockingHit(Hits) != nullptr)
-								{
-									Grip->bColliding = true;
 								}
 							}
 						}
@@ -6173,19 +6178,32 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 
 	// Get the PxRigidDynamic that we want to grab.
 	FBodyInstance* rBodyInstance = root->GetBodyInstance(NewGrip.GrippedBoneName);
+	Chaos::FPhysicsObject* PhysicsActor = root->GetPhysicsObjectByName(NewGrip.GrippedBoneName);
+
+	bool bUseActorHandle = true;
 	if (!rBodyInstance || !rBodyInstance->IsValidBodyInstance() || !FPhysicsInterface::IsValid(rBodyInstance->ActorHandle) || !rBodyInstance->BodySetup.IsValid())
 	{	
-		return false;
+		if (PhysicsActor)
+		{
+			bUseActorHandle = false;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
-	check(rBodyInstance->BodySetup->GetCollisionTraceFlag() != CTF_UseComplexAsSimple);
-
-	if (!HandleInfo->bSkipResettingCom && !FPhysicsInterface::IsValid(HandleInfo->KinActorData2) && !rBodyInstance->OnRecalculatedMassProperties().IsBoundToObject(this))
+	if (rBodyInstance && bUseActorHandle)
 	{
-		// Reset the mass properties, this avoids an issue with some weird replication issues
-		// We only do this on initial grip
-		rBodyInstance->UpdateMassProperties();
+		check(rBodyInstance->BodySetup->GetCollisionTraceFlag() != CTF_UseComplexAsSimple);
 
+		if (!HandleInfo->bSkipResettingCom && !FPhysicsInterface::IsValid(HandleInfo->KinActorData2) && !rBodyInstance->OnRecalculatedMassProperties().IsBoundToObject(this))
+		{
+			// Reset the mass properties, this avoids an issue with some weird replication issues
+			// We only do this on initial grip
+			rBodyInstance->UpdateMassProperties();
+
+		}
 	}
 
 	/*if (NewGrip.GrippedBoneName != NAME_None)
@@ -6193,46 +6211,56 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 		rBodyInstance->SetInstanceSimulatePhysics(true);
 	}*/
 
-	FPhysicsCommand::ExecuteWrite(rBodyInstance->ActorHandle, [&](const FPhysicsActorHandle& Actor)
+	FTransform RootBoneRotation = FTransform::Identity;
+	if (NewGrip.GrippedBoneName != NAME_None)
 	{
-
-		FTransform KinPose;
-		FTransform trans = FPhysicsInterface::GetGlobalPose_AssumesLocked(Actor);
-		FTransform RootBoneRotation = FTransform::Identity;
-
-		if (NewGrip.GrippedBoneName != NAME_None)
+		// Skip root bone rotation
+	}
+	else
+	{
+		// I actually don't need any of this code anymore or the HandleInfo->RootBoneRotation
+		// However I would have to expect people to pass in the bone transform without it.
+		// For now I am keeping it to keep it backwards compatible as it will adjust for root bone rotation automatically then
+		if (USkeletalMeshComponent* skele = Cast<USkeletalMeshComponent>(root))
 		{
-			// Skip root bone rotation
-		}
-		else
-		{
-			// I actually don't need any of this code anymore or the HandleInfo->RootBoneRotation
-			// However I would have to expect people to pass in the bone transform without it.
-			// For now I am keeping it to keep it backwards compatible as it will adjust for root bone rotation automatically then
-			if (USkeletalMeshComponent * skele = Cast<USkeletalMeshComponent>(root))
+			int32 RootBodyIndex = INDEX_NONE;
+			if (const UPhysicsAsset* PhysicsAsset = skele->GetPhysicsAsset())
 			{
-				int32 RootBodyIndex = INDEX_NONE;
-				if (const UPhysicsAsset* PhysicsAsset = skele->GetPhysicsAsset())
+				for (int32 i = 0; i < skele->GetNumBones(); i++)
 				{
-					for (int32 i = 0; i < skele->GetNumBones(); i++)
+					if (PhysicsAsset->FindBodyIndex(skele->GetBoneName(i)) != INDEX_NONE)
 					{
-						if (PhysicsAsset->FindBodyIndex(skele->GetBoneName(i)) != INDEX_NONE)
-						{
-							RootBodyIndex = i;
-							break;
-						}
+						RootBodyIndex = i;
+						break;
 					}
 				}
+			}
 
-				if (RootBodyIndex != INDEX_NONE)
-				{
-					RootBoneRotation = FTransform(skele->GetBoneTransform(RootBodyIndex, FTransform::Identity));
-					RootBoneRotation.SetScale3D(FVector(1.f));
-					RootBoneRotation.NormalizeRotation();
-					HandleInfo->RootBoneRotation = RootBoneRotation;
-				}
+			if (RootBodyIndex != INDEX_NONE)
+			{
+				RootBoneRotation = FTransform(skele->GetBoneTransform(RootBodyIndex, FTransform::Identity));
+				RootBoneRotation.SetScale3D(FVector(1.f));
+				RootBoneRotation.NormalizeRotation();
+				HandleInfo->RootBoneRotation = RootBoneRotation;
 			}
 		}
+	}
+
+	// They forgot to make a single chaos::FPhysicsBody version of the write lock....
+	bool bExecutedPhys = FPhysicsCommand::ExecuteWrite(PhysicsActor, PhysicsActor, [&](/*const FPhysicsActorHandle& Actor*/Chaos::FPhysicsObject* PhysActor, Chaos::FPhysicsObject* PhysActorNULL)
+	{
+		const FPhysicsActorHandle& Actor = bUseActorHandle ? rBodyInstance->GetPhysicsActorHandle() : nullptr;
+		Chaos::FWritePhysicsObjectInterface_External Interface = FPhysicsObjectExternalInterface::GetWrite_AssumesLocked();
+		FChaosScene* PhysScene = PhysicsObjectPhysicsCoreInterface::GetScene({ &PhysActor, 1 });
+		FTransform PhysActorTransform = Interface.GetTransform(PhysActor);
+
+		if (!PhysScene)
+		{
+			return;
+		}
+
+		FTransform KinPose;
+		FTransform trans = Interface.GetTransform(PhysActor);//FPhysicsInterface::GetGlobalPose_AssumesLocked(Actor);
 
 		EPhysicsGripCOMType COMType = NewGrip.AdvancedGripSettings.PhysicsSettings.PhysicsGripLocationSettings;
 
@@ -6248,34 +6276,46 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 			}
 		}
 
-		if (COMType == EPhysicsGripCOMType::COM_SetAndGripAt)
+		// For geometry collections we can't set COM
+		if (!bUseActorHandle)
+		{
+			if (COMType == EPhysicsGripCOMType::COM_SetAndGripAt)
+			{
+				COMType = EPhysicsGripCOMType::COM_GripAtControllerLoc;
+			}
+		}
+
+		if (bUseActorHandle && COMType == EPhysicsGripCOMType::COM_SetAndGripAt)
 		{
 			// Update the center of mass
 			FTransform ForwardTrans = (RootBoneRotation * NewGrip.RelativeTransform);
 			ForwardTrans.NormalizeRotation();
 			FVector Loc = (FTransform(ForwardTrans.ToInverseMatrixWithScale())).GetLocation();
-			Loc *= rBodyInstance->Scale3D;
+			Loc *= root->GetComponentScale();
 
-			FTransform localCom = FPhysicsInterface::GetComTransformLocal_AssumesLocked(Actor);
+			FTransform localCom = FPhysicsInterface::GetComTransformLocal_AssumesLocked(Actor);//Interface.GetWorldCoM(PhysActor); 
 			localCom.SetLocation(Loc);
 			FPhysicsInterface::SetComLocalPose_AssumesLocked(Actor, localCom);
 
-			FVector ComLoc = FPhysicsInterface::GetComTransform_AssumesLocked(Actor).GetLocation();
+			FVector ComLoc = FPhysicsInterface::GetComTransform_AssumesLocked(Actor).GetLocation(); // Interface.GetWorldCoM(PhysActor);
 			trans.SetLocation(ComLoc);
-			HandleInfo->COMPosition = FTransform(rBodyInstance->GetUnrealWorldTransform().InverseTransformPosition(ComLoc));
+			HandleInfo->COMPosition = FTransform(PhysActorTransform.InverseTransformPosition(ComLoc));
 			HandleInfo->bSetCOM = true;
 		}
 		else if (COMType == EPhysicsGripCOMType::COM_GripAtControllerLoc)
 		{
-			FVector ControllerLoc = (FTransform(NewGrip.RelativeTransform.ToInverseMatrixWithScale()) * root->GetComponentTransform()).GetLocation();
+			FTransform ObjectTransform = PhysActorTransform;
+			ObjectTransform.SetScale3D(root->GetComponentScale());
+
+			FVector ControllerLoc = (FTransform(NewGrip.RelativeTransform.ToInverseMatrixWithScale()) * ObjectTransform).GetLocation();
 			trans.SetLocation(ControllerLoc);
-			HandleInfo->COMPosition = FTransform(rBodyInstance->GetUnrealWorldTransform().InverseTransformPosition(ControllerLoc));
+			HandleInfo->COMPosition = FTransform(PhysActorTransform.InverseTransformPosition(ControllerLoc));
 		}
 		else if (COMType != EPhysicsGripCOMType::COM_AtPivot)
 		{
-			FVector ComLoc = FPhysicsInterface::GetComTransform_AssumesLocked(Actor).GetLocation();
+			FVector ComLoc = Interface.GetWorldCoM(PhysActor);// FPhysicsInterface::GetComTransform_AssumesLocked(Actor).GetLocation();
 			trans.SetLocation(ComLoc);
-			HandleInfo->COMPosition = FTransform(rBodyInstance->GetUnrealWorldTransform().InverseTransformPosition(ComLoc));
+			HandleInfo->COMPosition = FTransform(PhysActorTransform.InverseTransformPosition(ComLoc));
 		}
 
 		KinPose = trans;
@@ -6308,7 +6348,7 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 				}
 			}
 
-			if (HandleInfo->bSetCOM && bResetCom)
+			if (bUseActorHandle && HandleInfo->bSetCOM && bResetCom)
 			{
 				FTransform localCom = FPhysicsInterface::GetComTransformLocal_AssumesLocked(Actor);
 				localCom.SetLocation(HandleInfo->COMPosition.GetTranslation());//Loc);
@@ -6338,7 +6378,7 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 			ActorParams.bEnableGravity = false;
 			ActorParams.bQueryOnly = false;// true; // True or false?
 			ActorParams.bStatic = false;
-			ActorParams.Scene = FPhysicsInterface::GetCurrentScene(Actor);
+			ActorParams.Scene = PhysScene;//FPhysicsInterface::GetCurrentScene(Actor);
 			FPhysicsInterface::CreateActor(ActorParams, HandleInfo->KinActorData2);
 			
 			if (FPhysicsInterface::IsValid(HandleInfo->KinActorData2))
@@ -6368,11 +6408,11 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 			if (!NewGrip.bIsLerping && bConstrainToPivot)
 			{
 				FTransform TargetTrans(FTransform(NewGrip.RelativeTransform.ToMatrixNoScale().Inverse()) * HandleInfo->RootBoneRotation.Inverse());
-				HandleInfo->HandleData2 = FPhysicsInterface::CreateConstraint(HandleInfo->KinActorData2, Actor, FTransform::Identity, TargetTrans);
+				HandleInfo->HandleData2 = FPhysicsInterface::CreateConstraint(HandleInfo->KinActorData2->GetPhysicsObject(), PhysActor, FTransform::Identity, TargetTrans);
 			}
 			else
 			{
-				HandleInfo->HandleData2 = FPhysicsInterface::CreateConstraint(HandleInfo->KinActorData2, Actor, FTransform::Identity, KinPose.GetRelativeTransform(FPhysicsInterface::GetGlobalPose_AssumesLocked(Actor)));
+				HandleInfo->HandleData2 = FPhysicsInterface::CreateConstraint(HandleInfo->KinActorData2->GetPhysicsObject(), PhysActor, FTransform::Identity, KinPose.GetRelativeTransform(PhysActorTransform));
 			}
 		}
 		else
@@ -6389,11 +6429,11 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 			if (!NewGrip.bIsLerping && bConstrainToPivot)
 			{
 				FTransform TargetTrans(NewGrip.RelativeTransform.ToMatrixNoScale().Inverse());
-				HandleInfo->HandleData2 = FPhysicsInterface::CreateConstraint(HandleInfo->KinActorData2, Actor, FTransform::Identity, TargetTrans);
+				HandleInfo->HandleData2 = FPhysicsInterface::CreateConstraint(HandleInfo->KinActorData2->GetPhysicsObject(), PhysActor, FTransform::Identity, TargetTrans);
 			}
 			else
 			{
-				HandleInfo->HandleData2 = FPhysicsInterface::CreateConstraint(HandleInfo->KinActorData2, Actor, FTransform::Identity, KinPose.GetRelativeTransform(FPhysicsInterface::GetGlobalPose_AssumesLocked(Actor)));
+				HandleInfo->HandleData2 = FPhysicsInterface::CreateConstraint(HandleInfo->KinActorData2->GetPhysicsObject(), PhysActor, FTransform::Identity, KinPose.GetRelativeTransform(PhysActorTransform));
 			}
 		
 		}
@@ -6435,6 +6475,8 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 			float AngularDamping;
 			float AngularMaxForce;
 
+			const UVRGlobalSettings& VRSettings = *GetDefault<UVRGlobalSettings>();
+
 			if (NewGrip.AdvancedGripSettings.PhysicsSettings.bUsePhysicsSettings && NewGrip.AdvancedGripSettings.PhysicsSettings.bUseCustomAngularValues)
 			{
 				AngularStiffness = NewGrip.AdvancedGripSettings.PhysicsSettings.AngularStiffness;
@@ -6444,16 +6486,32 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 			{
 				AngularStiffness = Stiffness * ANGULAR_STIFFNESS_MULTIPLIER; // Default multiplier
 				AngularDamping = Damping * ANGULAR_DAMPING_MULTIPLIER; // Default multiplier
+
+				if (!VRSettings.bUseChaosTranslationScalers)
+				{
+					AngularStiffness *= ANGULAR_STIFFNESS_MULTIPLIER_CHAOS;
+					AngularDamping *= ANGULAR_DAMPING_MULTIPLIER_CHAOS;
+				}
 			}
 			
-			const UVRGlobalSettings& VRSettings = *GetDefault<UVRGlobalSettings>();
-
 			if (VRSettings.bUseChaosTranslationScalers)
 			{
 				Stiffness *= VRSettings.LinearDriveStiffnessScale;
 				Damping *= VRSettings.LinearDriveDampingScale;
 				AngularStiffness *= VRSettings.AngularDriveStiffnessScale;
 				AngularDamping *= VRSettings.AngularDriveDampingScale;
+			}
+			else
+			{
+				auto CVarLinearDriveStiffnessScale = IConsoleManager::Get().FindConsoleVariable(TEXT("p.Chaos.JointConstraint.LinearDriveStiffnessScale"));
+				auto CVarLinearDriveDampingScale = IConsoleManager::Get().FindConsoleVariable(TEXT("p.Chaos.JointConstraint.LinaearDriveDampingScale"));
+				auto CVarAngularDriveStiffnessScale = IConsoleManager::Get().FindConsoleVariable(TEXT("p.Chaos.JointConstraint.AngularDriveStiffnessScale"));
+				auto CVarAngularDriveDampingScale = IConsoleManager::Get().FindConsoleVariable(TEXT("p.Chaos.JointConstraint.AngularDriveDampingScale"));
+
+				Stiffness *= CVarLinearDriveStiffnessScale->GetFloat();
+				Damping *= CVarLinearDriveDampingScale->GetFloat();
+				AngularStiffness *= CVarAngularDriveStiffnessScale->GetFloat();
+				AngularDamping *= CVarAngularDriveDampingScale->GetFloat();
 			}
 
 			AngularMaxForce = (float)FMath::Clamp<double>((double)AngularStiffness * (double)NewGrip.AdvancedGripSettings.PhysicsSettings.AngularMaxForceCoefficient, 0, (double)MAX_FLT);
@@ -6587,10 +6645,15 @@ bool UGripMotionControllerComponent::SetUpPhysicsHandle(const FBPActorGripInform
 		}
 	});
 
+	if (!bExecutedPhys)
+	{
+		return false;
+	}
+
 	HandleInfo->bInitiallySetup = true;
 
 	// Bind to further updates in order to keep it alive
-	if (!rBodyInstance->OnRecalculatedMassProperties().IsBoundToObject(this))
+	if (bUseActorHandle && !rBodyInstance->OnRecalculatedMassProperties().IsBoundToObject(this))
 	{
 		rBodyInstance->OnRecalculatedMassProperties().AddUObject(this, &UGripMotionControllerComponent::OnGripMassUpdated);
 	}
@@ -6620,6 +6683,8 @@ bool UGripMotionControllerComponent::SetGripConstraintStiffnessAndDamping(const 
 					float AngularDamping;
 					float AngularMaxForce;
 
+					const UVRGlobalSettings& VRSettings = *GetDefault<UVRGlobalSettings>();
+
 					if (Grip->AdvancedGripSettings.PhysicsSettings.bUsePhysicsSettings && Grip->AdvancedGripSettings.PhysicsSettings.bUseCustomAngularValues)
 					{
 						AngularStiffness = Grip->AdvancedGripSettings.PhysicsSettings.AngularStiffness;
@@ -6629,9 +6694,13 @@ bool UGripMotionControllerComponent::SetGripConstraintStiffnessAndDamping(const 
 					{
 						AngularStiffness = Stiffness * ANGULAR_STIFFNESS_MULTIPLIER; // Default multiplier
 						AngularDamping = Damping * ANGULAR_DAMPING_MULTIPLIER; // Default multiplier
-					}
 
-					const UVRGlobalSettings& VRSettings = *GetDefault<UVRGlobalSettings>();
+						if (!VRSettings.bUseChaosTranslationScalers)
+						{
+							AngularStiffness *= ANGULAR_STIFFNESS_MULTIPLIER_CHAOS;
+							AngularDamping *= ANGULAR_DAMPING_MULTIPLIER_CHAOS;
+						}
+					}
 					
 					if (VRSettings.bUseChaosTranslationScalers)
 					{
@@ -6639,6 +6708,28 @@ bool UGripMotionControllerComponent::SetGripConstraintStiffnessAndDamping(const 
 						Damping *= VRSettings.LinearDriveDampingScale;
 						AngularStiffness *= VRSettings.AngularDriveStiffnessScale;
 						AngularDamping *= VRSettings.AngularDriveDampingScale;
+					}
+					else
+					{
+						if (VRSettings.bUseChaosTranslationScalers)
+						{
+							Stiffness *= VRSettings.LinearDriveStiffnessScale;
+							Damping *= VRSettings.LinearDriveDampingScale;
+							AngularStiffness *= VRSettings.AngularDriveStiffnessScale;
+							AngularDamping *= VRSettings.AngularDriveDampingScale;
+						}
+						else
+						{
+							auto CVarLinearDriveStiffnessScale = IConsoleManager::Get().FindConsoleVariable(TEXT("p.Chaos.JointConstraint.LinearDriveStiffnessScale"));
+							auto CVarLinearDriveDampingScale = IConsoleManager::Get().FindConsoleVariable(TEXT("p.Chaos.JointConstraint.LinaearDriveDampingScale"));
+							auto CVarAngularDriveStiffnessScale = IConsoleManager::Get().FindConsoleVariable(TEXT("p.Chaos.JointConstraint.AngularDriveStiffnessScale"));
+							auto CVarAngularDriveDampingScale = IConsoleManager::Get().FindConsoleVariable(TEXT("p.Chaos.JointConstraint.AngularDriveDampingScale"));
+
+							Stiffness *= CVarLinearDriveStiffnessScale->GetFloat();
+							Damping *= CVarLinearDriveDampingScale->GetFloat();
+							AngularStiffness *= CVarAngularDriveStiffnessScale->GetFloat();
+							AngularDamping *= CVarAngularDriveDampingScale->GetFloat();
+						}
 					}
 
 					AngularMaxForce = (float)FMath::Clamp<double>((double)AngularStiffness * (double)Grip->AdvancedGripSettings.PhysicsSettings.AngularMaxForceCoefficient, 0, (double)MAX_FLT);
@@ -7707,9 +7798,9 @@ void UGripMotionControllerComponent::Server_NotifyLocalGripRemoved_Implementatio
 		}
 	}
 
-	if (!DropObjectByInterface(nullptr, FoundGrip.GripID, AngularVelocity, LinearVelocity))
+	if (!DropObjectByInterface_Implementation(nullptr, FoundGrip.GripID, AngularVelocity, LinearVelocity, true))
 	{
-		DropGrip_Implementation(FoundGrip, false, AngularVelocity, LinearVelocity);
+		DropGrip_Implementation(FoundGrip, false, AngularVelocity, LinearVelocity,true);
 	}
 }
 
