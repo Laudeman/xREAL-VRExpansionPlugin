@@ -1864,7 +1864,7 @@ namespace OculusXRHMD
 
 		if (bUseSeparateRenderTarget && Frame.IsValid())
 		{
-			CachedWindowSize = (Window.IsValid()) ? Window->GetSizeInScreen() : Viewport.GetSizeXY();
+			CachedWindowSize = (Window.IsValid()) ? Window->GetSizeInScreen() : FVector2D(Viewport.GetSizeXY());
 		}
 	}
 
