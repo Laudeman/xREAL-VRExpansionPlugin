@@ -6,7 +6,7 @@ public class OculusXREditor : ModuleRules
 {
 	public OculusXREditor(ReadOnlyTargetRules Target) : base(Target)
 	{
-        PrivateDependencyModuleNames.AddRange(
+		PrivateDependencyModuleNames.AddRange(
 			new string[] {
 				"Projects",
 				"InputCore",
@@ -21,14 +21,16 @@ public class OculusXREditor : ModuleRules
 				"EditorStyle",
 				"Core",
 				"OculusXRHMD",
+				"OculusXRMovement",
+				"OculusXRPassthrough",
 				"OVRPluginXR",
 				"HTTP",
 				"DesktopPlatform",
-                "LauncherServices",
-                "GameProjectGeneration",
+				"LauncherServices",
+				"GameProjectGeneration",
 				"SharedSettingsWidgets",
-            }
-			);
+			}
+		);
 
 		PrivateIncludePaths.AddRange(
 				new string[] {
@@ -40,7 +42,7 @@ public class OculusXREditor : ModuleRules
 		PrivateIncludePathModuleNames.AddRange(
 			new string[] {
 				"Settings",
-            }
-            );
+			}
+			);
 	}
 }

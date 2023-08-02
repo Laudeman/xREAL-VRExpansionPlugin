@@ -56,7 +56,7 @@ public:
 	 * Suffix:
 	 * FOculusXRSpaceQueryResultDelegate
 	 */
-	DECLARE_MULTICAST_DELEGATE_ThreeParams(FOculusXRSpaceQueryResultDelegate, FOculusXRUInt64  /*requestId*/, FOculusXRUInt64 /* space*/, FOculusXRUUID /*uuid*/);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FOculusXRSpaceQueryResultDelegate, FOculusXRUInt64 /*requestId*/, FOculusXRUInt64 /* space*/, FOculusXRUUID /*uuid*/);
 	static OCULUSXRANCHORS_API FOculusXRSpaceQueryResultDelegate OculusSpaceQueryResult;
 
 	/* ovrpEventType_SpaceQueryComplete
@@ -67,7 +67,7 @@ public:
 	 * Suffix:
 	 * FOculusXRSpaceQueryCompleteDelegate
 	 */
-	DECLARE_MULTICAST_DELEGATE_TwoParams(FOculusXRSpaceQueryCompleteDelegate, FOculusXRUInt64  /*requestId*/, int /*result*/);
+	DECLARE_MULTICAST_DELEGATE_TwoParams(FOculusXRSpaceQueryCompleteDelegate, FOculusXRUInt64 /*requestId*/, int /*result*/);
 	static OCULUSXRANCHORS_API FOculusXRSpaceQueryCompleteDelegate OculusSpaceQueryComplete;
 
 	/* ovrpEventType_SpaceSaveComplete
@@ -78,7 +78,7 @@ public:
 	 * Suffix:
 	 * FOculusXRSpaceSaveCompleteDelegate
 	 */
-	DECLARE_MULTICAST_DELEGATE_FiveParams(FOculusXRSpaceSaveCompleteDelegate, FOculusXRUInt64  /*requestId*/, FOculusXRUInt64 /* space*/, bool /* sucess*/, int /*result*/, FOculusXRUUID /*uuid*/);
+	DECLARE_MULTICAST_DELEGATE_FiveParams(FOculusXRSpaceSaveCompleteDelegate, FOculusXRUInt64 /*requestId*/, FOculusXRUInt64 /* space*/, bool /* sucess*/, int /*result*/, FOculusXRUUID /*uuid*/);
 	static OCULUSXRANCHORS_API FOculusXRSpaceSaveCompleteDelegate OculusSpaceSaveComplete;
 
 	/* ovrpEventType_SpaceListSaveResult
@@ -100,7 +100,7 @@ public:
 	 * Suffix:
 	 * FOculusXRSpaceEraseCompleteDelegate
 	 */
-	DECLARE_MULTICAST_DELEGATE_FourParams(FOculusXRSpaceEraseCompleteDelegate, FOculusXRUInt64  /*requestId*/, int /* result*/, FOculusXRUUID /*uuid*/, EOculusXRSpaceStorageLocation /*location*/);
+	DECLARE_MULTICAST_DELEGATE_FourParams(FOculusXRSpaceEraseCompleteDelegate, FOculusXRUInt64 /*requestId*/, int /* result*/, FOculusXRUUID /*uuid*/, EOculusXRSpaceStorageLocation /*location*/);
 	static OCULUSXRANCHORS_API FOculusXRSpaceEraseCompleteDelegate OculusSpaceEraseComplete;
 
 	/* ovrpEventType_SpaceShareSpaceResult
@@ -124,5 +124,4 @@ public:
 	 */
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FOculusXRSceneCaptureCompleteDelegate, FOculusXRUInt64 /*requestId*/, bool /*success*/);
 	static OCULUSXRANCHORS_API FOculusXRSceneCaptureCompleteDelegate OculusSceneCaptureComplete;
-
 };

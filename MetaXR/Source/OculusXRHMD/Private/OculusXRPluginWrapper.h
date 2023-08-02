@@ -6,7 +6,7 @@
 #include <memory.h>
 
 #if PLATFORM_SUPPORTS_PRAGMA_PACK
-#pragma pack (push,8)
+#pragma pack(push, 8)
 #endif
 
 #if PLATFORM_WINDOWS
@@ -14,7 +14,7 @@
 #endif
 
 #pragma warning(push)
-#pragma warning(disable:4201)		// nonstandard extension used: nameless struct/union
+#pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
 //#pragma warning(disable:4668)		// 'symbol' is not defined as a preprocessor macro, replacing with '0' for 'directives'
 #define OVRP_EXPORT typedef
 #include "OVR_Plugin.h"
@@ -29,7 +29,7 @@
 #endif
 
 #if PLATFORM_SUPPORTS_PRAGMA_PACK
-#pragma pack (pop)
+#pragma pack(pop)
 #endif
 
 #if PLATFORM_WINDOWS
@@ -38,7 +38,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogOculusPluginWrapper, Log, All);
 
-#define OCULUS_DECLARE_ENTRY_POINT(Func)		ovrp_##Func* Func
+#define OCULUS_DECLARE_ENTRY_POINT(Func) ovrp_##Func* Func
 
 struct OculusPluginWrapper
 {
@@ -55,7 +55,7 @@ struct OculusPluginWrapper
 		ovrpHeaderVersion.PatchVersion = OVRP_PATCH_VERSION;
 	}
 
-	bool IsInitialized() const 
+	bool IsInitialized() const
 	{
 		return Initialized;
 	}
@@ -241,6 +241,10 @@ struct OculusPluginWrapper
 	OCULUS_DECLARE_ENTRY_POINT(GetLocalDimmingSupported);
 	OCULUS_DECLARE_ENTRY_POINT(SetLocalDimming);
 	OCULUS_DECLARE_ENTRY_POINT(GetCurrentInteractionProfile);
+	OCULUS_DECLARE_ENTRY_POINT(GetLayerRecommendedResolution);
+	OCULUS_DECLARE_ENTRY_POINT(IsLayerShapeSupported);
+
+
 #ifndef OVRPLUGIN_JNI_LIB_EXCLUDED
 	OCULUS_DECLARE_ENTRY_POINT(GetSystemVolume2);
 	OCULUS_DECLARE_ENTRY_POINT(GetSystemHeadphonesPresent2);
@@ -272,14 +276,19 @@ struct OculusPluginWrapper
 	OCULUS_DECLARE_ENTRY_POINT(GetSpaceBoundary2D);
 	OCULUS_DECLARE_ENTRY_POINT(RequestSceneCapture);
 
+	// Local Groups
+
 	// MovementSDK
-	OCULUS_DECLARE_ENTRY_POINT(GetBodyState);
 	OCULUS_DECLARE_ENTRY_POINT(GetBodyTrackingEnabled);
 	OCULUS_DECLARE_ENTRY_POINT(GetBodyTrackingSupported);
-	OCULUS_DECLARE_ENTRY_POINT(StartBodyTracking);
 	OCULUS_DECLARE_ENTRY_POINT(StopBodyTracking);
+
+	OCULUS_DECLARE_ENTRY_POINT(StartBodyTracking);
+	OCULUS_DECLARE_ENTRY_POINT(GetBodyState);
+
 	OCULUS_DECLARE_ENTRY_POINT(GetFaceTrackingEnabled);
 	OCULUS_DECLARE_ENTRY_POINT(GetFaceTrackingSupported);
+
 	OCULUS_DECLARE_ENTRY_POINT(GetFaceState);
 	OCULUS_DECLARE_ENTRY_POINT(StartFaceTracking);
 	OCULUS_DECLARE_ENTRY_POINT(StopFaceTracking);
@@ -300,7 +309,13 @@ struct OculusPluginWrapper
 	OCULUS_DECLARE_ENTRY_POINT(DestroyInsightPassthroughGeometryInstance);
 	OCULUS_DECLARE_ENTRY_POINT(UpdateInsightPassthroughGeometryTransform);
 	OCULUS_DECLARE_ENTRY_POINT(SetInsightPassthroughStyle);
+	OCULUS_DECLARE_ENTRY_POINT(SetInsightPassthroughStyle2);
 	OCULUS_DECLARE_ENTRY_POINT(GetPassthroughCapabilityFlags);
+	OCULUS_DECLARE_ENTRY_POINT(CreatePassthroughColorLut);
+	OCULUS_DECLARE_ENTRY_POINT(DestroyPassthroughColorLut);
+	OCULUS_DECLARE_ENTRY_POINT(UpdatePassthroughColorLut);
+	OCULUS_DECLARE_ENTRY_POINT(GetPassthroughCapabilities);
+	OCULUS_DECLARE_ENTRY_POINT(GetPassthroughPreferences);
 
 	//OVR_Plugin_MixedReality.h
 
@@ -312,36 +327,6 @@ struct OculusPluginWrapper
 	OCULUS_DECLARE_ENTRY_POINT(GetExternalCameraName);
 	OCULUS_DECLARE_ENTRY_POINT(GetExternalCameraIntrinsics);
 	OCULUS_DECLARE_ENTRY_POINT(GetExternalCameraExtrinsics);
-	OCULUS_DECLARE_ENTRY_POINT(GetExternalCameraCalibrationRawPose);
-	OCULUS_DECLARE_ENTRY_POINT(OverrideExternalCameraFov);
-	OCULUS_DECLARE_ENTRY_POINT(GetUseOverriddenExternalCameraFov);
-	OCULUS_DECLARE_ENTRY_POINT(OverrideExternalCameraStaticPose);
-	OCULUS_DECLARE_ENTRY_POINT(GetUseOverriddenExternalCameraStaticPose);
-	OCULUS_DECLARE_ENTRY_POINT(GetExternalCameraPose);
-	OCULUS_DECLARE_ENTRY_POINT(ConvertPoseToCameraSpace);
-	OCULUS_DECLARE_ENTRY_POINT(ResetDefaultExternalCamera);
-	OCULUS_DECLARE_ENTRY_POINT(SetDefaultExternalCamera);
-	OCULUS_DECLARE_ENTRY_POINT(EnumerateAllCameraDevices);
-	OCULUS_DECLARE_ENTRY_POINT(EnumerateAvailableCameraDevices);
-	OCULUS_DECLARE_ENTRY_POINT(UpdateCameraDevices);
-	OCULUS_DECLARE_ENTRY_POINT(IsCameraDeviceAvailable2);
-	OCULUS_DECLARE_ENTRY_POINT(SetCameraDevicePreferredColorFrameSize);
-	OCULUS_DECLARE_ENTRY_POINT(OpenCameraDevice);
-	OCULUS_DECLARE_ENTRY_POINT(CloseCameraDevice);
-	OCULUS_DECLARE_ENTRY_POINT(HasCameraDeviceOpened2);
-	OCULUS_DECLARE_ENTRY_POINT(GetCameraDeviceIntrinsicsParameters);
-	OCULUS_DECLARE_ENTRY_POINT(IsCameraDeviceColorFrameAvailable2);
-	OCULUS_DECLARE_ENTRY_POINT(GetCameraDeviceColorFrameSize);
-	OCULUS_DECLARE_ENTRY_POINT(GetCameraDeviceColorFrameBgraPixels);
-	OCULUS_DECLARE_ENTRY_POINT(DoesCameraDeviceSupportDepth);
-	OCULUS_DECLARE_ENTRY_POINT(GetCameraDeviceDepthSensingMode);
-	OCULUS_DECLARE_ENTRY_POINT(SetCameraDeviceDepthSensingMode);
-	OCULUS_DECLARE_ENTRY_POINT(GetCameraDevicePreferredDepthQuality);
-	OCULUS_DECLARE_ENTRY_POINT(SetCameraDevicePreferredDepthQuality);
-	OCULUS_DECLARE_ENTRY_POINT(IsCameraDeviceDepthFrameAvailable);
-	OCULUS_DECLARE_ENTRY_POINT(GetCameraDeviceDepthFrameSize);
-	OCULUS_DECLARE_ENTRY_POINT(GetCameraDeviceDepthFramePixels);
-	OCULUS_DECLARE_ENTRY_POINT(GetCameraDeviceDepthConfidencePixels);
 
 	// OVR_Plugin_Media.h
 

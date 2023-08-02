@@ -2,80 +2,77 @@
 
 #include "StereoLayerShapes.h"
 #include "OculusXRPassthroughMesh.h"
+#include "OculusXRPassthroughLayerShapes.generated.h"
 
 UENUM()
 enum EOculusXRColorMapType
 {
 	/** None*/
-	ColorMapType_None UMETA(DisplayName = "None"),
+	ColorMapType_None = 0 UMETA(DisplayName = "None"),
 
 	/** Grayscale to color */
-	ColorMapType_GrayscaleToColor UMETA(DisplayName = "Grayscale To Color"),
+	ColorMapType_GrayscaleToColor = 1 UMETA(DisplayName = "Grayscale To Color"),
 
 	/** Grayscale */
-	ColorMapType_Grayscale UMETA(DisplayName = "Grayscale"),
+	ColorMapType_Grayscale = 2 UMETA(DisplayName = "Grayscale"),
 
 	/** Color Adjustment */
-	ColorMapType_ColorAdjustment UMETA(DisplayName = "Color Adjustment"),
+	ColorMapType_ColorAdjustment = 3 UMETA(DisplayName = "Color Adjustment"),
 
-	ColorMapType_MAX,
+	/** Color LUT */
+	ColorMapType_ColorLut = 4 UMETA(DisplayName = "Color LUT"),
+
+	/** Interpolated Color LUT */
+	ColorMapType_ColorLut_Interpolated = 5 UMETA(DisplayName = "Interpolated Color LUT"),
+
+	ColorMapType_MAX = 255,
 };
 
 UENUM()
 enum EOculusXRPassthroughLayerOrder
 {
 	/** Layer is rendered on top of scene */
-	PassthroughLayerOrder_Overlay UMETA(DisplayName = "Overlay"),
+	PassthroughLayerOrder_Overlay = 0 UMETA(DisplayName = "Overlay"),
 
 	/** Layer is rendered under scene */
-	PassthroughLayerOrder_Underlay UMETA(DisplayName = "Underlay"),
+	PassthroughLayerOrder_Underlay = 1 UMETA(DisplayName = "Underlay"),
 
-	PassthroughLayerOrder_MAX,
+	PassthroughLayerOrder_MAX = 255,
 };
 
-struct FEdgeStyleParameters {
-	FEdgeStyleParameters()
-	:	bEnableEdgeColor(false)
-	,	bEnableColorMap(false)
-	,	TextureOpacityFactor(1.0f)
-	,	EdgeColor{}
-	,	ColorMapType{}
-	,	ColorMapData{}
-	{
+struct OCULUSXRHMD_API FColorLutDesc
+{
+	FColorLutDesc();
 
-	};
+	FColorLutDesc(const TArray<uint64>& InColorLuts, float InWeight);
+
+	float Weight;
+	TArray<uint64> ColorLuts;
+};
+
+struct OCULUSXRHMD_API FEdgeStyleParameters
+{
+public:
+	FEdgeStyleParameters();
 
 	FEdgeStyleParameters(
-		bool bEnableEdgeColor, 
-		bool bEnableColorMap, 
-		float TextureOpacityFactor, 
-		float Brightness, 
-		float Contrast, 
-		float Posterize, 
+		bool bEnableEdgeColor,
+		bool bEnableColorMap,
+		float TextureOpacityFactor,
+		float Brightness,
+		float Contrast,
+		float Posterize,
 		float Saturation,
-		FLinearColor EdgeColor, 
-		FLinearColor ColorScale, 
-		FLinearColor ColorOffset, 
+		FLinearColor EdgeColor,
+		FLinearColor ColorScale,
+		FLinearColor ColorOffset,
 		EOculusXRColorMapType InColorMapType,
-		const TArray<FLinearColor>& InColorMapGradient)
-	:	bEnableEdgeColor(bEnableEdgeColor)
-	,	bEnableColorMap(bEnableColorMap)
-	,	TextureOpacityFactor(TextureOpacityFactor)
-	,	Brightness(Brightness)
-	,	Contrast(Contrast)
-	,	Posterize(Posterize)
-	,	Saturation(Saturation)
-	,	EdgeColor(EdgeColor)
-	,	ColorScale(ColorScale)
-	,	ColorOffset(ColorOffset)
-	,	ColorMapType(InColorMapType)
-
-	{
-		ColorMapData = GenerateColorMapData(InColorMapType, InColorMapGradient);
-	};
+		const TArray<FLinearColor>& InColorMapGradient,
+		const FColorLutDesc& InLutDesc);
 
 	bool bEnableEdgeColor;
 	bool bEnableColorMap;
+	bool bUseColorLuts;
 	float TextureOpacityFactor;
 	float Brightness;
 	float Contrast;
@@ -86,9 +83,9 @@ struct FEdgeStyleParameters {
 	FLinearColor ColorOffset;
 	EOculusXRColorMapType ColorMapType;
 	TArray<uint8> ColorMapData;
+	FColorLutDesc ColorLutDesc;
 
 private:
-
 	/** Generates the corresponding color map based on given color map type */
 	TArray<uint8> GenerateColorMapData(EOculusXRColorMapType InColorMapType, const TArray<FLinearColor>& InColorMapGradient);
 
@@ -107,12 +104,9 @@ class OCULUSXRHMD_API FReconstructedLayer : public IStereoLayerShape
 	STEREO_LAYER_SHAPE_BOILERPLATE(FReconstructedLayer)
 
 public:
-	FReconstructedLayer() {};
+	FReconstructedLayer(){};
 	FReconstructedLayer(const FEdgeStyleParameters& EdgeStyleParameters, EOculusXRPassthroughLayerOrder PassthroughLayerOrder)
-	:	EdgeStyleParameters(EdgeStyleParameters),
-		PassthroughLayerOrder(PassthroughLayerOrder)
-	{
-	};
+		: EdgeStyleParameters(EdgeStyleParameters), PassthroughLayerOrder(PassthroughLayerOrder){};
 	FEdgeStyleParameters EdgeStyleParameters;
 	EOculusXRPassthroughLayerOrder PassthroughLayerOrder;
 };
@@ -120,16 +114,14 @@ public:
 struct FUserDefinedGeometryDesc
 {
 	FUserDefinedGeometryDesc(const FString& MeshName, OculusXRHMD::FOculusPassthroughMeshRef PassthroughMesh, const FTransform& Transform, bool bUpdateTransform)
-	:	MeshName(MeshName)
-	,	PassthroughMesh(PassthroughMesh)
-	,	Transform(Transform)
-	,	bUpdateTransform(bUpdateTransform)
-	{
-	};
+		: MeshName(MeshName)
+		, PassthroughMesh(PassthroughMesh)
+		, Transform(Transform)
+		, bUpdateTransform(bUpdateTransform){};
 
 	FString MeshName;
 	OculusXRHMD::FOculusPassthroughMeshRef PassthroughMesh;
-	FTransform  Transform;
+	FTransform Transform;
 	bool bUpdateTransform;
 };
 
@@ -138,11 +130,11 @@ class OCULUSXRHMD_API FUserDefinedLayer : public IStereoLayerShape
 	STEREO_LAYER_SHAPE_BOILERPLATE(FUserDefinedLayer)
 
 public:
-	FUserDefinedLayer() {};
+	FUserDefinedLayer(){};
 	FUserDefinedLayer(TArray<FUserDefinedGeometryDesc> InUserGeometryList, const FEdgeStyleParameters& EdgeStyleParameters, EOculusXRPassthroughLayerOrder PassthroughLayerOrder)
-	:	UserGeometryList{}
-	,	EdgeStyleParameters(EdgeStyleParameters)
-	,	PassthroughLayerOrder(PassthroughLayerOrder)
+		: UserGeometryList{}
+		, EdgeStyleParameters(EdgeStyleParameters)
+		, PassthroughLayerOrder(PassthroughLayerOrder)
 	{
 		UserGeometryList = InUserGeometryList;
 	}
@@ -152,5 +144,4 @@ public:
 	EOculusXRPassthroughLayerOrder PassthroughLayerOrder;
 
 private:
-
 };

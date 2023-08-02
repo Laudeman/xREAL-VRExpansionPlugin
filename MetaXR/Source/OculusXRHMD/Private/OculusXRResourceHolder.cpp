@@ -36,7 +36,4 @@ UOculusXRResourceHolder::UOculusXRResourceHolder(const FObjectInitializer& Objec
 	{
 		UE_LOG(LogHMD, Log, TEXT("PokeAHoleInverseMaterial loaded successfully"));
 	}
-
-
-
 }

@@ -1,6 +1,13 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+/*
+Copyright (c) Meta Platforms, Inc. and affiliates.
+All rights reserved.
+This source code is licensed under the license found in the
+LICENSE file in the root directory of this source tree.
+*/
 
 #include "OculusXREditorModule.h"
+
+#include "AssetToolsModule.h"
 #include "OculusXRToolStyle.h"
 #include "OculusXRToolCommands.h"
 #include "OculusXRToolWidget.h"
@@ -10,17 +17,16 @@
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
 #include "Widgets/Docking/SDockTab.h"
-#include "Widgets/Layout/SBox.h"
 #include "Widgets/Input/SButton.h"
-#include "Widgets/Text/STextBlock.h"
-#include "Widgets/Images/SImage.h"
 #include "PropertyEditorModule.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailWidgetRow.h"
+#include "IAssetTools.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "ISettingsModule.h"
 #include "OculusXREditorSettings.h"
+#include "OculusXRPassthroughColorLutAsset.h"
 
 #define LOCTEXT_NAMESPACE "OculusXREditor"
 
@@ -49,19 +55,22 @@ void FOculusXREditorModule::StartupModule()
 
 		PluginCommands->MapAction(
 			FOculusToolCommands::Get().OpenPluginWindow,
-			FExecuteAction::CreateRaw(this, &FOculusXREditorModule::PluginButtonClicked),
+			FExecuteAction::CreateRaw(this, &FOculusXREditorModule::PluginOpenPerfWindow),
+			FCanExecuteAction());
+		PluginCommands->MapAction(
+			FOculusToolCommands::Get().OpenPlatWindow,
+			FExecuteAction::CreateRaw(this, &FOculusXREditorModule::PluginOpenPlatWindow),
 			FCanExecuteAction());
 		PluginCommands->MapAction(
 			FOculusToolCommands::Get().ToggleDeploySo,
-			FExecuteAction::CreateLambda([=]() { 
-				UOculusXRHMDRuntimeSettings *settings = GetMutableDefault<UOculusXRHMDRuntimeSettings>(); 
-				settings->bDeploySoToDevice = !settings->bDeploySoToDevice; 
+			FExecuteAction::CreateLambda([=]() {
+				UOculusXRHMDRuntimeSettings* settings = GetMutableDefault<UOculusXRHMDRuntimeSettings>();
+				settings->bDeploySoToDevice = !settings->bDeploySoToDevice;
 			}),
 			FCanExecuteAction(),
-			FIsActionChecked::CreateLambda([=]() { 
-				return GetMutableDefault<UOculusXRHMDRuntimeSettings>()->bDeploySoToDevice; 
-			})
-		);
+			FIsActionChecked::CreateLambda([=]() {
+				return GetMutableDefault<UOculusXRHMDRuntimeSettings>()->bDeploySoToDevice;
+			}));
 
 		FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 
@@ -75,13 +84,13 @@ void FOculusXREditorModule::StartupModule()
 		ToolbarExtender->AddToolBarExtension("Play", EExtensionHook::After, PluginCommands, FToolBarExtensionDelegate::CreateRaw(this, &FOculusXREditorModule::AddToolbarExtension));
 		LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
 
-		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(OculusPerfTabName, FOnSpawnTab::CreateRaw(this, &FOculusXREditorModule::OnSpawnPluginTab))
-			.SetDisplayName(LOCTEXT("FOculusXREditorTabTitle", "Meta XR Performance Check"))
-			.SetMenuType(ETabSpawnerMenuType::Hidden);
+		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(OculusPerfTabName, FOnSpawnTab::CreateRaw(this, &FOculusXREditorModule::OnSpawnPluginTab)).SetDisplayName(LOCTEXT("FOculusXREditorTabTitle", "Meta XR Performance Check")).SetMenuType(ETabSpawnerMenuType::Hidden);
 
-		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(OculusPlatToolTabName, FOnSpawnTab::CreateRaw(this, &FOculusXREditorModule::OnSpawnPlatToolTab))
-			.SetDisplayName(LOCTEXT("FOculusPlatfToolTabTitle", "Meta XR Platform Tool"))
-			.SetMenuType(ETabSpawnerMenuType::Hidden);
+		FGlobalTabmanager::Get()->RegisterNomadTabSpawner(OculusPlatToolTabName, FOnSpawnTab::CreateRaw(this, &FOculusXREditorModule::OnSpawnPlatToolTab)).SetDisplayName(LOCTEXT("FOculusPlatfToolTabTitle", "Meta XR Platform Tool")).SetMenuType(ETabSpawnerMenuType::Hidden);
+
+		// Register asset types
+		IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+		AssetTools.RegisterAssetTypeActions(MakeShareable(new FAssetTypeActions_OculusXRPassthroughColorLut));
 	}
 }
 
@@ -109,23 +118,26 @@ void FOculusXREditorModule::ShutdownModule()
 
 TSharedRef<SDockTab> FOculusXREditorModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
+	/* clang-format off */
 	auto myTab = SNew(SDockTab)
-		.TabRole(ETabRole::NomadTab)
-		[
-			SNew(SOculusToolWidget)
-		];
-
+	.TabRole(ETabRole::NomadTab)
+	[
+		SNew(SOculusToolWidget)
+	];
+	/* clang-format on */
 
 	return myTab;
 }
 
 TSharedRef<SDockTab> FOculusXREditorModule::OnSpawnPlatToolTab(const FSpawnTabArgs& SpawnTabArgs)
 {
+	/* clang-format off */
 	auto myTab = SNew(SDockTab)
-		.TabRole(ETabRole::NomadTab)
-		[
-			SNew(SOculusPlatformToolWidget)
-		];
+	.TabRole(ETabRole::NomadTab)
+	[
+		SNew(SOculusPlatformToolWidget)
+	];
+	/* clang-format on */
 
 	return myTab;
 }
@@ -137,8 +149,7 @@ void FOculusXREditorModule::RegisterSettings()
 		SettingsModule->RegisterSettings("Project", "Plugins", "OculusXR",
 			LOCTEXT("RuntimeSettingsName", "Meta XR"),
 			LOCTEXT("RuntimeSettingsDescription", "Configure the Meta XR plugin"),
-			GetMutableDefault<UOculusXRHMDRuntimeSettings>()
-		);
+			GetMutableDefault<UOculusXRHMDRuntimeSettings>());
 
 		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 		PropertyModule.RegisterCustomClassLayout(UOculusXRHMDRuntimeSettings::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FOculusXRHMDSettingsDetailsCustomization::MakeInstance));
@@ -155,13 +166,18 @@ void FOculusXREditorModule::UnregisterSettings()
 
 FReply FOculusXREditorModule::PluginClickFn(bool text)
 {
-	PluginButtonClicked();
+	PluginOpenPerfWindow();
 	return FReply::Handled();
 }
 
-void FOculusXREditorModule::PluginButtonClicked()
+void FOculusXREditorModule::PluginOpenPerfWindow()
 {
 	FGlobalTabmanager::Get()->TryInvokeTab(OculusPerfTabName);
+}
+
+void FOculusXREditorModule::PluginOpenPlatWindow()
+{
+	FGlobalTabmanager::Get()->TryInvokeTab(OculusPlatToolTabName);
 }
 
 void FOculusXREditorModule::AddMenuExtension(FMenuBuilder& Builder)
@@ -185,8 +201,7 @@ void FOculusXREditorModule::AddToolbarExtension(FToolBarBuilder& Builder)
 		TAttribute<FSlateIcon>::CreateLambda([]() {
 			return FSlateIcon(FOculusToolStyle::GetStyleSetName(), "OculusTool.MenuButton");
 		}),
-		false
-	);
+		false);
 }
 
 // Add the entries to the OculusXR Tools toolbar menu button
@@ -196,8 +211,11 @@ TSharedRef<SWidget> FOculusXREditorModule::CreateToolbarEntryMenu(TSharedPtr<cla
 	MenuBuilder.BeginSection("OculusXRBuilds", LOCTEXT("OculusXRBuilds", "Builds"));
 	MenuBuilder.AddMenuEntry(FOculusToolCommands::Get().ToggleDeploySo);
 	MenuBuilder.EndSection();
-	// If you want to make the tool even easier to launch, and add a toolbar button.
-	//MenuBuilder.AddMenuEntry(FOculusToolCommands::Get().OpenPluginWindow);
+
+	MenuBuilder.BeginSection("OculusXRTools", LOCTEXT("OculusXRTools", "Tools"));
+	MenuBuilder.AddMenuEntry(FOculusToolCommands::Get().OpenPluginWindow);
+	MenuBuilder.AddMenuEntry(FOculusToolCommands::Get().OpenPlatWindow);
+	MenuBuilder.EndSection();
 
 	return MenuBuilder.MakeWidget();
 }
@@ -223,33 +241,35 @@ void FOculusXRHMDSettingsDetailsCustomization::CustomizeDetails(IDetailLayoutBui
 {
 	// Labeled "General OculusXR" instead of "General" to enable searchability. The button "Launch Oculus Utilities Window" doesn't show up if you search for "Oculus"
 	IDetailCategoryBuilder& CategoryBuilder = DetailLayout.EditCategory("General Meta XR", FText::GetEmpty(), ECategoryPriority::Important);
+	/* clang-format off */
 	CategoryBuilder.AddCustomRow(LOCTEXT("General", "General"))
-		.WholeRowContent()
+	.WholeRowContent()
+	[
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot().AutoHeight().Padding(2)
 		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot().AutoHeight().Padding(2)
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().AutoWidth()
-						[
-							SNew(SButton)
-							.Text(LOCTEXT("LaunchTool", "Launch Meta XR Performance Window"))
-							.OnClicked(this, &FOculusXRHMDSettingsDetailsCustomization::PluginClickPerfFn, true)
-						]
-					+ SHorizontalBox::Slot().FillWidth(8)
-				]
-			+ SVerticalBox::Slot().AutoHeight().Padding(2)
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().AutoWidth()
-						[
-							SNew(SButton)
-							.Text(LOCTEXT("LaunchPlatTool", "Launch Meta XR Platform Window"))
-							.OnClicked(this, &FOculusXRHMDSettingsDetailsCustomization::PluginClickPlatFn, true)
-						]
-					+ SHorizontalBox::Slot().FillWidth(8)
-				]
-		];
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().AutoWidth()
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("LaunchTool", "Launch Meta XR Performance Window"))
+				.OnClicked(this, &FOculusXRHMDSettingsDetailsCustomization::PluginClickPerfFn, true)
+			]
+			+ SHorizontalBox::Slot().FillWidth(8)
+		]
+		+ SVerticalBox::Slot().AutoHeight().Padding(2)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().AutoWidth()
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("LaunchPlatTool", "Launch Meta XR Platform Window"))
+				.OnClicked(this, &FOculusXRHMDSettingsDetailsCustomization::PluginClickPlatFn, true)
+			]
+			+ SHorizontalBox::Slot().FillWidth(8)
+		]
+	];
+	/* clang-format on */
 }
 
 //////////////////////////////////////////////////////////////////////////

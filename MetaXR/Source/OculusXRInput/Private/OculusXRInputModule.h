@@ -7,7 +7,6 @@
 
 #define LOCTEXT_NAMESPACE "OculusXRInput"
 
-
 //-------------------------------------------------------------------------------------------------
 // FOculusXRInputModule
 //-------------------------------------------------------------------------------------------------
@@ -25,7 +24,7 @@ class FOculusXRInputModule : public IOculusXRInputModule
 
 	// IInputDeviceModule overrides
 	virtual void StartupModule() override;
-	virtual TSharedPtr< class IInputDevice > CreateInputDevice( const TSharedRef< FGenericApplicationMessageHandler >& InMessageHandler ) override;
+	virtual TSharedPtr<class IInputDevice> CreateInputDevice(const TSharedRef<FGenericApplicationMessageHandler>& InMessageHandler) override;
 
 	// IOculusXRInputModule overrides
 	virtual uint32 GetNumberOfTouchControllers() const override;
@@ -33,7 +32,7 @@ class FOculusXRInputModule : public IOculusXRInputModule
 	virtual TSharedPtr<IInputDevice> GetInputDevice() const override;
 };
 
-#else	//	OCULUS_INPUT_SUPPORTED_PLATFORMS
+#else //	OCULUS_INPUT_SUPPORTED_PLATFORMS
 
 class FOculusXRInputModule : public FDefaultModuleImpl
 {
@@ -48,7 +47,6 @@ class FOculusXRInputModule : public FDefaultModuleImpl
 	};
 };
 
-#endif	// OCULUS_INPUT_SUPPORTED_PLATFORMS
-
+#endif // OCULUS_INPUT_SUPPORTED_PLATFORMS
 
 #undef LOCTEXT_NAMESPACE

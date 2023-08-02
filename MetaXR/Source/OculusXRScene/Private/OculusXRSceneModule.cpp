@@ -9,22 +9,19 @@ DEFINE_LOG_CATEGORY(LogOculusXRScene);
 
 #define LOCTEXT_NAMESPACE "OculusXRScene"
 
-
 //-------------------------------------------------------------------------------------------------
 // FOculusXRSceneModule
 //-------------------------------------------------------------------------------------------------
 void FOculusXRSceneModule::StartupModule()
 {
-	
 }
 
 void FOculusXRSceneModule::ShutdownModule()
 {
-
 }
 
-#endif	// OCULUS_SCENE_SUPPORTED_PLATFORMS
+#endif // OCULUS_SCENE_SUPPORTED_PLATFORMS
 
-IMPLEMENT_MODULE( FOculusXRSceneModule, OculusXRScene )
+IMPLEMENT_MODULE(FOculusXRSceneModule, OculusXRScene)
 
 #undef LOCTEXT_NAMESPACE

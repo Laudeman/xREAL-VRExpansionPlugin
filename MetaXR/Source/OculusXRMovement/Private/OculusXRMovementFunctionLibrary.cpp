@@ -6,9 +6,13 @@ LICENSE file in the root directory of this source tree.
 */
 
 #include "OculusXRMovementFunctionLibrary.h"
+
+#include "IOculusXRMovementModule.h"
+#include "LiveLinkOculusXRMovementSourceFactory.h"
 #include "OculusXRHMDPrivate.h"
 #include "OculusXRMovement.h"
 #include "OculusXRHMD.h"
+#include "OculusXRMovementLiveLink.h"
 
 bool UOculusXRMovementFunctionLibrary::TryGetBodyState(FOculusXRBodyState& outBodyState, float WorldToMeters)
 {
@@ -24,6 +28,7 @@ bool UOculusXRMovementFunctionLibrary::IsBodyTrackingSupported()
 {
 	return OculusXRMovement::IsBodyTrackingSupported();
 }
+
 
 bool UOculusXRMovementFunctionLibrary::StartBodyTracking()
 {

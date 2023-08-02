@@ -9,7 +9,6 @@ LICENSE file in the root directory of this source tree.
 
 #include "CoreMinimal.h"
 #include "Components/SkeletalMeshComponent.h"
-
 #include "OculusXRMorphTargetsController.h"
 #include "OculusXRMovementTypes.h"
 

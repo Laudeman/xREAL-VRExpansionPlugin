@@ -6,7 +6,6 @@
 #include "Tickable.h"
 #include "OculusXRSceneCaptureCubemap.generated.h"
 
-
 //-------------------------------------------------------------------------------------------------
 // UOculusXRSceneCaptureCubemap
 //-------------------------------------------------------------------------------------------------
@@ -57,7 +56,6 @@ public:
 #endif // UE_BUILD_SHIPPING
 
 private:
-
 	enum EStage
 	{
 		None,
@@ -74,7 +72,7 @@ private:
 
 	FString OutputDir;
 
-	FVector OverriddenLocation;		// overridden location of the capture, world coordinates, UU
-	FQuat	OverriddenOrientation;	// overridden orientation of the capture. Full orientation is used (not only yaw, like with player's rotation).
-	FVector CaptureOffset;			// offset relative to current player's 0 location
+	FVector OverriddenLocation;	 // overridden location of the capture, world coordinates, UU
+	FQuat OverriddenOrientation; // overridden orientation of the capture. Full orientation is used (not only yaw, like with player's rotation).
+	FVector CaptureOffset;		 // offset relative to current player's 0 location
 };

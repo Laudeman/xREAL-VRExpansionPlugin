@@ -29,14 +29,14 @@ enum class SupportFlags : int
 typedef struct _SimpleSettingAction
 {
 	FText buttonText;
-	FReply(SOculusToolWidget::*ClickFunc)(bool);
+	FReply (SOculusToolWidget::*ClickFunc)(bool);
 } SimpleSettingAction;
 
 typedef struct _SimpleSetting
 {
 	FName tag;
 	FText description;
-	EVisibility(SOculusToolWidget::*VisFunc)(FName) const;
+	EVisibility (SOculusToolWidget::*VisFunc)(FName) const;
 	TArray<SimpleSettingAction> actions;
 	int supportMask; // bitfield of SupportFlags
 } SimpleSetting;
@@ -45,9 +45,9 @@ typedef struct _SimpleSetting
 class SOculusToolWidget : public SCompoundWidget
 {
 public:
-
 	SLATE_BEGIN_ARGS(SOculusToolWidget)
-	{}
+	{
+	}
 	SLATE_END_ARGS();
 
 	void Construct(const FArguments& InArgs);
@@ -128,8 +128,8 @@ protected:
 
 	FReply SelectLight(FString lightName);
 	FReply IgnoreLight(FString lightName);
-	
-	void OnShowButtonChanged( ECheckBoxState NewState );
+
+	void OnShowButtonChanged(ECheckBoxState NewState);
 	ECheckBoxState IsShowButtonChecked() const;
 
 	APostProcessVolume* PostProcessVolume;
@@ -137,7 +137,7 @@ protected:
 	TArray<TSharedPtr<FString>> Platforms;
 	TMap<FName, SimpleSetting> SimpleSettings;
 
-	TMap<FString, TWeakObjectPtr<ULightComponentBase> > DynamicLights;
+	TMap<FString, TWeakObjectPtr<ULightComponentBase>> DynamicLights;
 
 	TSharedPtr<SScrollBox> ScrollingContainer;
 

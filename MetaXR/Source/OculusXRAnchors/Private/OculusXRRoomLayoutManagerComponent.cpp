@@ -9,6 +9,10 @@ LICENSE file in the root directory of this source tree.
 #include "OculusXRHMD.h"
 #include "OculusXRRoomLayoutManager.h"
 #include "OculusXRAnchorDelegates.h"
+#include "OculusXRAnchorManager.h"
+#include "OculusXRAnchorBPFunctionLibrary.h"
+#include "ProceduralMeshComponent.h"
+#include "OculusXRAnchorsModule.h"
 
 UOculusXRRoomLayoutManagerComponent::UOculusXRRoomLayoutManagerComponent(const FObjectInitializer& ObjectInitializer)
 {
@@ -41,7 +45,7 @@ void UOculusXRRoomLayoutManagerComponent::UninitializeComponent()
 
 bool UOculusXRRoomLayoutManagerComponent::LaunchCaptureFlow()
 {
-	UE_LOG(LogOculusXRAnchors, Error, TEXT("Launch capture flow -- UOculusXRRoomLayoutManagerComponent"));
+	UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Launch capture flow -- UOculusXRRoomLayoutManagerComponent"));
 
 	uint64 OutRequest = 0;
 	const bool bSuccess = OculusXRAnchors::FOculusXRRoomLayoutManager::RequestSceneCapture(OutRequest);
@@ -50,8 +54,8 @@ bool UOculusXRRoomLayoutManagerComponent::LaunchCaptureFlow()
 		EntityRequestList.Add(OutRequest);
 	}
 
-	UE_LOG(LogOculusXRAnchors, Error, TEXT("Launch capture flow -- RequestSceneCapture -- %d"), bSuccess);
-	
+	UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Launch capture flow -- RequestSceneCapture -- %d"), bSuccess);
+
 	return bSuccess;
 }
 
@@ -71,15 +75,23 @@ bool UOculusXRRoomLayoutManagerComponent::GetRoomLayout(FOculusXRUInt64 Space, F
 	if (bSuccess)
 	{
 		RoomLayoutOut.CeilingUuid = OutCeilingUuid;
-		
 		RoomLayoutOut.FloorUuid = OutFloorUuid;
-
 		RoomLayoutOut.WallsUuid.InsertZeroed(0, OutWallsUuid.Num());
+
 		for (int32 i = 0; i < OutWallsUuid.Num(); ++i)
 		{
-			RoomLayoutOut.WallsUuid[i]= OutWallsUuid[i];
+			RoomLayoutOut.WallsUuid[i] = OutWallsUuid[i];
+		}
+
+		TArray<FOculusXRUUID> spaceUUIDs;
+		EOculusXRAnchorResult::Type result = OculusXRAnchors::FOculusXRAnchorManager::GetSpaceContainerUUIDs(Space, spaceUUIDs);
+
+		if (UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(result))
+		{
+			RoomLayoutOut.RoomObjectUUIDs = spaceUUIDs;
 		}
 	}
 
 	return bSuccess;
 }
+

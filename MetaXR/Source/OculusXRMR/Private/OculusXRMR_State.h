@@ -80,7 +80,8 @@ struct FOculusXRTrackedCamera
 		, UserOffset(EForceInit::ForceInitToZero)
 		, RawRotation_DEPRECATED(EForceInit::ForceInitToZero)
 		, RawOffset_DEPRECATED(EForceInit::ForceInitToZero)
-	{}
+	{
+	}
 };
 
 /**
@@ -92,7 +93,6 @@ class UOculusXRMR_State : public UObject
 	GENERATED_BODY()
 
 public:
-
 	UOculusXRMR_State(const FObjectInitializer& ObjectInitializer);
 
 	UPROPERTY()
@@ -105,8 +105,6 @@ public:
 	// A multiplier on the camera distance, should be based on the scaling of the player component
 	UPROPERTY()
 	double ScalingFactor;
-
-	ovrpCameraDevice CurrentCapturingCamera;
 
 	/** Flag indicating a change in the tracked camera state for the camera actor to consume */
 	UPROPERTY()

@@ -5,5 +5,4 @@
 
 class IOculusXROpenXRHMDPlugin : public IOpenXRExtensionPlugin, public IModuleInterface
 {
-	
 };

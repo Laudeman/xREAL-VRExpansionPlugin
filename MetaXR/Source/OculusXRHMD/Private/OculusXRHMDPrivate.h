@@ -14,12 +14,11 @@
 #define OCULUS_HMD_SUPPORTED_PLATFORMS_D3D11 PLATFORM_WINDOWS
 #define OCULUS_HMD_SUPPORTED_PLATFORMS_D3D12 PLATFORM_WINDOWS
 #define OCULUS_HMD_SUPPORTED_PLATFORMS_VULKAN (PLATFORM_WINDOWS || PLATFORM_ANDROID)
-#else 
+#else
 #define OCULUS_HMD_SUPPORTED_PLATFORMS_D3D11 0
 #define OCULUS_HMD_SUPPORTED_PLATFORMS_D3D12 0
 #define OCULUS_HMD_SUPPORTED_PLATFORMS_VULKAN 0
 #endif // OCULUS_HMD_SUPPORTED_PLATFORMS
-
 
 //-------------------------------------------------------------------------------------------------
 // OVRPlugin
@@ -44,21 +43,23 @@ namespace OculusXRHMD
 		FPose()
 			: Orientation(EForceInit::ForceInit)
 			, Position(EForceInit::ForceInit)
-		{}
+		{
+		}
 
-		FPose(const FQuat& InOrientation, const FVector& InPosition) : Orientation(InOrientation), Position(InPosition) {}
+		FPose(const FQuat& InOrientation, const FVector& InPosition)
+			: Orientation(InOrientation), Position(InPosition) {}
 
-        FPose Inverse() const
-        {
-            FQuat InvOrientation = Orientation.Inverse();
-            FVector InvPosition = InvOrientation.RotateVector(-Position);
-            return FPose(InvOrientation, InvPosition);
-        }
+		FPose Inverse() const
+		{
+			FQuat InvOrientation = Orientation.Inverse();
+			FVector InvPosition = InvOrientation.RotateVector(-Position);
+			return FPose(InvOrientation, InvPosition);
+		}
 
-        FPose operator*(const FPose& other) const
-        {
-            return FPose(Orientation * other.Orientation, Orientation.RotateVector(other.Position) + Position);
-        }
+		FPose operator*(const FPose& other) const
+		{
+			return FPose(Orientation * other.Orientation, Orientation.RotateVector(other.Position) + Position);
+		}
 	};
 
 	/** Converts ovrpQuatf to FQuat */
@@ -70,7 +71,7 @@ namespace OculusXRHMD
 	/** Converts FQuat to ovrpQuatf */
 	FORCEINLINE ovrpQuatf ToOvrpQuatf(const FQuat& InQuat)
 	{
-		return ovrpQuatf { static_cast<float>(InQuat.Y), static_cast<float>(InQuat.Z), static_cast<float>(-InQuat.X), static_cast<float>(-InQuat.W) };
+		return ovrpQuatf{ static_cast<float>(InQuat.Y), static_cast<float>(InQuat.Z), static_cast<float>(-InQuat.X), static_cast<float>(-InQuat.W) };
 	}
 
 	/** Converts vector from Oculus to Unreal */
@@ -82,7 +83,7 @@ namespace OculusXRHMD
 	/** Converts vector from Unreal to Oculus. */
 	FORCEINLINE ovrpVector3f ToOvrpVector3f(const FVector& InVec)
 	{
-		return ovrpVector3f { static_cast<float>(InVec.Y), static_cast<float>(InVec.Z), static_cast<float>(-InVec.X) };
+		return ovrpVector3f{ static_cast<float>(InVec.Y), static_cast<float>(InVec.Z), static_cast<float>(-InVec.X) };
 	}
 
 	FORCEINLINE FMatrix ToFMatrix(const ovrpMatrix4f& vtm)
@@ -102,12 +103,12 @@ namespace OculusXRHMD
 
 	FORCEINLINE ovrpRecti ToOvrpRecti(const FIntRect& rect)
 	{
-		return ovrpRecti { { rect.Min.X, rect.Min.Y }, { rect.Size().X, rect.Size().Y } };
+		return ovrpRecti{ { rect.Min.X, rect.Min.Y }, { rect.Size().X, rect.Size().Y } };
 	}
 
 	FORCEINLINE ovrpColorf ToOvrpColorf(const FLinearColor LinearColor)
 	{
-		return ovrpColorf { LinearColor.R, LinearColor.G , LinearColor.B, LinearColor.A };
+		return ovrpColorf{ LinearColor.R, LinearColor.G, LinearColor.B, LinearColor.A };
 	}
 
 	FORCEINLINE ovrpMatrix4f ToOvrpMatrix(FMatrix Matrix)
@@ -144,23 +145,23 @@ namespace OculusXRHMD
 
 		switch (Source)
 		{
-        case ovrpNode_None:
-            Destination = EOculusXRTrackedDeviceType::None;
-            break;
-		case ovrpNode_Head:
-			Destination = EOculusXRTrackedDeviceType::HMD;
-			break;
-		case ovrpNode_HandLeft:
-			Destination = EOculusXRTrackedDeviceType::LTouch;
-			break;
-		case ovrpNode_HandRight:
-			Destination = EOculusXRTrackedDeviceType::RTouch;
-			break;
-        case ovrpNode_DeviceObjectZero:
-            Destination = EOculusXRTrackedDeviceType::DeviceObjectZero;
-            break;
-		default:
-			break;
+			case ovrpNode_None:
+				Destination = EOculusXRTrackedDeviceType::None;
+				break;
+			case ovrpNode_Head:
+				Destination = EOculusXRTrackedDeviceType::HMD;
+				break;
+			case ovrpNode_HandLeft:
+				Destination = EOculusXRTrackedDeviceType::LTouch;
+				break;
+			case ovrpNode_HandRight:
+				Destination = EOculusXRTrackedDeviceType::RTouch;
+				break;
+			case ovrpNode_DeviceObjectZero:
+				Destination = EOculusXRTrackedDeviceType::DeviceObjectZero;
+				break;
+			default:
+				break;
 		}
 		return Destination;
 	}
@@ -172,23 +173,23 @@ namespace OculusXRHMD
 
 		switch (Source)
 		{
-        case EOculusXRTrackedDeviceType::None:
-            Destination = ovrpNode_None;
-            break;
-		case EOculusXRTrackedDeviceType::HMD:
-			Destination = ovrpNode_Head;
-			break;
-		case EOculusXRTrackedDeviceType::LTouch:
-			Destination = ovrpNode_HandLeft;
-			break;
-		case EOculusXRTrackedDeviceType::RTouch:
-			Destination = ovrpNode_HandRight;
-			break;
-        case EOculusXRTrackedDeviceType::DeviceObjectZero:
-            Destination = ovrpNode_DeviceObjectZero;
-            break;
-		default:
-			break;
+			case EOculusXRTrackedDeviceType::None:
+				Destination = ovrpNode_None;
+				break;
+			case EOculusXRTrackedDeviceType::HMD:
+				Destination = ovrpNode_Head;
+				break;
+			case EOculusXRTrackedDeviceType::LTouch:
+				Destination = ovrpNode_HandLeft;
+				break;
+			case EOculusXRTrackedDeviceType::RTouch:
+				Destination = ovrpNode_HandRight;
+				break;
+			case EOculusXRTrackedDeviceType::DeviceObjectZero:
+				Destination = ovrpNode_DeviceObjectZero;
+				break;
+			default:
+				break;
 		}
 		return Destination;
 	}
@@ -198,19 +199,19 @@ namespace OculusXRHMD
 		int32 ExternalDeviceId = INDEX_NONE;
 		switch (Source)
 		{
-		case ovrpNode_Head:
-			// required to be zero (see IXRTrackingSystem::HMDDeviceId)
-			ExternalDeviceId = 0;
-			break;
-		case ovrpNode_None:
-		case ovrpNode_Count:
-		case ovrpNode_EnumSize:
-			// ExternalDeviceId = INDEX_NONE;
-			break;
-		default:
-			// add one, in case the enum value is zero (conflicting with the HMD)
-			ExternalDeviceId = 1 + (int32)Source;
-			break;
+			case ovrpNode_Head:
+				// required to be zero (see IXRTrackingSystem::HMDDeviceId)
+				ExternalDeviceId = 0;
+				break;
+			case ovrpNode_None:
+			case ovrpNode_Count:
+			case ovrpNode_EnumSize:
+				// ExternalDeviceId = INDEX_NONE;
+				break;
+			default:
+				// add one, in case the enum value is zero (conflicting with the HMD)
+				ExternalDeviceId = 1 + (int32)Source;
+				break;
 		}
 		return ExternalDeviceId;
 	}
@@ -220,17 +221,17 @@ namespace OculusXRHMD
 		ovrpNode Destination = ovrpNode_None;
 		switch (ExternalDeviceId)
 		{
-		case 0:
-			// zero implies HMD (see ToExternalDeviceId/IXRTrackingSystem::HMDDeviceId)
-			Destination = ovrpNode_Head;
-			break;
-		case -1:
-			// Destination = ovrpNode_None;
-			break;
-		default:
-			// we added one to avoid collision with the HMD's ID (see ToExternalDeviceId)
-			Destination = ovrpNode(ExternalDeviceId - 1);
-			break;
+			case 0:
+				// zero implies HMD (see ToExternalDeviceId/IXRTrackingSystem::HMDDeviceId)
+				Destination = ovrpNode_Head;
+				break;
+			case -1:
+				// Destination = ovrpNode_None;
+				break;
+			default:
+				// we added one to avoid collision with the HMD's ID (see ToExternalDeviceId)
+				Destination = ovrpNode(ExternalDeviceId - 1);
+				break;
 		}
 		return Destination;
 	}
@@ -243,21 +244,24 @@ namespace OculusXRHMD
 
 	FORCEINLINE ovrpInsightPassthroughColorMapType ToOVRPColorMapType(EOculusXRColorMapType InColorMapType)
 	{
-		switch (InColorMapType) {
-		case ColorMapType_GrayscaleToColor:
-			return ovrpInsightPassthroughColorMapType_MonoToRgba;
-		case ColorMapType_Grayscale:
-			return ovrpInsightPassthroughColorMapType_MonoToMono;
-		case ColorMapType_ColorAdjustment:
-			return ovrpInsightPassthroughColorMapType_BrightnessContrastSaturation;
-		default:
-			return ovrpInsightPassthroughColorMapType_None;
+		switch (InColorMapType)
+		{
+			case ColorMapType_GrayscaleToColor:
+				return ovrpInsightPassthroughColorMapType_MonoToRgba;
+			case ColorMapType_Grayscale:
+				return ovrpInsightPassthroughColorMapType_MonoToMono;
+			case ColorMapType_ColorAdjustment:
+				return ovrpInsightPassthroughColorMapType_BrightnessContrastSaturation;
+			case ColorMapType_ColorLut:
+				return ovrpInsightPassthroughColorMapType_ColorLut;
+			case ColorMapType_ColorLut_Interpolated:
+				return ovrpInsightPassthroughColorMapType_InterpolatedColorLut;
+			default:
+				return ovrpInsightPassthroughColorMapType_None;
 		}
 	}
 
-
 #endif // OCULUS_HMD_SUPPORTED_PLATFORMS
-
 
 	/** Check currently executing from Game thread */
 	OCULUSXRHMD_API bool InGameThread();
@@ -269,7 +273,6 @@ namespace OculusXRHMD
 #endif
 	}
 
-
 	/** Check currently executing from Render thread */
 	OCULUSXRHMD_API bool InRenderThread();
 
@@ -279,7 +282,6 @@ namespace OculusXRHMD
 		check(InRenderThread());
 #endif
 	}
-
 
 	/** Check currently executing from RHI thread */
 	OCULUSXRHMD_API bool InRHIThread();

@@ -8,7 +8,6 @@
 
 #define LOCTEXT_NAMESPACE "OculusXRInput"
 
-
 //-------------------------------------------------------------------------------------------------
 // FOculusXRInputModule
 //-------------------------------------------------------------------------------------------------
@@ -19,14 +18,13 @@ void FOculusXRInputModule::StartupModule()
 	OculusXRInput::FOculusXRInput::PreInit();
 }
 
-
-TSharedPtr< class IInputDevice > FOculusXRInputModule::CreateInputDevice( const TSharedRef< FGenericApplicationMessageHandler >& InMessageHandler )
+TSharedPtr<class IInputDevice> FOculusXRInputModule::CreateInputDevice(const TSharedRef<FGenericApplicationMessageHandler>& InMessageHandler)
 {
 	if (IOculusXRHMDModule::IsAvailable())
 	{
 		if (FOculusXRHMDModule::Get().PreInit())
 		{
-			TSharedPtr< OculusXRInput::FOculusXRInput > InputDevice(new OculusXRInput::FOculusXRInput(InMessageHandler));
+			TSharedPtr<OculusXRInput::FOculusXRInput> InputDevice(new OculusXRInput::FOculusXRInput(InMessageHandler));
 			OculusXRInputDevice = InputDevice;
 			return InputDevice;
 		}
@@ -36,7 +34,7 @@ TSharedPtr< class IInputDevice > FOculusXRInputModule::CreateInputDevice( const 
 	{
 		UE_LOG(LogOcInput, Warning, TEXT("OculusXRInput plugin enabled, but OculusXRHMD plugin is not available."));
 	}
-	return nullptr;		
+	return nullptr;
 }
 
 uint32 FOculusXRInputModule::GetNumberOfTouchControllers() const
@@ -66,9 +64,8 @@ TSharedPtr<IInputDevice> FOculusXRInputModule::GetInputDevice() const
 	return NULL;
 }
 
+#endif // OCULUS_INPUT_SUPPORTED_PLATFORMS
 
-#endif	// OCULUS_INPUT_SUPPORTED_PLATFORMS
-
-IMPLEMENT_MODULE( FOculusXRInputModule, OculusXRInput )
+IMPLEMENT_MODULE(FOculusXRInputModule, OculusXRInput)
 
 #undef LOCTEXT_NAMESPACE

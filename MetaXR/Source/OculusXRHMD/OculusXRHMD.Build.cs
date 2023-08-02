@@ -25,7 +25,7 @@ namespace UnrealBuildTool.Rules
 					"Launch",
 					"ProceduralMeshComponent",
 					"AndroidPermission"
-				});			
+				});
 
 			PrivateDependencyModuleNames.AddRange(
 				new string[]

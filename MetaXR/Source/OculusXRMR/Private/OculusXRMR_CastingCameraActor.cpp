@@ -25,19 +25,17 @@
 #include "VRNotificationsComponent.h"
 #include "RenderUtils.h"
 #include "AudioDevice.h"
+#include "Materials/Material.h"
+#include "RHIDefinitions.h"
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 2) || ENGINE_MAJOR_VERSION > 5
+#include "DataDrivenShaderPlatformInfo.h"
+#endif
 
 #define LOCTEXT_NAMESPACE "OculusXRMR_CastingCameraActor"
 
 // Possibly add 2=Limited in a future update
-static TAutoConsoleVariable<int32> CEnableExternalCompositionPostProcess(TEXT("oculus.mr.ExternalCompositionPostProcess"), 0, TEXT("Enable MR external composition post process: 0=Off, 1=On")); 
+static TAutoConsoleVariable<int32> CEnableExternalCompositionPostProcess(TEXT("oculus.mr.ExternalCompositionPostProcess"), 0, TEXT("Enable MR external composition post process: 0=Off, 1=On"));
 static TAutoConsoleVariable<int32> COverrideMixedRealityParametersVar(TEXT("oculus.mr.OverrideParameters"), 0, TEXT("Use the Mixed Reality console variables"));
-static TAutoConsoleVariable<int32> CChromaKeyColorRVar(TEXT("oculus.mr.ChromaKeyColor_R"), 0, TEXT("Chroma Key Color R"));
-static TAutoConsoleVariable<int32> CChromaKeyColorGVar(TEXT("oculus.mr.ChromaKeyColor_G"), 255, TEXT("Chroma Key Color G"));
-static TAutoConsoleVariable<int32> CChromaKeyColorBVar(TEXT("oculus.mr.ChromaKeyColor_B"), 0, TEXT("Chroma Key Color B"));
-static TAutoConsoleVariable<float> CChromaKeySimilarityVar(TEXT("oculus.mr.ChromaKeySimilarity"), 0.6f, TEXT("Chroma Key Similarity"));
-static TAutoConsoleVariable<float> CChromaKeySmoothRangeVar(TEXT("oculus.mr.ChromaKeySmoothRange"), 0.03f, TEXT("Chroma Key Smooth Range"));
-static TAutoConsoleVariable<float> CChromaKeySpillRangeVar(TEXT("oculus.mr.ChromaKeySpillRange"), 0.04f, TEXT("Chroma Key Spill Range"));
-static TAutoConsoleVariable<float> CCastingLantencyVar(TEXT("oculus.mr.CastingLantency"), 0, TEXT("Casting Latency"));
 
 namespace
 {
@@ -86,16 +84,13 @@ namespace
 
 		return true;
 	}
-}
+} // namespace
 
 //////////////////////////////////////////////////////////////////////////
 // ACastingCameraActor
 
 AOculusXRMR_CastingCameraActor::AOculusXRMR_CastingCameraActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, ChromaKeyMaterial(NULL)
-	, ChromaKeyMaterialInstance(NULL)
-	, CameraFrameMaterialInstance(NULL)
 	, TrackedCameraCalibrationRequired(false)
 	, HasTrackedCameraCalibrationCalibrated(false)
 	, RefreshBoundaryMeshCounter(3)
@@ -113,12 +108,6 @@ AOculusXRMR_CastingCameraActor::AOculusXRMR_CastingCameraActor(const FObjectInit
 	PlaneMeshComponent->ResetRelativeTransform();
 	PlaneMeshComponent->SetVisibility(false);
 #endif
-
-	ChromaKeyMaterial = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), NULL, TEXT("/OculusXR/Materials/OculusMR_ChromaKey")));
-	if (!ChromaKeyMaterial)
-	{
-		UE_LOG(LogMR, Warning, TEXT("Invalid ChromaKeyMaterial"));
-	}
 
 	OpaqueColoredMaterial = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), NULL, TEXT("/OculusXR/Materials/OculusMR_OpaqueColoredMaterial")));
 	if (!OpaqueColoredMaterial)
@@ -282,15 +271,6 @@ void AOculusXRMR_CastingCameraActor::Tick(float DeltaTime)
 		return;
 	}
 
-	if (COverrideMixedRealityParametersVar.GetValueOnAnyThread() > 0)
-	{
-		MRSettings->ChromaKeyColor = FColor(CChromaKeyColorRVar.GetValueOnAnyThread(), CChromaKeyColorGVar.GetValueOnAnyThread(), CChromaKeyColorBVar.GetValueOnAnyThread());
-		MRSettings->ChromaKeySimilarity = CChromaKeySimilarityVar.GetValueOnAnyThread();
-		MRSettings->ChromaKeySmoothRange = CChromaKeySmoothRangeVar.GetValueOnAnyThread();
-		MRSettings->ChromaKeySpillRange = CChromaKeySpillRangeVar.GetValueOnAnyThread();
-		MRSettings->CastingLatency = CCastingLantencyVar.GetValueOnAnyThread();
-	}
-
 	// Reset capturing components if the composition method changes
 	if (MRState->ChangeCameraStateRequested)
 	{
@@ -321,35 +301,6 @@ void AOculusXRMR_CastingCameraActor::Tick(float DeltaTime)
 			ForegroundCaptureActor->GetCaptureComponent2D()->ShowFlags.PostProcessing = bPostProcess;
 		}
 	}
-#if PLATFORM_WINDOWS
-	else if (MRSettings->GetCompositionMethod() == EOculusXRMR_CompositionMethod::DirectComposition)
-	{
-		SetupCameraFrameMaterialInstance();
-
-		if (CameraFrameMaterialInstance)
-		{
-			CameraFrameMaterialInstance->SetVectorParameterValue(FName(TEXT("ChromaKeyColor")), FLinearColor(MRSettings->ChromaKeyColor));
-			CameraFrameMaterialInstance->SetScalarParameterValue(FName(TEXT("ChromaKeySimilarity")), MRSettings->ChromaKeySimilarity);
-			CameraFrameMaterialInstance->SetScalarParameterValue(FName(TEXT("ChromaKeySmoothRange")), MRSettings->ChromaKeySmoothRange);
-			CameraFrameMaterialInstance->SetScalarParameterValue(FName(TEXT("ChromaKeySpillRange")), MRSettings->ChromaKeySpillRange);
-		}
-	}
-#endif
-
-	if (MRState->CurrentCapturingCamera != ovrpCameraDevice_None)
-	{
-		ovrpBool colorFrameAvailable = ovrpBool_False;
-		ovrpSizei colorFrameSize = { 0, 0 };
-		const ovrpByte* colorFrameData = nullptr;
-		int colorRowPitch = 0;
-
-		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().IsCameraDeviceColorFrameAvailable2(MRState->CurrentCapturingCamera, &colorFrameAvailable)) && colorFrameAvailable &&
-			OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetCameraDeviceColorFrameSize(MRState->CurrentCapturingCamera, &colorFrameSize)) &&
-			OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetCameraDeviceColorFrameBgraPixels(MRState->CurrentCapturingCamera, &colorFrameData, &colorRowPitch)))
-		{
-			UpdateCameraColorTexture(colorFrameSize, colorFrameData, colorRowPitch);
-		}
-	}
 
 	if (TrackedCameraCalibrationRequired)
 	{
@@ -360,13 +311,6 @@ void AOculusXRMR_CastingCameraActor::Tick(float DeltaTime)
 
 #if PLATFORM_WINDOWS
 	RepositionPlaneMesh();
-
-	double HandPoseStateLatencyToSet = (double)MRSettings->HandPoseStateLatency;
-	ovrpResult result = FOculusXRHMDModule::GetPluginWrapper().SetHandNodePoseStateLatency(HandPoseStateLatencyToSet);
-	if (OVRP_FAILURE(result))
-	{
-		UE_LOG(LogMR, Warning, TEXT("FOculusXRHMDModule::GetPluginWrapper().SetHandNodePoseStateLatency(%f) failed, result %d"), HandPoseStateLatencyToSet, (int)result);
-	}
 #endif
 
 	UpdateRenderTargetSize();
@@ -419,10 +363,8 @@ void AOculusXRMR_CastingCameraActor::Tick(float DeltaTime)
 
 			if (IsVulkanPlatform(GMaxRHIShaderPlatform))
 			{
-				ExecuteOnRenderThread([this, EncodeIndex, &BackgroundTexture, &ForegroundTexture]()
-				{
-					ExecuteOnRHIThread([this, EncodeIndex, &BackgroundTexture, &ForegroundTexture]()
-					{
+				ExecuteOnRenderThread([this, EncodeIndex, &BackgroundTexture, &ForegroundTexture]() {
+					ExecuteOnRHIThread([this, EncodeIndex, &BackgroundTexture, &ForegroundTexture]() {
 						// The Vulkan RHI's implementation of GetNativeResource is different and returns the VkImage cast
 						// as a void* instead of a pointer to the VkImage, so we need this workaround
 						BackgroundTexture = (void*)BackgroundRenderTargets[EncodeIndex]->GetResource()->TextureRHI->GetNativeResource();
@@ -432,10 +374,8 @@ void AOculusXRMR_CastingCameraActor::Tick(float DeltaTime)
 			}
 			else
 			{
-				ExecuteOnRenderThread([this, EncodeIndex, &BackgroundTexture, &ForegroundTexture]()
-				{
-					ExecuteOnRHIThread([this, EncodeIndex, &BackgroundTexture, &ForegroundTexture]()
-					{
+				ExecuteOnRenderThread([this, EncodeIndex, &BackgroundTexture, &ForegroundTexture]() {
+					ExecuteOnRHIThread([this, EncodeIndex, &BackgroundTexture, &ForegroundTexture]() {
 						BackgroundTexture = *((void**)BackgroundRenderTargets[EncodeIndex]->GetResource()->TextureRHI->GetNativeResource());
 						ForegroundTexture = *((void**)ForegroundRenderTargets[EncodeIndex]->GetResource()->TextureRHI->GetNativeResource());
 					});
@@ -476,63 +416,6 @@ void AOculusXRMR_CastingCameraActor::Tick(float DeltaTime)
 		}
 	}
 #endif
-}
-
-void AOculusXRMR_CastingCameraActor::UpdateCameraColorTexture(const ovrpSizei &frameSize, const ovrpByte* frameData, int rowPitch)
-{
-	if (CameraColorTexture->GetSizeX() != frameSize.w || CameraColorTexture->GetSizeY() != frameSize.h)
-	{
-		UE_LOG(LogMR, Log, TEXT("CameraColorTexture resize to (%d, %d)"), frameSize.w, frameSize.h);
-		CameraColorTexture = UTexture2D::CreateTransient(frameSize.w, frameSize.h);
-		CameraColorTexture->UpdateResource();
-		if (CameraFrameMaterialInstance)
-		{
-			CameraFrameMaterialInstance->SetTextureParameterValue(FName(TEXT("CameraCaptureTexture")), CameraColorTexture);
-			CameraFrameMaterialInstance->SetVectorParameterValue(FName(TEXT("CameraCaptureTextureSize")),
-				FLinearColor((float)CameraColorTexture->GetSizeX(), (float)CameraColorTexture->GetSizeY(), 1.0f / FMath::Max<int32>(1, CameraColorTexture->GetSizeX()), 1.0f / FMath::Max<int32>(1, CameraColorTexture->GetSizeY())));
-		}
-	}
-	uint32 Pitch = rowPitch;
-	uint32 DataSize = frameSize.h * Pitch;
-	uint8* SrcData = (uint8*)FMemory::Malloc(DataSize);
-	FMemory::Memcpy(SrcData, frameData, DataSize);
-
-	struct FUploadCameraTextureContext
-	{
-		uint8* CameraBuffer;	// Render thread assumes ownership
-		uint32 CameraBufferPitch;
-		FTexture2DResource* DestTextureResource;
-		uint32 FrameWidth;
-		uint32 FrameHeight;
-	} Context =
-	{
-		SrcData,
-		Pitch,
-		(FTexture2DResource*)CameraColorTexture->GetResource(),
-		(uint32) frameSize.w,
-		(uint32) frameSize.h
-	};
-
-	ENQUEUE_RENDER_COMMAND(UpdateCameraColorTexture)(
-		[Context](FRHICommandListImmediate& RHICmdList)
-		{
-			const FUpdateTextureRegion2D UpdateRegion(
-				0, 0,		// Dest X, Y
-				0, 0,		// Source X, Y
-				Context.FrameWidth,	    // Width
-				Context.FrameHeight	    // Height
-			);
-
-			RHIUpdateTexture2D(
-				Context.DestTextureResource->GetTexture2DRHI(),	// Destination GPU texture
-				0,												// Mip map index
-				UpdateRegion,									// Update region
-				Context.CameraBufferPitch,						// Source buffer pitch
-				Context.CameraBuffer);							// Source buffer pointer
-
-			FMemory::Free(Context.CameraBuffer);
-		}
-	);
 }
 
 void AOculusXRMR_CastingCameraActor::Execute_BindToTrackedCameraIndexIfAvailable()
@@ -631,7 +514,6 @@ void AOculusXRMR_CastingCameraActor::SetTrackedCameraInitialPoseWithPlayerTransf
 		ForegroundCaptureActor->GetCaptureComponent2D()->FOVAngle = MRState->TrackedCamera.FieldOfView;
 	}
 }
-
 
 void AOculusXRMR_CastingCameraActor::SetTrackedCameraUserPoseWithCameraTransform()
 {
@@ -767,51 +649,13 @@ void AOculusXRMR_CastingCameraActor::SetupTrackedCamera()
 	MRState->ChangeCameraStateRequested = false;
 
 #if PLATFORM_WINDOWS
-	// Set the plane mesh to the camera stream in direct composition or static background for external composition
-	if (MRSettings->GetCompositionMethod() == EOculusXRMR_CompositionMethod::DirectComposition)
-	{
-		ovrpBool cameraOpen;
-		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().HasCameraDeviceOpened2(MRState->CurrentCapturingCamera, &cameraOpen)) && cameraOpen)
-		{
-			UE_LOG(LogMR, Log, TEXT("Create CameraColorTexture (1280x720)"));
-			CameraColorTexture = UTexture2D::CreateTransient(1280, 720);
-			CameraColorTexture->UpdateResource();
-			CameraDepthTexture = DefaultTexture_White;
-		}
-		else
-		{
-			MRState->CurrentCapturingCamera = ovrpCameraDevice_None;
-			UE_LOG(LogMR, Error, TEXT("Unable to open CapturingCamera"));
-			return;
-		}
-
-		SetupCameraFrameMaterialInstance();
-	}
-	else if (MRSettings->GetCompositionMethod() == EOculusXRMR_CompositionMethod::ExternalComposition)
+	if (MRSettings->GetCompositionMethod() == EOculusXRMR_CompositionMethod::ExternalComposition)
 	{
 		SetupBackdropMaterialInstance();
 	}
 
 	RepositionPlaneMesh();
 #endif
-}
-
-void AOculusXRMR_CastingCameraActor::SetupCameraFrameMaterialInstance()
-{
-	if (!ChromaKeyMaterialInstance && ChromaKeyMaterial)
-	{
-		ChromaKeyMaterialInstance = UMaterialInstanceDynamic::Create(ChromaKeyMaterial, this);
-	}
-	CameraFrameMaterialInstance = ChromaKeyMaterialInstance;
-
-	PlaneMeshComponent->SetMaterial(0, CameraFrameMaterialInstance);
-
-	if (CameraFrameMaterialInstance && CameraColorTexture)
-	{
-		CameraFrameMaterialInstance->SetTextureParameterValue(FName(TEXT("CameraCaptureTexture")), CameraColorTexture);
-		CameraFrameMaterialInstance->SetVectorParameterValue(FName(TEXT("CameraCaptureTextureSize")),
-			FLinearColor((float)CameraColorTexture->GetSizeX(), (float)CameraColorTexture->GetSizeY(), 1.0f / FMath::Max<int32>(1, CameraColorTexture->GetSizeX()), 1.0f / FMath::Max<int32>(1, CameraColorTexture->GetSizeY())));
-	}
 }
 
 void AOculusXRMR_CastingCameraActor::SetBackdropMaterialColor()
@@ -876,8 +720,7 @@ void BuildProjectionMatrix(float YMultiplier, float FOV, float FarClipPlane, FMa
 			1.0f,
 			YMultiplier,
 			GNearClippingPlane,
-			FarClipPlane
-		);
+			FarClipPlane);
 	}
 	else
 	{
@@ -887,8 +730,7 @@ void BuildProjectionMatrix(float YMultiplier, float FOV, float FarClipPlane, FMa
 			1.0f,
 			YMultiplier,
 			GNearClippingPlane,
-			FarClipPlane
-		);
+			FarClipPlane);
 	}
 }
 
@@ -944,7 +786,8 @@ void AOculusXRMR_CastingCameraActor::SetupMRCScreen()
 	{
 		SpecScreen = (OculusXRHMD::FSpectatorScreenController*)HMD->GetSpectatorScreenController();
 	}
-	if (SpecScreen) {
+	if (SpecScreen)
+	{
 #endif
 		UpdateRenderTargetSize();
 
@@ -984,19 +827,6 @@ void AOculusXRMR_CastingCameraActor::SetupMRCScreen()
 			ForegroundCaptureActor->AttachToActor(this, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
 		}
 #if PLATFORM_WINDOWS
-		else if (MRSettings->GetCompositionMethod() == EOculusXRMR_CompositionMethod::DirectComposition)
-		{
-			SpecScreen->SetMRBackground(BackgroundRenderTargets[0]);
-			SpecScreen->SetMRSpectatorScreenMode(OculusXRHMD::EMRSpectatorScreenMode::DirectComposition);
-			// Set the plane mesh to only render to MRC capture target
-			PlaneMeshComponent->SetPlaneRenderTarget(BackgroundRenderTargets[0]);
-
-			if (ForegroundCaptureActor)
-			{
-				ForegroundCaptureActor->Destroy();
-				ForegroundCaptureActor = nullptr;
-			}
-		}
 	}
 	else
 	{
@@ -1015,7 +845,8 @@ void AOculusXRMR_CastingCameraActor::CloseMRCScreen()
 		SpecScreen = (OculusXRHMD::FSpectatorScreenController*)HMD->GetSpectatorScreenController();
 	}
 	// Restore original spectator screen mode
-	if (SpecScreen) {
+	if (SpecScreen)
+	{
 		SpecScreen->SetMRSpectatorScreenMode(OculusXRHMD::EMRSpectatorScreenMode::Default);
 		SpecScreen->SetMRForeground(nullptr);
 		SpecScreen->SetMRBackground(nullptr);
@@ -1030,10 +861,10 @@ void AOculusXRMR_CastingCameraActor::CloseMRCScreen()
 
 void AOculusXRMR_CastingCameraActor::CloseTrackedCamera()
 {
-	if (PlaneMeshComponent) {
+	if (PlaneMeshComponent)
+	{
 		PlaneMeshComponent->SetVisibility(false);
 	}
-	CameraFrameMaterialInstance = NULL;
 }
 
 #undef LOCTEXT_NAMESPACE

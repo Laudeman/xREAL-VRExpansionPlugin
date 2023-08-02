@@ -5,7 +5,6 @@
 
 #define OCULUS_ANCHORS_SUPPORTED_PLATFORMS (PLATFORM_WINDOWS && WINVER > 0x0502) || (PLATFORM_ANDROID_ARM || PLATFORM_ANDROID_ARM64)
 
-
 /**
  * The public interface to this module.  In most cases, this interface is only public to sibling modules 
  * within this plugin.
@@ -14,7 +13,6 @@ class IOculusXRAnchorsModule : public IModuleInterface
 {
 
 public:
-
 	/**
 	 * Singleton-like access to this module's interface.  This is just for convenience!
 	 * Beware of calling this during the shutdown phase, though.  Your module might have been unloaded already.
@@ -23,7 +21,7 @@ public:
 	 */
 	static inline IOculusXRAnchorsModule& Get()
 	{
-		return FModuleManager::LoadModuleChecked< IOculusXRAnchorsModule >( "OculusXRAnchors" );
+		return FModuleManager::LoadModuleChecked<IOculusXRAnchorsModule>("OculusXRAnchors");
 	}
 
 	/**
@@ -33,7 +31,6 @@ public:
 	 */
 	static inline bool IsAvailable()
 	{
-		return FModuleManager::Get().IsModuleLoaded( "OculusXRAnchors" );
+		return FModuleManager::Get().IsModuleLoaded("OculusXRAnchors");
 	}
 };
-

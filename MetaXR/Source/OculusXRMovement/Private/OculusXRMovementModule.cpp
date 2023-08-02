@@ -29,6 +29,33 @@ void FOculusXRMovementModule::ShutdownModule()
 {
 }
 
+TSharedPtr<ILiveLinkSource> FOculusXRMovementModule::GetLiveLinkSource()
+{
+	if (!MovementSource.IsValid())
+	{
+		AddLiveLinkSource();
+	}
+	return MovementSource;
+}
+
+bool FOculusXRMovementModule::IsLiveLinkSourceValid() const
+{
+	return MovementSource.IsValid();
+}
+
+void FOculusXRMovementModule::AddLiveLinkSource()
+{
+	if (!MovementSource.IsValid())
+	{
+		MovementSource = MakeShared<MetaXRMovement::LiveLinkSource>();
+	}
+}
+
+void FOculusXRMovementModule::RemoveLiveLinkSource()
+{
+	MovementSource.Reset();
+}
+
 IMPLEMENT_MODULE(FOculusXRMovementModule, OculusXRMovement)
 
 #undef LOCTEXT_NAMESPACE

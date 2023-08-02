@@ -10,7 +10,7 @@ LICENSE file in the root directory of this source tree.
 #include "Modules/ModuleManager.h"
 
 /**
- * The public interface to this module.  In most cases, this interface is only public to sibling modules 
+ * The public interface to this module.  In most cases, this interface is only public to sibling modules
  * within this plugin.
  */
 class IOculusXRMovementModule : public IModuleInterface
@@ -37,4 +37,28 @@ public:
 	{
 		return FModuleManager::Get().IsModuleLoaded("OculusXRMovement");
 	}
+
+	/**
+	* Returns the LiveLinkSource associated with this IOculusXRMovementModule.
+	*
+	* @return Shared pointer to the Meta MovementSDK source.
+	*/
+	virtual TSharedPtr<class ILiveLinkSource> GetLiveLinkSource() = 0;
+
+	/**
+	 * Checks if the LiveLinkSource has been created.
+	 *
+	 * @return True if the LiveLinkSource has been created with GetLiveLinkSource or AddLiveLinkSource.
+	 */
+	virtual bool IsLiveLinkSourceValid() const = 0;
+
+	/**
+	 * Make sure Meta MovementSDK Live Link source exist.
+	 */
+	virtual void AddLiveLinkSource() = 0;
+
+	/**
+	 * Destroy Meta MovementSDK Live Link source.
+	 */
+	virtual void RemoveLiveLinkSource() = 0;
 };

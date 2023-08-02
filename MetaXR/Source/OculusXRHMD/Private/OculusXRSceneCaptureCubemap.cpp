@@ -14,6 +14,7 @@
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
 #include "XRThreadUtils.h"
+#include "RenderingThread.h"
 
 //-------------------------------------------------------------------------------------------------
 // UOculusXRSceneCaptureCubemap
@@ -35,7 +36,7 @@ void UOculusXRSceneCaptureCubemap::StartCapture(UWorld* World, uint32 InCaptureB
 	CaptureFormat = InFormat;
 
 	FVector Location = OverriddenLocation;
-	FQuat Orientation= OverriddenOrientation;
+	FQuat Orientation = OverriddenOrientation;
 
 	APlayerController* CapturePlayerController = UGameplayStatics::GetPlayerController(GWorld, 0);
 	if (CapturePlayerController)
@@ -59,9 +60,9 @@ void UOculusXRSceneCaptureCubemap::StartCapture(UWorld* World, uint32 InCaptureB
 
 	const FVector ZAxis(0, 0, 1);
 	const FVector YAxis(0, 1, 0);
-	const FQuat FaceOrientations[]= {	{ZAxis, PI/2}, { ZAxis, -PI/2},	// right, left
-										{YAxis, -PI/2}, { YAxis, PI/2},	// top, bottom
-										{ZAxis, 0},    { ZAxis, -PI} }; // front, back
+	const FQuat FaceOrientations[] = { { ZAxis, PI / 2 }, { ZAxis, -PI / 2 }, // right, left
+		{ YAxis, -PI / 2 }, { YAxis, PI / 2 },								  // top, bottom
+		{ ZAxis, 0 }, { ZAxis, -PI } };										  // front, back
 
 	for (int i = 0; i < 6; ++i)
 	{
@@ -100,8 +101,7 @@ void UOculusXRSceneCaptureCubemap::StartCapture(UWorld* World, uint32 InCaptureB
 
 void UOculusXRSceneCaptureCubemap::Tick(float DeltaTime)
 {
-	ExecuteOnRenderThread([]()
-	{
+	ExecuteOnRenderThread([]() {
 		TickRenderingTickables();
 	});
 
@@ -132,7 +132,7 @@ void UOculusXRSceneCaptureCubemap::Tick(float DeltaTime)
 
 		// copy subimage into whole cubemap array
 		const uint32 Stride = CaptureBoxSideRes * 6;
-		const uint32 XOff = cubeFaceIdx*CaptureBoxSideRes;
+		const uint32 XOff = cubeFaceIdx * CaptureBoxSideRes;
 		const uint32 StripSizeInBytes = CaptureBoxSideRes * sizeof(FColor);
 		for (uint32 y = 0; y < CaptureBoxSideRes; ++y)
 		{
@@ -147,7 +147,7 @@ void UOculusXRSceneCaptureCubemap::Tick(float DeltaTime)
 
 	FFileHelper::SaveArrayToFile(PNGData, *Filename);
 
-	check (Stage == Capturing);
+	check(Stage == Capturing);
 	Stage = Finished;
 	for (int i = 0; i < CaptureComponents.Num(); ++i)
 	{
@@ -156,7 +156,6 @@ void UOculusXRSceneCaptureCubemap::Tick(float DeltaTime)
 	CaptureComponents.SetNum(0);
 	RemoveFromRoot(); // We're done here, so remove ourselves from the root set. @TODO: Fix this later
 }
-
 
 #if !UE_BUILD_SHIPPING
 void UOculusXRSceneCaptureCubemap::CaptureCubemapCommandHandler(const TArray<FString>& Args, UWorld* World, FOutputDevice& Ar)
@@ -177,7 +176,7 @@ void UOculusXRSceneCaptureCubemap::CaptureCubemapCommandHandler(const TArray<FSt
 		}
 	}
 
-	UOculusXRSceneCaptureCubemap*	CubemapCapturer = NewObject<UOculusXRSceneCaptureCubemap>();
+	UOculusXRSceneCaptureCubemap* CubemapCapturer = NewObject<UOculusXRSceneCaptureCubemap>();
 	CubemapCapturer->AddToRoot(); // TODO: Don't add the object to the GC root
 	CubemapCapturer->SetOffset((FVector)CaptureOffset);
 	if (Yaw != 0.f)

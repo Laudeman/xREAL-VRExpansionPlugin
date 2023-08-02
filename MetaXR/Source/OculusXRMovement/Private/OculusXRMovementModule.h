@@ -6,8 +6,11 @@ LICENSE file in the root directory of this source tree.
 */
 
 #pragma once
+#include "ILiveLinkSource.h"
+
 #include "IOculusXRMovementModule.h"
 #include "OculusXRMovement.h"
+#include "OculusXRMovementLiveLink.h"
 
 #define LOCTEXT_NAMESPACE "OculusXRMovement"
 
@@ -27,6 +30,15 @@ public:
 
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
+
+	/* Live link */
+	virtual TSharedPtr<ILiveLinkSource> GetLiveLinkSource() override;
+	virtual bool IsLiveLinkSourceValid() const override;
+	virtual void AddLiveLinkSource() override;
+	virtual void RemoveLiveLinkSource() override;
+
+private:
+	TSharedPtr<MetaXRMovement::LiveLinkSource> MovementSource{ nullptr };
 };
 
 #undef LOCTEXT_NAMESPACE

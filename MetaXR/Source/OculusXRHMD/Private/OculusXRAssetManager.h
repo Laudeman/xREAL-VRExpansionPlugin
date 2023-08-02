@@ -18,7 +18,7 @@ public:
 public:
 	UOculusXRResourceHolder* GetResourceHolder() { return ResourceHolder; }
 
-	//~ IXRSystemAssets interface 
+	//~ IXRSystemAssets interface
 
 	virtual bool EnumerateRenderableDevices(TArray<int32>& DeviceListOut) override;
 	virtual int32 GetDeviceId(EControllerHand ControllerHand) override;

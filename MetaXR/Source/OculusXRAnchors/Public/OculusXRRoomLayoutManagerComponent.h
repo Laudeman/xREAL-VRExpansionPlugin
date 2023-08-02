@@ -21,6 +21,7 @@ struct OCULUSXRANCHORS_API FOculusXRRoomLayout
 	FOculusXRUUID FloorUuid;
 	FOculusXRUUID CeilingUuid;
 	TArray<FOculusXRUUID> WallsUuid;
+	TArray<FOculusXRUUID> RoomObjectUUIDs;
 };
 
 UCLASS(meta = (DisplayName = "OculusXR Room Layout Manager Component", BlueprintSpawnableComponent))
@@ -44,7 +45,7 @@ public:
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FOculusXRRoomLayoutSceneCompleteNativeDelegate, FOculusXRUInt64 /*requestId*/, bool /*success*/);
 	FOculusXRRoomLayoutSceneCompleteNativeDelegate OculusXRRoomLayoutSceneCaptureCompleteNative;
 
-	UPROPERTY(BlueprintAssignable, Category= "OculusXR|Room Layout Manager")
+	UPROPERTY(BlueprintAssignable, Category = "OculusXR|Room Layout Manager")
 	FOculusXRRoomLayoutSceneCaptureCompleteDelegate OculusXRRoomLayoutSceneCaptureComplete;
 
 	// Requests to launch Capture Flow
@@ -55,9 +56,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OculusXR|Room Layout Manager")
 	bool GetRoomLayout(FOculusXRUInt64 Space, UPARAM(ref) FOculusXRRoomLayout& RoomLayoutOut, int32 MaxWallsCapacity = 64);
 
+
 protected:
 	UPROPERTY(Transient)
 	TSet<uint64> EntityRequestList;
+
+	UPROPERTY(Transient)
+	TMap<FOculusXRUInt64, FOculusXRRoomLayout> RoomLayouts;
 
 private:
 	UFUNCTION()

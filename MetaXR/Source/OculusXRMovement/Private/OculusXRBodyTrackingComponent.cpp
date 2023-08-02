@@ -24,7 +24,7 @@ static TAutoConsoleVariable<int32> CVarOVRBodyDebugDraw(
 
 int UOculusXRBodyTrackingComponent::TrackingInstanceCount = 0;
 
-UOculusXRBodyTrackingComponent::UOculusXRBodyTrackingComponent() 
+UOculusXRBodyTrackingComponent::UOculusXRBodyTrackingComponent()
 	: BodyTrackingMode(EOculusXRBodyTrackingMode::PositionAndRotation)
 	, ConfidenceThreshold(0.f)
 	, WorldToMeters(100.f)
@@ -129,6 +129,7 @@ void UOculusXRBodyTrackingComponent::BeginPlay()
 		return;
 	}
 
+
 	if (!UOculusXRMovementFunctionLibrary::StartBodyTracking())
 	{
 		UE_LOG(LogOculusXRMovement, Warning, TEXT("Failed to start body tracking. (%s: %s)"), *GetOwner()->GetName(), *GetName());
@@ -142,6 +143,7 @@ void UOculusXRBodyTrackingComponent::EndPlay(const EEndPlayReason::Type EndPlayR
 {
 	if (IsComponentTickEnabled())
 	{
+
 		if (--TrackingInstanceCount == 0)
 		{
 			if (!UOculusXRMovementFunctionLibrary::StopBodyTracking())
@@ -158,13 +160,18 @@ void UOculusXRBodyTrackingComponent::TickComponent(float DeltaTime, enum ELevelT
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if(UOculusXRMovementFunctionLibrary::TryGetBodyState(BodyState, WorldToMeters))
+	if (UOculusXRMovementFunctionLibrary::TryGetBodyState(BodyState, WorldToMeters))
 	{
 		if (BodyState.IsActive && BodyState.Confidence > ConfidenceThreshold)
 		{
 			for (int i = 0; i < BodyState.Joints.Num(); ++i)
 			{
 				const FOculusXRBodyJoint& Joint = BodyState.Joints[i];
+				if (!Joint.bIsValid)
+				{
+					continue;
+				}
+
 				const FVector& Position = Joint.Position;
 				const FRotator& Orientation = Joint.Orientation;
 
@@ -187,14 +194,14 @@ void UOculusXRBodyTrackingComponent::TickComponent(float DeltaTime, enum ELevelT
 				{
 					switch (BodyTrackingMode)
 					{
-					case EOculusXRBodyTrackingMode::PositionAndRotation:
-						SetBoneTransformByName(BoneNames[static_cast<EOculusXRBoneID>(i)], FTransform(Orientation, Position), EBoneSpaces::ComponentSpace);
-						break;
-					case EOculusXRBodyTrackingMode::RotationOnly:
-						SetBoneRotationByName(BoneNames[static_cast<EOculusXRBoneID>(i)], Orientation, EBoneSpaces::ComponentSpace);
-						break;
-					case EOculusXRBodyTrackingMode::NoTracking:
-						break;
+						case EOculusXRBodyTrackingMode::PositionAndRotation:
+							SetBoneTransformByName(BoneNames[static_cast<EOculusXRBoneID>(i)], FTransform(Orientation, Position), EBoneSpaces::ComponentSpace);
+							break;
+						case EOculusXRBodyTrackingMode::RotationOnly:
+							SetBoneRotationByName(BoneNames[static_cast<EOculusXRBoneID>(i)], Orientation, EBoneSpaces::ComponentSpace);
+							break;
+						case EOculusXRBodyTrackingMode::NoTracking:
+							break;
 					}
 				}
 			}
@@ -220,7 +227,8 @@ void UOculusXRBodyTrackingComponent::ResetAllBoneTransforms()
 
 bool UOculusXRBodyTrackingComponent::InitializeBodyBones()
 {
-	if (SkeletalMesh == nullptr)
+	USkeletalMesh* BodyMesh = Cast<USkeletalMesh>(GetSkinnedAsset());
+	if (BodyMesh == nullptr)
 	{
 		UE_LOG(LogOculusXRMovement, Display, TEXT("No SkeletalMesh in this component."));
 		return false;
@@ -232,7 +240,7 @@ bool UOculusXRBodyTrackingComponent::InitializeBodyBones()
 
 		if (BoneIndex == INDEX_NONE)
 		{
-			UE_LOG(LogOculusXRMovement, Display, TEXT("Could not find bone %s in skeletal mesh %s"), *StaticEnum<EOculusXRBoneID>()->GetValueAsString(it.Key), *SkeletalMesh->GetName());
+			UE_LOG(LogOculusXRMovement, Display, TEXT("Could not find bone %s in skeletal mesh %s"), *StaticEnum<EOculusXRBoneID>()->GetValueAsString(it.Key), *BodyMesh->GetName());
 		}
 		else
 		{

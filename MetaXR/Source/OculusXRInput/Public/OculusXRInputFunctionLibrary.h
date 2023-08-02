@@ -75,9 +75,9 @@ enum class EOculusXRBone : uint8
 UENUM(BlueprintType)
 enum class EOculusXRHandHapticsLocation : uint8
 {
-	Hand = 0,   // Haptics is applied to the whole controller 
-	Thumb,      // Haptics is applied to the thumb finger location
-	Index,      // Haptics is applied to the index finger location
+	Hand = 0, // Haptics is applied to the whole controller
+	Thumb,	  // Haptics is applied to the thumb finger location
+	Index,	  // Haptics is applied to the index finger location
 
 	HandHapticsLocation_Count UMETA(Hidden, DisplayName = "<INVALID>"),
 };
@@ -86,10 +86,10 @@ struct FOculusXRHapticsDesc
 {
 	FOculusXRHapticsDesc(
 		EOculusXRHandHapticsLocation ILocation = EOculusXRHandHapticsLocation::Hand,
-		bool bIAppend = false) :
-		Location(ILocation),
-		bAppend(bIAppend)
-	{}
+		bool bIAppend = false)
+		: Location(ILocation), bAppend(bIAppend)
+	{
+	}
 
 	void Restart()
 	{
@@ -114,10 +114,10 @@ struct OCULUSXRINPUT_API FOculusXRCapsuleCollider
 
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "OculusLibrary|HandTracking")
-	UCapsuleComponent* Capsule;
+	UCapsuleComponent* Capsule = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, Category = "OculusLibrary|HandTracking")
-	EOculusXRBone BoneId;
+	EOculusXRBone BoneId = EOculusXRBone::Wrist_Root;
 };
 
 UCLASS()
@@ -126,13 +126,12 @@ class OCULUSXRINPUT_API UOculusXRInputFunctionLibrary : public UBlueprintFunctio
 	GENERATED_UCLASS_BODY()
 
 public:
-
 	UFUNCTION(BlueprintCallable, Category = "OculusLibrary|HandTracking")
 	static EOculusXRFinger ConvertBoneToFinger(const EOculusXRBone Bone);
-	
+
 	DECLARE_MULTICAST_DELEGATE_FourParams(FHandMovementFilterDelegate, EControllerHand, FVector*, FRotator*, bool*);
 	static FHandMovementFilterDelegate HandMovementFilter; /// Called to modify Hand position and orientation whenever it is queried
-	
+
 	/**
 	 * Creates a new runtime hand skeletal mesh.
 	 *
@@ -163,7 +162,7 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, Category = "OculusLibrary|HandTracking")
 	static FQuat GetBoneRotation(const EOculusXRHandType DeviceHand, const EOculusXRBone BoneId, const int32 ControllerIndex = 0);
-	
+
 	/**
 	 * Get the pointer pose
 	 *
@@ -275,7 +274,7 @@ public:
 
 	/**
 	 * Play a haptic feedback soundwave on the player's controller.
-	 * In each frame, the soundwave data will be splitted into a batch of data and sent to controller.
+	 * In each frame, the soundwave data will be split into a batch of data and sent to controller.
 	 * The data duration of each frame is equal to controller's maximum haptics duration which can be queried with GetMaxHapticDuration.
 	 * @param	HapticEffect			The haptic effect to play
 	 * @param	Hand					Which hand to play the effect on
@@ -320,4 +319,3 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OculusLibrary|Controller")
 	static int GetMaxHapticDuration(EControllerHand Hand);
 };
-

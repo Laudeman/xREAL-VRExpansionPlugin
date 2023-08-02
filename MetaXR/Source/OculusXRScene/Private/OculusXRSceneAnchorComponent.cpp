@@ -10,8 +10,8 @@ LICENSE file in the root directory of this source tree.
 
 #include "Engine/StaticMeshActor.h"
 
-
-UOculusXRSceneAnchorComponent::UOculusXRSceneAnchorComponent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+UOculusXRSceneAnchorComponent::UOculusXRSceneAnchorComponent(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	bUpdateHeadSpaceTransform = false;
 }
@@ -20,44 +20,8 @@ void UOculusXRSceneAnchorComponent::TickComponent(float DeltaTime, enum ELevelTi
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	AActor* Parent = GetOwner();
-
-	if (Parent == nullptr)
-	{
-		return;
-	}
-
 	if (GetHandle().Value == 0)
 	{
 		return;
-	}
-
-	if (ForceParallelToFloor)
-	{
-		FRotator rotation = Parent->GetActorRotation();
-		FVector angles = rotation.Euler();
-		bool isNeg = angles.Y < 0.f;
-		angles.Y = 90 * int32((abs(angles.Y) / 90.f) + 0.5f);
-
-		if (isNeg)
-		{
-			angles.Y *= -1.f;
-		}
-
-		rotation = rotation.MakeFromEuler(angles);
-		Parent->SetActorRotation(rotation, ETeleportType::ResetPhysics);
-	}
-
-	if(!AddOffset.Equals(FVector::ZeroVector))
-	{
-		const auto ParentActor = Cast<AStaticMeshActor>(Parent);
-		if(ParentActor != nullptr)
-		{
-			const auto SMComponent = ParentActor->GetStaticMeshComponent();
-			if (SMComponent != nullptr)
-			{
-				SMComponent->AddLocalOffset(AddOffset, false, nullptr, ETeleportType::ResetPhysics);
-			}
-		}	
 	}
 }

@@ -9,35 +9,35 @@
 namespace OculusXRHMD
 {
 
-//-------------------------------------------------------------------------------------------------
-// FDeferredDeletionQueue
-//-------------------------------------------------------------------------------------------------
+	//-------------------------------------------------------------------------------------------------
+	// FDeferredDeletionQueue
+	//-------------------------------------------------------------------------------------------------
 
-class FDeferredDeletionQueue
-{
-public:
-	void AddLayerToDeferredDeletionQueue(const FLayerPtr& ptr);
-	void AddOVRPLayerToDeferredDeletionQueue(const uint32 layerID);
-	void HandleLayerDeferredDeletionQueue_RenderThread(bool bDeleteImmediately = false);
-
-private:
-	struct DeferredDeletionEntry
+	class FDeferredDeletionQueue
 	{
-		enum class DeferredDeletionEntryType
+	public:
+		void AddLayerToDeferredDeletionQueue(const FLayerPtr& ptr);
+		void AddOVRPLayerToDeferredDeletionQueue(const uint32 layerID);
+		void HandleLayerDeferredDeletionQueue_RenderThread(bool bDeleteImmediately = false);
+
+	private:
+		struct DeferredDeletionEntry
 		{
-			Layer,
-			OvrpLayer
+			enum class DeferredDeletionEntryType
+			{
+				Layer,
+				OvrpLayer
+			};
+
+			FLayerPtr Layer;
+			uint32 OvrpLayerId;
+
+			uint32 FrameEnqueued;
+			DeferredDeletionEntryType EntryType;
 		};
 
-		FLayerPtr Layer;
-		uint32 OvrpLayerId;
-		
-		uint32 FrameEnqueued;
-		DeferredDeletionEntryType EntryType;
+		TArray<DeferredDeletionEntry> DeferredDeletionArray;
 	};
-
-	TArray<DeferredDeletionEntry> DeferredDeletionArray;
-};
 
 } // namespace OculusXRHMD
 

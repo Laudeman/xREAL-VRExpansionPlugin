@@ -28,8 +28,7 @@ FText OculusPlatformDialogMessage = LOCTEXT("DownloadOculusPlatformUtilityMessag
 	"Oculus Platform Window would like to download the latest version of the Oculus Platform Utility."
 	" Oculus Platform Utility is a command-line tool that enables the uploading of builds to your release channels on the Oculus Developer Dashboard."
 	"\n\nYou can learn more about the Oculus Platform Utility at https://developer.oculus.com/distribute/publish-reference-platform-command-line-utility/"
-	"\n\nCanceling will prevent the download and the UPLOAD button will be unfunctional. Would you like the tool to download the Oculus Platform Utility to your project?"
-);
+	"\n\nCanceling will prevent the download and the UPLOAD button will be unfunctional. Would you like the tool to download the Oculus Platform Utility to your project?");
 
 static bool bShowUploadDebugSymbols = false;
 
@@ -113,141 +112,94 @@ void SOculusPlatformToolWidget::Construct(const FArguments& InArgs)
 #endif
 
 	ChildSlot
-	[
-		SNew(SBorder)
-		.BorderImage(FAppStyle::GetBrush("ToolPanel.LightGroupBorder"))
-		.Padding(2)
-		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot().Padding(0, 0).FillHeight(1.f)
-			[
-				SNew(SScrollBox)
-				+ SScrollBox::Slot()
-				[
-					SNew(SExpandableArea)
-					.HeaderPadding(5)
-					.Padding(5)
-					.BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
-					.BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-					.BodyBorderBackgroundColor(FLinearColor::White)
-					.InitiallyCollapsed(false)
-					.HeaderContent()
-					[
-						SNew(SRichTextBlock)
-						.TextStyle(FAppStyle::Get(), "ToolBar.Heading")
-						.DecoratorStyleSet(&FAppStyle::Get()).AutoWrapText(true)
-						.Text(LOCTEXT("GeneralSettings", "<RichTextBlock.Bold>General Settings</>"))
-					]
-					.BodyContent()
-					[
-						mainVerticalBox
-					]
-				]
-				+ SScrollBox::Slot()
-				[
-					SNew(SExpandableArea)
-					.HeaderPadding(5)
-					.Padding(5)
-					.BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
-					.BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-					.BodyBorderBackgroundColor(FLinearColor::White)
-					.InitiallyCollapsed(true)
-					.HeaderContent()
-					[
-						SNew(SRichTextBlock)
-						.TextStyle(FAppStyle::Get(), "ToolBar.Heading")
-						.DecoratorStyleSet(&FAppStyle::Get()).AutoWrapText(true)
-						.Text(LOCTEXT("OptionalSettings", "<RichTextBlock.Bold>Optional Settings</>"))
-					]
-					.BodyContent()
-					[
-						SNew(SVerticalBox)
+		[SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("ToolPanel.LightGroupBorder"))
+				.Padding(2)
+					[SNew(SVerticalBox)
+						+ SVerticalBox::Slot().Padding(0, 0).FillHeight(1.f)
+							  [SNew(SScrollBox)
+								  + SScrollBox::Slot()
+									  [SNew(SExpandableArea)
+											  .HeaderPadding(5)
+											  .Padding(5)
+											  .BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
+											  .BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+											  .BodyBorderBackgroundColor(FLinearColor::White)
+											  .InitiallyCollapsed(false)
+											  .HeaderContent()
+												  [SNew(SRichTextBlock)
+														  .TextStyle(FAppStyle::Get(), "ToolBar.Heading")
+														  .DecoratorStyleSet(&FAppStyle::Get())
+														  .AutoWrapText(true)
+														  .Text(LOCTEXT("GeneralSettings", "<RichTextBlock.Bold>General Settings</>"))]
+											  .BodyContent()
+												  [mainVerticalBox]]
+								  + SScrollBox::Slot()
+									  [SNew(SExpandableArea)
+											  .HeaderPadding(5)
+											  .Padding(5)
+											  .BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
+											  .BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+											  .BodyBorderBackgroundColor(FLinearColor::White)
+											  .InitiallyCollapsed(true)
+											  .HeaderContent()
+												  [SNew(SRichTextBlock)
+														  .TextStyle(FAppStyle::Get(), "ToolBar.Heading")
+														  .DecoratorStyleSet(&FAppStyle::Get())
+														  .AutoWrapText(true)
+														  .Text(LOCTEXT("OptionalSettings", "<RichTextBlock.Bold>Optional Settings</>"))]
+											  .BodyContent()
+												  [SNew(SVerticalBox)
+													  + SVerticalBox::Slot().AutoHeight()
+															[optionalSettings]]]
+								  + SScrollBox::Slot()
+									  [SNew(SExpandableArea)
+											  .HeaderPadding(5)
+											  .Padding(5)
+											  .BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
+											  .BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+											  .BodyBorderBackgroundColor(FLinearColor::White)
+											  .InitiallyCollapsed(true)
+											  .HeaderContent()
+												  [SNew(SRichTextBlock)
+														  .TextStyle(FAppStyle::Get(), "ToolBar.Heading")
+														  .DecoratorStyleSet(&FAppStyle::Get())
+														  .AutoWrapText(true)
+														  .Text(LOCTEXT("ExpansionFileSettings", "<RichTextBlock.Bold>Expansion Files</>"))]
+											  .BodyContent()
+												  [SNew(SVerticalBox)
+													  + SVerticalBox::Slot().AutoHeight()
+															[expansionFilesSettings]]]]
 						+ SVerticalBox::Slot().AutoHeight()
-						[
-							optionalSettings
-						]
-					]
-				]
-				+ SScrollBox::Slot()
-				[
-					SNew(SExpandableArea)
-					.HeaderPadding(5)
-					.Padding(5)
-					.BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
-					.BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-					.BodyBorderBackgroundColor(FLinearColor::White)
-					.InitiallyCollapsed(true)
-					.HeaderContent()
-					[
-						SNew(SRichTextBlock)
-						.TextStyle(FAppStyle::Get(), "ToolBar.Heading")
-						.DecoratorStyleSet(&FAppStyle::Get()).AutoWrapText(true)
-						.Text(LOCTEXT("ExpansionFileSettings", "<RichTextBlock.Bold>Expansion Files</>"))
-					]
-					.BodyContent()
-					[
-						SNew(SVerticalBox)
-						+ SVerticalBox::Slot().AutoHeight()
-						[
-							expansionFilesSettings
-						]
-					]
-				]
-			]
-			+ SVerticalBox::Slot().AutoHeight()
-			[
-				buttonToolbarBox
-			]
-			+ SVerticalBox::Slot().FillHeight(1.f)
-			[
-				SNew(SBorder)
-				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-				[
-					logTextBox
-				]
-			]
-			+ SVerticalBox::Slot().AutoHeight().Padding(2.0f)
-			[
-				SNew(SBorder)
-				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().AutoWidth()
-					[
-						SNew(SBox)
-						.WidthOverride(60.0f)
-						.HeightOverride(60.0f)
-						[
-							SNew(SImage)
-							.Image(ODHIconDynamicImageBrush.IsValid() ? ODHIconDynamicImageBrush.Get() : nullptr)
-						]
-					]
-					+ SHorizontalBox::Slot().FillWidth(1.0f)
-					[
-						SNew(SVerticalBox)
+							  [buttonToolbarBox]
+						+ SVerticalBox::Slot().FillHeight(1.f)
+							  [SNew(SBorder)
+									  .BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+										  [logTextBox]]
 						+ SVerticalBox::Slot().AutoHeight().Padding(2.0f)
-						[
-							SNew(SRichTextBlock)
-							.Text(LOCTEXT("ODHCallout",
-								"<RichTextBlock.Bold>Oculus Developer Hub</> is a desktop companion tool that can upload builds, manage apps and reduce friction in daily Quest development."))
-							.DecoratorStyleSet(&FAppStyle::Get())
-							.AutoWrapText(true)
-						]
-						+ SVerticalBox::Slot().AutoHeight()
-						[
-							SNew(SBox)
-							.HAlign(HAlign_Left)
-							[
-								SNew(SHyperlinkLaunchURL, odhLink)
-								.Text(LOCTEXT("ODHDownloadPage", "Download Oculus Developer Hub"))
-								.ToolTipText(LOCTEXT("ODHDownloadPageTooltip", "Opens a page that provides the download link for Oculus Developer Hub"))
-							]
-						]
-					]
-				]
-			]
-		]
-	];
+							  [SNew(SBorder)
+									  .BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+										  [SNew(SHorizontalBox)
+											  + SHorizontalBox::Slot().AutoWidth()
+													[SNew(SBox)
+															.WidthOverride(60.0f)
+															.HeightOverride(60.0f)
+																[SNew(SImage)
+																		.Image(ODHIconDynamicImageBrush.IsValid() ? ODHIconDynamicImageBrush.Get() : nullptr)]]
+											  + SHorizontalBox::Slot().FillWidth(1.0f)
+													[SNew(SVerticalBox)
+														+ SVerticalBox::Slot().AutoHeight().Padding(2.0f)
+															  [SNew(SRichTextBlock)
+																	  .Text(LOCTEXT("ODHCallout",
+																		  "<RichTextBlock.Bold>Oculus Developer Hub</> is a desktop companion tool that can upload builds, manage apps and reduce friction in daily Quest development."))
+																	  .DecoratorStyleSet(&FAppStyle::Get())
+																	  .AutoWrapText(true)]
+														+ SVerticalBox::Slot().AutoHeight()
+															  [SNew(SBox)
+																	  .HAlign(HAlign_Left)
+																		  [SNew(SHyperlinkLaunchURL, odhLink)
+																				  .Text(LOCTEXT("ODHDownloadPage", "Download Oculus Developer Hub"))
+																				  .ToolTipText(LOCTEXT("ODHDownloadPageTooltip", "Opens a page that provides the download link for Oculus Developer Hub"))]]]]]]];
 }
 
 void SOculusPlatformToolWidget::BuildGeneralSettingsBox(TSharedPtr<SVerticalBox> box)
@@ -264,7 +216,7 @@ void SOculusPlatformToolWidget::BuildGeneralSettingsBox(TSharedPtr<SVerticalBox>
 		&SOculusPlatformToolWidget::OnPlatformSettingChanged);
 
 	// Build field for Oculus Application ID.
-	BuildTextField(box, LOCTEXT("AppID", "Oculus Application ID"), FText::FromString(PlatformSettings->GetApplicationID()), 
+	BuildTextField(box, LOCTEXT("AppID", "Oculus Application ID"), FText::FromString(PlatformSettings->GetApplicationID()),
 		LOCTEXT("AppIDTT", "Specifies the ID of your app. Obtained from the API tab of your app in the Oculus Dashboard."),
 		&SOculusPlatformToolWidget::OnApplicationIDChanged);
 
@@ -344,139 +296,98 @@ void SOculusPlatformToolWidget::BuildGeneralSettingsBox(TSharedPtr<SVerticalBox>
 	}
 }
 
-void SOculusPlatformToolWidget::BuildTextField(TSharedPtr<SVerticalBox> box, FText name, FText text, FText tooltip, 
+void SOculusPlatformToolWidget::BuildTextField(TSharedPtr<SVerticalBox> box, FText name, FText text, FText tooltip,
 	PTextComittedDel deleg, bool isPassword, int32 indentAmount)
 {
 	FMargin textMargin = FMargin(TEXT_INDENT_OFFSET * indentAmount, 1.0f, 1.0f, 1.0f);
 
-	box.Get()->AddSlot()
-	.Padding(1)
-	.AutoHeight()
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot().Padding(1).AutoWidth()
-		[
-			SNew(SBox)
-			.WidthOverride(250.f)
-			.Padding(textMargin)
-			[
-				SNew(STextBlock)
-				.Text(name)
-				.ToolTipText(tooltip)
-			]
-		]
-		+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
-		[
-			SNew(SEditableTextBox)
-			.Text(text)
-			.IsPassword(isPassword)
-			.OnTextCommitted(this, deleg)
-		]
-	];
+	box.Get()->AddSlot().Padding(1).AutoHeight()
+		[SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().Padding(1).AutoWidth()
+				  [SNew(SBox)
+						  .WidthOverride(250.f)
+						  .Padding(textMargin)
+							  [SNew(STextBlock)
+									  .Text(name)
+									  .ToolTipText(tooltip)]]
+			+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
+				  [SNew(SEditableTextBox)
+						  .Text(text)
+						  .IsPassword(isPassword)
+						  .OnTextCommitted(this, deleg)]];
 }
 
-void SOculusPlatformToolWidget::BuildTextComboBoxField(TSharedPtr<SVerticalBox> box, FText name, 
+void SOculusPlatformToolWidget::BuildTextComboBoxField(TSharedPtr<SVerticalBox> box, FText name,
 	TArray<TSharedPtr<FString>>* options, TSharedPtr<FString> current, PTextComboBoxDel deleg, int32 indentAmount)
 {
 	FMargin textMargin = FMargin(TEXT_INDENT_OFFSET * indentAmount, 1.0f, 1.0f, 1.0f);
 
-	box.Get()->AddSlot()
-	.Padding(1)
-	.AutoHeight()
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot().Padding(1).AutoWidth()
-		[
-			SNew(SBox)
-			.WidthOverride(250.f).Padding(textMargin)
-			[
-				SNew(SRichTextBlock)
-				.DecoratorStyleSet(&FAppStyle::Get())
-				.Text(name)
-			]
-		]
-		+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
-		[
-			SNew(STextComboBox)
-			.OptionsSource(options)
-			.InitiallySelectedItem(current)
-			.OnSelectionChanged(this, deleg)
-		]
-	];
+	box.Get()->AddSlot().Padding(1).AutoHeight()
+		[SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().Padding(1).AutoWidth()
+				  [SNew(SBox)
+						  .WidthOverride(250.f)
+						  .Padding(textMargin)
+							  [SNew(SRichTextBlock)
+									  .DecoratorStyleSet(&FAppStyle::Get())
+									  .Text(name)]]
+			+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
+				  [SNew(STextComboBox)
+						  .OptionsSource(options)
+						  .InitiallySelectedItem(current)
+						  .OnSelectionChanged(this, deleg)]];
 }
 
-void SOculusPlatformToolWidget::BuildCheckBoxField(TSharedPtr<SVerticalBox> box, FText name, bool check, 
+void SOculusPlatformToolWidget::BuildCheckBoxField(TSharedPtr<SVerticalBox> box, FText name, bool check,
 	FText tooltip, PCheckBoxChangedDel deleg, int32 indentAmount)
 {
 	FMargin textMargin = FMargin(TEXT_INDENT_OFFSET * indentAmount, 1.0f, 1.0f, 1.0f);
 
-	box.Get()->AddSlot()
-	.Padding(1)
-	.AutoHeight()
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot().Padding(1).AutoWidth()
-		[
-			SNew(SBox)
-			.WidthOverride(250.f).Padding(textMargin)
-			[
-				SNew(SRichTextBlock)
-				.DecoratorStyleSet(&FAppStyle::Get())
-				.Text(name)
-			]
-		]
-		+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
-		[
-			SNew(SCheckBox)
-			.OnCheckStateChanged(this, deleg)
-			.IsChecked(check ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
-		]
-	];
+	box.Get()->AddSlot().Padding(1).AutoHeight()
+		[SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().Padding(1).AutoWidth()
+				  [SNew(SBox)
+						  .WidthOverride(250.f)
+						  .Padding(textMargin)
+							  [SNew(SRichTextBlock)
+									  .DecoratorStyleSet(&FAppStyle::Get())
+									  .Text(name)]]
+			+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
+				  [SNew(SCheckBox)
+						  .OnCheckStateChanged(this, deleg)
+						  .IsChecked(check ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)]];
 }
 
-void SOculusPlatformToolWidget::BuildFileDirectoryField(TSharedPtr<SVerticalBox> box, FText name, FText path, FText tooltip, 
+void SOculusPlatformToolWidget::BuildFileDirectoryField(TSharedPtr<SVerticalBox> box, FText name, FText path, FText tooltip,
 	PButtonClickedDel deleg, PButtonClickedDel clearDeleg, int32 indentAmount)
 {
 	EVisibility cancelButtonVisibility = path.IsEmpty() ? EVisibility::Hidden : EVisibility::Visible;
 	FMargin textMargin = FMargin(TEXT_INDENT_OFFSET * indentAmount, 1.0f, 1.0f, 1.0f);
 
-	box.Get()->AddSlot()
-	.Padding(1)
-	.AutoHeight()
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot().Padding(1).AutoWidth()
-		[
-			SNew(SBox)
-			.WidthOverride(250.f).Padding(textMargin)
-			[
-				SNew(STextBlock)
-				.Text(name)
-				.ToolTipText(tooltip)
-			]
-		]
-		+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
-		[
-			SNew(SEditableText)
-			.Text(path)
-			.IsReadOnly(true)
-			.Justification(ETextJustify::Left)
-		]
-		+ SHorizontalBox::Slot().Padding(1).AutoWidth().HAlign(EHorizontalAlignment::HAlign_Right)
-		[
-			SNew(SButton)
-			.Text(FText::FromString("X"))
-			.Visibility(cancelButtonVisibility)
-			.OnClicked(this, clearDeleg)
-			.ButtonColorAndOpacity(FLinearColor(0.36f, 0.1f, 0.05f))
-		]
-		+ SHorizontalBox::Slot().Padding(1).AutoWidth().HAlign(EHorizontalAlignment::HAlign_Right)
-		[
-			SNew(SButton)
-			.Text((LOCTEXT("Choose", "Choose...")))
-			.OnClicked(this, deleg)
-		]
-	];
+	box.Get()->AddSlot().Padding(1).AutoHeight()
+		[SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().Padding(1).AutoWidth()
+				  [SNew(SBox)
+						  .WidthOverride(250.f)
+						  .Padding(textMargin)
+							  [SNew(STextBlock)
+									  .Text(name)
+									  .ToolTipText(tooltip)]]
+			+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
+				  [SNew(SEditableText)
+						  .Text(path)
+						  .IsReadOnly(true)
+						  .Justification(ETextJustify::Left)]
+			+ SHorizontalBox::Slot().Padding(1).AutoWidth().HAlign(EHorizontalAlignment::HAlign_Right)
+				  [SNew(SButton)
+						  .Text(FText::FromString("X"))
+						  .Visibility(cancelButtonVisibility)
+						  .OnClicked(this, clearDeleg)
+						  .ButtonColorAndOpacity(FLinearColor(0.36f, 0.1f, 0.05f))]
+			+ SHorizontalBox::Slot().Padding(1).AutoWidth().HAlign(EHorizontalAlignment::HAlign_Right)
+				  [SNew(SButton)
+						  .Text((LOCTEXT("Choose", "Choose...")))
+						  .OnClicked(this, deleg)]];
 }
 
 void SOculusPlatformToolWidget::BuildButtonToolbar(TSharedPtr<SHorizontalBox> box)
@@ -485,19 +396,15 @@ void SOculusPlatformToolWidget::BuildButtonToolbar(TSharedPtr<SHorizontalBox> bo
 
 	box.Get()->AddSlot().FillWidth(1.f);
 	box.Get()->AddSlot().AutoWidth().Padding(2.f)
-	[
-		SNew(SButton)
-		.Text((LOCTEXT("Upload", "Upload")))
-		.OnClicked(this, &SOculusPlatformToolWidget::OnStartPlatformUpload)
-		.IsEnabled(ActiveUploadButton)
-	];
+		[SNew(SButton)
+				.Text((LOCTEXT("Upload", "Upload")))
+				.OnClicked(this, &SOculusPlatformToolWidget::OnStartPlatformUpload)
+				.IsEnabled(ActiveUploadButton)];
 	box.Get()->AddSlot().AutoWidth().Padding(2.f)
-	[
-		SNew(SButton)
-		.Text((LOCTEXT("Cancel", "Cancel")))
-		.OnClicked(this, &SOculusPlatformToolWidget::OnCancelUpload)
-		.IsEnabled(!ActiveUploadButton)
-	];
+		[SNew(SButton)
+				.Text((LOCTEXT("Cancel", "Cancel")))
+				.OnClicked(this, &SOculusPlatformToolWidget::OnCancelUpload)
+				.IsEnabled(!ActiveUploadButton)];
 	box.Get()->AddSlot().FillWidth(1.f);
 }
 
@@ -524,7 +431,7 @@ void SOculusPlatformToolWidget::BuildRiftOptionalFields(TSharedPtr<SVerticalBox>
 	BuildTextComboBoxField(box, LOCTEXT("GamepadEmu", "Gamepad Emulation"),
 		&RiftGamepadEmulation, RiftGamepadEmulation[(uint8)PlatformSettings->GetRiftGamepadEmulation()],
 		&SOculusPlatformToolWidget::OnRiftGamepadEmulationChanged);
-	
+
 	// Generate 2D Settings Expandable Area
 	TSharedRef<SVerticalBox> settings2DBox = SNew(SVerticalBox);
 
@@ -539,27 +446,22 @@ void SOculusPlatformToolWidget::BuildRiftOptionalFields(TSharedPtr<SVerticalBox>
 		&SOculusPlatformToolWidget::On2DLaunchParamsChanged);
 
 	box.Get()->AddSlot().AutoHeight().Padding(1)
-	[
-		SNew(SExpandableArea)
-		.HeaderPadding(5)
-		.Padding(5)
-		.BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
-		.BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-		.BodyBorderBackgroundColor(FLinearColor::White)
-		.InitiallyCollapsed(Options2DCollapsed)
-		.OnAreaExpansionChanged(this, &SOculusPlatformToolWidget::On2DOptionsExpanded)
-		.HeaderContent()
-		[
-			SNew(SRichTextBlock)
-			.TextStyle(FAppStyle::Get(), "ToolBar.Heading")
-			.DecoratorStyleSet(&FAppStyle::Get()).AutoWrapText(true)
-			.Text(LOCTEXT("2DSettings", "<RichTextBlock.Bold>2D Settings</>"))
-		]
-		.BodyContent()
-		[
-			settings2DBox
-		]
-	];
+		[SNew(SExpandableArea)
+				.HeaderPadding(5)
+				.Padding(5)
+				.BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
+				.BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+				.BodyBorderBackgroundColor(FLinearColor::White)
+				.InitiallyCollapsed(Options2DCollapsed)
+				.OnAreaExpansionChanged(this, &SOculusPlatformToolWidget::On2DOptionsExpanded)
+				.HeaderContent()
+					[SNew(SRichTextBlock)
+							.TextStyle(FAppStyle::Get(), "ToolBar.Heading")
+							.DecoratorStyleSet(&FAppStyle::Get())
+							.AutoWrapText(true)
+							.Text(LOCTEXT("2DSettings", "<RichTextBlock.Bold>2D Settings</>"))]
+				.BodyContent()
+					[settings2DBox]];
 
 	BuildRedistPackagesBox(box);
 }
@@ -572,51 +474,38 @@ void SOculusPlatformToolWidget::BuildRedistPackagesBox(TSharedPtr<SVerticalBox> 
 	{
 		FOculusXRRedistPackage* Package = &PlatformSettings->OculusRedistPackages[i];
 		redistBox->AddSlot()
-		.Padding(1)
-		.AutoHeight()
-		[
-			SNew(SHorizontalBox)
-			+ SHorizontalBox::Slot().Padding(1).AutoWidth()
-			[
-				SNew(SBox)
-				.WidthOverride(250.f)
-				[
-					SNew(SRichTextBlock)
-					.DecoratorStyleSet(&FAppStyle::Get())
-					.Text(FText::FromString(Package->Name))
-				]
-			]
-			+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
-			[
-				SNew(SCheckBox)
-				.OnCheckStateChanged(this, &SOculusPlatformToolWidget::OnRedistPackageStateChanged, Package)
-				.IsChecked(Package->Included ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
-			]
-		];
+			.Padding(1)
+			.AutoHeight()
+				[SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().Padding(1).AutoWidth()
+						  [SNew(SBox)
+								  .WidthOverride(250.f)
+									  [SNew(SRichTextBlock)
+											  .DecoratorStyleSet(&FAppStyle::Get())
+											  .Text(FText::FromString(Package->Name))]]
+					+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
+						  [SNew(SCheckBox)
+								  .OnCheckStateChanged(this, &SOculusPlatformToolWidget::OnRedistPackageStateChanged, Package)
+								  .IsChecked(Package->Included ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)]];
 	}
 
 	box.Get()->AddSlot().AutoHeight().Padding(1)
-	[
-		SNew(SExpandableArea)
-		.HeaderPadding(5)
-		.Padding(5)
-		.BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
-		.BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-		.BodyBorderBackgroundColor(FLinearColor::White)
-		.InitiallyCollapsed(OptionsRedistPackagesCollapsed)
-		.OnAreaExpansionChanged(this, &SOculusPlatformToolWidget::OnRedistPackagesExpanded)
-		.HeaderContent()
-		[
-			SNew(SRichTextBlock)
-			.TextStyle(FAppStyle::Get(), "ToolBar.Heading")
-			.DecoratorStyleSet(&FAppStyle::Get()).AutoWrapText(true)
-			.Text(LOCTEXT("RedistPack", "<RichTextBlock.Bold>Redistributable Packages</>"))
-		]
-		.BodyContent()
-		[
-			redistBox
-		]
-	];
+		[SNew(SExpandableArea)
+				.HeaderPadding(5)
+				.Padding(5)
+				.BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
+				.BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+				.BodyBorderBackgroundColor(FLinearColor::White)
+				.InitiallyCollapsed(OptionsRedistPackagesCollapsed)
+				.OnAreaExpansionChanged(this, &SOculusPlatformToolWidget::OnRedistPackagesExpanded)
+				.HeaderContent()
+					[SNew(SRichTextBlock)
+							.TextStyle(FAppStyle::Get(), "ToolBar.Heading")
+							.DecoratorStyleSet(&FAppStyle::Get())
+							.AutoWrapText(true)
+							.Text(LOCTEXT("RedistPack", "<RichTextBlock.Bold>Redistributable Packages</>"))]
+				.BodyContent()
+					[redistBox]];
 }
 
 void SOculusPlatformToolWidget::BuildExpansionFileBox(TSharedPtr<SVerticalBox> box)
@@ -646,99 +535,64 @@ void SOculusPlatformToolWidget::BuildExpansionFileBox(TSharedPtr<SVerticalBox> b
 			BuildAssetConfigBox(AssetConfigBox, (*AssetConfigs)[i], i);
 
 			box.Get()->AddSlot().AutoHeight().Padding(1)
-			[
-				SNew(SExpandableArea)
-				.HeaderPadding(5)
-				.Padding(5)
-				.BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
-				.BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-				.BodyBorderBackgroundColor(FLinearColor::White)
-				.HeaderContent()
-				[
-					SNew(SRichTextBlock)
-					.TextStyle(FAppStyle::Get(), "ToolBar.Heading")
-					.DecoratorStyleSet(&FAppStyle::Get()).AutoWrapText(true)
-					.Text(FText::FromString((*AssetConfigs)[i].Name))
-				]
-				.BodyContent()
-				[
-					AssetConfigBox
-				]
-			];
+				[SNew(SExpandableArea)
+						.HeaderPadding(5)
+						.Padding(5)
+						.BorderBackgroundColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f))
+						.BodyBorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+						.BodyBorderBackgroundColor(FLinearColor::White)
+						.HeaderContent()
+							[SNew(SRichTextBlock)
+									.TextStyle(FAppStyle::Get(), "ToolBar.Heading")
+									.DecoratorStyleSet(&FAppStyle::Get())
+									.AutoWrapText(true)
+									.Text(FText::FromString((*AssetConfigs)[i].Name))]
+						.BodyContent()
+							[AssetConfigBox]];
 		}
 	}
 }
 
 void SOculusPlatformToolWidget::BuildAssetConfigBox(TSharedPtr<SVerticalBox> box, FOculusXRAssetConfig config, int index)
 {
-	box.Get()->AddSlot()
-	.Padding(1)
-	.AutoHeight()
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot().Padding(1).AutoWidth()
-		[
-			SNew(SBox)
-			.WidthOverride(250.f)
-			[
-				SNew(SRichTextBlock)
-				.DecoratorStyleSet(&FAppStyle::Get())
-				.Text(LOCTEXT("AssetType", "Asset Type"))
-			]
-		]
-		+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
-		[
-			SNew(STextComboBox)
-			.OptionsSource(&AssetType)
-			.InitiallySelectedItem(AssetType[(uint8)config.AssetType])
-			.OnSelectionChanged(this, &SOculusPlatformToolWidget::OnAssetConfigTypeChanged, index)
-		]
-	];
+	box.Get()->AddSlot().Padding(1).AutoHeight()
+		[SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().Padding(1).AutoWidth()
+				  [SNew(SBox)
+						  .WidthOverride(250.f)
+							  [SNew(SRichTextBlock)
+									  .DecoratorStyleSet(&FAppStyle::Get())
+									  .Text(LOCTEXT("AssetType", "Asset Type"))]]
+			+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
+				  [SNew(STextComboBox)
+						  .OptionsSource(&AssetType)
+						  .InitiallySelectedItem(AssetType[(uint8)config.AssetType])
+						  .OnSelectionChanged(this, &SOculusPlatformToolWidget::OnAssetConfigTypeChanged, index)]];
 
-	box.Get()->AddSlot()
-	.Padding(1)
-	.AutoHeight()
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot().Padding(1).AutoWidth()
-		[
-			SNew(SBox)
-			.WidthOverride(250.f)
-			[
-				SNew(SRichTextBlock)
-				.DecoratorStyleSet(&FAppStyle::Get())
-				.Text(LOCTEXT("AssetRequired", "Required"))
-			]
-		]
-		+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
-		[
-			SNew(SCheckBox)
-			.OnCheckStateChanged(this, &SOculusPlatformToolWidget::OnAssetConfigRequiredChanged, index)
-			.IsChecked(config.Required ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)
-		]
-	];
+	box.Get()->AddSlot().Padding(1).AutoHeight()
+		[SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().Padding(1).AutoWidth()
+				  [SNew(SBox)
+						  .WidthOverride(250.f)
+							  [SNew(SRichTextBlock)
+									  .DecoratorStyleSet(&FAppStyle::Get())
+									  .Text(LOCTEXT("AssetRequired", "Required"))]]
+			+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
+				  [SNew(SCheckBox)
+						  .OnCheckStateChanged(this, &SOculusPlatformToolWidget::OnAssetConfigRequiredChanged, index)
+						  .IsChecked(config.Required ? ECheckBoxState::Checked : ECheckBoxState::Unchecked)]];
 
-	box.Get()->AddSlot()
-	.Padding(1)
-	.AutoHeight()
-	[
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot().Padding(1).AutoWidth()
-		[
-			SNew(SBox)
-			.WidthOverride(250.f)
-			[
-				SNew(STextBlock)
-				.Text(LOCTEXT("SKU", "SKU"))
-			]
-		]
-		+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
-		[
-			SNew(SEditableTextBox)
-			.Text(FText::FromString(config.Sku))
-			.OnTextCommitted(this, &SOculusPlatformToolWidget::OnAssetConfigSKUChanged, index)
-		]
-	];
+	box.Get()->AddSlot().Padding(1).AutoHeight()
+		[SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().Padding(1).AutoWidth()
+				  [SNew(SBox)
+						  .WidthOverride(250.f)
+							  [SNew(STextBlock)
+									  .Text(LOCTEXT("SKU", "SKU"))]]
+			+ SHorizontalBox::Slot().Padding(1).FillWidth(1.f)
+				  [SNew(SEditableTextBox)
+						  .Text(FText::FromString(config.Sku))
+						  .OnTextCommitted(this, &SOculusPlatformToolWidget::OnAssetConfigSKUChanged, index)]];
 }
 
 bool SOculusPlatformToolWidget::ConstructArguments(FString& args)
@@ -797,7 +651,7 @@ bool SOculusPlatformToolWidget::ConstructArguments(FString& args)
 	if (PlatformSettings->GetTargetPlatform() == (uint8)EOculusXRPlatformTarget::Rift)
 	{
 		// Launch File Path check and command.
-		ValidateTextField(&SOculusPlatformToolWidget::FileFieldValidator, PlatformSettings->GetLaunchFilePath(), 
+		ValidateTextField(&SOculusPlatformToolWidget::FileFieldValidator, PlatformSettings->GetLaunchFilePath(),
 			LOCTEXT("LaunchFile", "Launch File Path").ToString(), success);
 		args += " --launch-file \"" + PlatformSettings->GetLaunchFilePath() + "\"";
 
@@ -841,16 +695,23 @@ bool SOculusPlatformToolWidget::ConstructArguments(FString& args)
 		}
 
 		// Rift Gamepad Emulation command
-		if (PlatformSettings->GetRiftGamepadEmulation() > EOculusXRGamepadEmulation::Off &&
-			PlatformSettings->GetRiftGamepadEmulation() < EOculusXRGamepadEmulation::Length)
+		if (PlatformSettings->GetRiftGamepadEmulation() > EOculusXRGamepadEmulation::Off && PlatformSettings->GetRiftGamepadEmulation() < EOculusXRGamepadEmulation::Length)
 		{
 			args += " --gamepad-emulation ";
 			switch (PlatformSettings->GetRiftGamepadEmulation())
 			{
-				case EOculusXRGamepadEmulation::Twinstick: args += "TWINSTICK";   break;
-				case EOculusXRGamepadEmulation::RightDPad: args += "RIGHT_D_PAD"; break;
-				case EOculusXRGamepadEmulation::LeftDPad:  args += "LEFT_D_PAD";  break;
-				default:								 args += "OFF";			break;
+				case EOculusXRGamepadEmulation::Twinstick:
+					args += "TWINSTICK";
+					break;
+				case EOculusXRGamepadEmulation::RightDPad:
+					args += "RIGHT_D_PAD";
+					break;
+				case EOculusXRGamepadEmulation::LeftDPad:
+					args += "LEFT_D_PAD";
+					break;
+				default:
+					args += "OFF";
+					break;
 			}
 		}
 
@@ -1297,7 +1158,6 @@ FString SOculusPlatformToolWidget::GenerateSymbolPath()
 	return FPaths::ProjectDir() + TEXT("Binaries/Android/") + FApp::GetProjectName() + TEXT("_Symbols_v1/") + FApp::GetProjectName() + TEXT("-arm64");
 }
 
-
 FReply SOculusPlatformToolWidget::OnSelectSymbolDirPath()
 {
 	TSharedPtr<SWindow> parentWindow = FSlateApplication::Get().FindWidgetWindow(AsShared());
@@ -1583,7 +1443,7 @@ void FPlatformDownloadTask::DoWork()
 	UpdateLogText.Execute(SOculusPlatformToolWidget::LogText + LOCTEXT("DownloadProgress", "Downloading Platform Tool: {0}%\n").ToString());
 	ToolConsoleLog = SOculusPlatformToolWidget::LogText;
 	UpdateProgressLog(0);
-	
+
 	// Wait for download to complete
 	downloadCompleteEvent->Wait();
 
@@ -1665,7 +1525,7 @@ void FPlatformUploadTask::DoWork()
 
 		UpdateLogText.Execute(SOculusPlatformToolWidget::LogText + LOCTEXT("StartUploadAfterDownload", "Starting upload . . .\n").ToString());
 	}
-	 
+
 	// Start up the CLI and pass in arguments.
 	FPlatformProcess::CreatePipe(ReadPipe, WritePipe);
 	FProcHandle PlatformProcess = FPlatformProcess::CreateProc(*(FPaths::ProjectContentDir() + ProjectPlatformUtilPath), *LaunchArgs, false, true, true, nullptr, 0, nullptr, WritePipe, ReadPipe);

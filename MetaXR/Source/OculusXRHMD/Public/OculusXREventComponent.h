@@ -14,7 +14,6 @@ class OCULUSXRHMD_API UOculusXREventComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOculusDisplayRefreshRateChangedEventDelegate, float, fromRefreshRate, float, toRefreshRate);
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOculusEyeTrackingStateChangedEventDelegate, bool, bEyeTrackingOn);
 

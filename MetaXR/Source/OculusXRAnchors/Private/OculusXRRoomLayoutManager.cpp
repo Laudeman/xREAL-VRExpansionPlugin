@@ -8,31 +8,32 @@ LICENSE file in the root directory of this source tree.
 #include "OculusXRRoomLayoutManager.h"
 #include "OculusXRHMD.h"
 #include "OculusXRAnchorDelegates.h"
-
+#include "OculusXRAnchorsModule.h"
+#include <vector>
 namespace OculusXRAnchors
 {
 	void FOculusXRRoomLayoutManager::OnPollEvent(ovrpEventDataBuffer* EventDataBuffer, bool& EventPollResult)
 	{
 		ovrpEventDataBuffer& buf = *EventDataBuffer;
 
-		switch (buf.EventType) 
+		switch (buf.EventType)
 		{
-			case ovrpEventType_None: break;
+			case ovrpEventType_None:
+				break;
 			case ovrpEventType_SceneCaptureComplete:
 			{
 				ovrpEventSceneCaptureComplete sceneCaptureComplete;
 				unsigned char* bufData = buf.EventData;
-								
+
 				memcpy(&sceneCaptureComplete.requestId, bufData, sizeof(sceneCaptureComplete.requestId));
 				bufData += sizeof(ovrpUInt64); //move forward
 				memcpy(&sceneCaptureComplete.result, bufData, sizeof(sceneCaptureComplete.result));
 
-				
 				FOculusXRAnchorEventDelegates::OculusSceneCaptureComplete.Broadcast(FOculusXRUInt64(sceneCaptureComplete.requestId), sceneCaptureComplete.result >= 0);
 				break;
 			}
-			
-			default: 
+
+			default:
 			{
 				EventPollResult = false;
 				break;
@@ -55,8 +56,8 @@ namespace OculusXRAnchors
 		sceneCaptureRequest.request = nullptr;
 		sceneCaptureRequest.requestByteCount = 0;
 
-		const ovrpResult bSuccess = FOculusXRHMDModule::GetPluginWrapper().RequestSceneCapture(&sceneCaptureRequest, &OutRequestID);
-		if (bSuccess == ovrpFailure)
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().RequestSceneCapture(&sceneCaptureRequest, &OutRequestID);
+		if (!OVRP_SUCCESS(Result))
 		{
 			return false;
 		}
@@ -74,7 +75,7 @@ namespace OculusXRAnchors
 	 * @return returns true if sucessfull
 	 */
 	bool FOculusXRRoomLayoutManager::GetSpaceRoomLayout(const uint64 Space, const uint32 MaxWallsCapacity,
-															FOculusXRUUID &OutCeilingUuid, FOculusXRUUID &OutFloorUuid, TArray<FOculusXRUUID>& OutWallsUuid)
+		FOculusXRUUID& OutCeilingUuid, FOculusXRUUID& OutFloorUuid, TArray<FOculusXRUUID>& OutWallsUuid)
 	{
 		TArray<ovrpUuid> uuids;
 		uuids.InsertZeroed(0, MaxWallsCapacity);
@@ -83,8 +84,8 @@ namespace OculusXRAnchors
 		roomLayout.wallUuidCapacityInput = MaxWallsCapacity;
 		roomLayout.wallUuids = uuids.GetData();
 
-		const ovrpResult bSuccess = FOculusXRHMDModule::GetPluginWrapper().GetSpaceRoomLayout(&Space, &roomLayout);
-		if (bSuccess == ovrpFailure)
+		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().GetSpaceRoomLayout(&Space, &roomLayout);
+		if (!OVRP_SUCCESS(Result))
 		{
 			return false;
 		}
@@ -102,5 +103,5 @@ namespace OculusXRAnchors
 
 		return true;
 	}
-}
 
+} // namespace OculusXRAnchors

@@ -35,14 +35,15 @@ DECLARE_DELEGATE_RetVal_TwoParams(bool, FFieldValidatorDel, FString, FString&);
 class SOculusPlatformToolWidget : public SCompoundWidget
 {
 public:
-	typedef void(SOculusPlatformToolWidget::*PTextComboBoxDel)(TSharedPtr<FString>, ESelectInfo::Type);
-	typedef void(SOculusPlatformToolWidget::*PTextComittedDel)(const FText&, ETextCommit::Type);
-	typedef FReply(SOculusPlatformToolWidget::*PButtonClickedDel)();
-	typedef bool(SOculusPlatformToolWidget::*PFieldValidatorDel)(FString, FString&);
-	typedef void(SOculusPlatformToolWidget::*PCheckBoxChangedDel)(ECheckBoxState);
+	typedef void (SOculusPlatformToolWidget::*PTextComboBoxDel)(TSharedPtr<FString>, ESelectInfo::Type);
+	typedef void (SOculusPlatformToolWidget::*PTextComittedDel)(const FText&, ETextCommit::Type);
+	typedef FReply (SOculusPlatformToolWidget::*PButtonClickedDel)();
+	typedef bool (SOculusPlatformToolWidget::*PFieldValidatorDel)(FString, FString&);
+	typedef void (SOculusPlatformToolWidget::*PCheckBoxChangedDel)(ECheckBoxState);
 
 	SLATE_BEGIN_ARGS(SOculusPlatformToolWidget)
-	{}
+	{
+	}
 	SLATE_END_ARGS();
 
 	SOculusPlatformToolWidget();
@@ -218,4 +219,3 @@ protected:
 		RETURN_QUICK_DECLARE_CYCLE_STAT(FPlatformLoadRedistPackagesTask, STATGROUP_ThreadPoolAsyncTasks);
 	}
 };
-

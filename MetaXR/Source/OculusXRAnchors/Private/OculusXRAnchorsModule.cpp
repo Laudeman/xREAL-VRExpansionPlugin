@@ -13,18 +13,12 @@ DEFINE_LOG_CATEGORY(LogOculusXRAnchors);
 
 #define LOCTEXT_NAMESPACE "OculusXRAnchors"
 
-
 //-------------------------------------------------------------------------------------------------
 // FOculusXRAnchorsModule
 //-------------------------------------------------------------------------------------------------
 void FOculusXRAnchorsModule::StartupModule()
 {
 	if (!GEngine)
-	{
-		return;
-	}
-
-	if (!GEngine->XRSystem.IsValid() || GEngine->XRSystem->GetSystemName() != OculusXRHMD::FOculusXRHMD::OculusSystemName)
 	{
 		return;
 	}
@@ -53,8 +47,8 @@ OculusXRAnchors::FOculusXRAnchors* FOculusXRAnchorsModule::GetOculusAnchors()
 	return &Module.Anchors;
 }
 
-#endif	// OCULUS_ANCHORS_SUPPORTED_PLATFORMS
+#endif // OCULUS_ANCHORS_SUPPORTED_PLATFORMS
 
-IMPLEMENT_MODULE( FOculusXRAnchorsModule, OculusXRAnchors )
+IMPLEMENT_MODULE(FOculusXRAnchorsModule, OculusXRAnchors)
 
 #undef LOCTEXT_NAMESPACE

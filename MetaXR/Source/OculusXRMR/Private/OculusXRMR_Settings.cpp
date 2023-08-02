@@ -13,15 +13,9 @@ UOculusXRMR_Settings::UOculusXRMR_Settings(const FObjectInitializer& ObjectIniti
 	, HeightPerView(540)
 	, CastingLatency(0.0f)
 	, BackdropColor(FColor::Green)
-	, HandPoseStateLatency(0.0f)
-	, ChromaKeyColor(FColor::Green)
-	, ChromaKeySimilarity(0.6f)
-	, ChromaKeySmoothRange(0.03f)
-	, ChromaKeySpillRange(0.04f)
 	, ExternalCompositionPostProcessEffects(EOculusXRMR_PostProcessEffects::PPE_Off)
 	, bIsCasting(false)
 	, CompositionMethod(EOculusXRMR_CompositionMethod::ExternalComposition)
-	, CapturingCamera(EOculusXRMR_CameraDeviceEnum::CD_WebCamera0)
 	, BindToTrackedCameraIndex(-1)
 {
 }
@@ -39,13 +33,7 @@ void UOculusXRMR_Settings::SetCompositionMethod(EOculusXRMR_CompositionMethod va
 
 void UOculusXRMR_Settings::SetCapturingCamera(EOculusXRMR_CameraDeviceEnum val)
 {
-	if (CapturingCamera == val)
-	{
-		return;
-	}
-	auto old = CapturingCamera;
-	CapturingCamera = val;
-	CapturingCameraChangeDelegate.Execute(old, val);
+	// deprecated
 }
 
 void UOculusXRMR_Settings::SetIsCasting(bool val)
@@ -108,10 +96,6 @@ void UOculusXRMR_Settings::LoadFromIni()
 	{
 		HeightPerView = i;
 	}
-	if (GConfig->GetInt(OculusXRMRSettings, TEXT("CapturingCamera"), i, GEngineIni))
-	{
-		CapturingCamera = (EOculusXRMR_CameraDeviceEnum)i;
-	}
 	if (GConfig->GetFloat(OculusXRMRSettings, TEXT("CastingLatency"), f, GEngineIni))
 	{
 		CastingLatency = f;
@@ -119,26 +103,6 @@ void UOculusXRMR_Settings::LoadFromIni()
 	if (GConfig->GetColor(OculusXRMRSettings, TEXT("BackdropColor"), color, GEngineIni))
 	{
 		BackdropColor = color;
-	}
-	if (GConfig->GetFloat(OculusXRMRSettings, TEXT("HandPoseStateLatency"), f, GEngineIni))
-	{
-		HandPoseStateLatency = f;
-	}
-	if (GConfig->GetColor(OculusXRMRSettings, TEXT("ChromaKeyColor"), color, GEngineIni))
-	{
-		ChromaKeyColor = color;
-	}
-	if (GConfig->GetFloat(OculusXRMRSettings, TEXT("ChromaKeySimilarity"), f, GEngineIni))
-	{
-		ChromaKeySimilarity = f;
-	}
-	if (GConfig->GetFloat(OculusXRMRSettings, TEXT("ChromaKeySmoothRange"), f, GEngineIni))
-	{
-		ChromaKeySmoothRange = f;
-	}
-	if (GConfig->GetFloat(OculusXRMRSettings, TEXT("ChromaKeySpillRange"), f, GEngineIni))
-	{
-		ChromaKeySpillRange = f;
 	}
 	if (GConfig->GetInt(OculusXRMRSettings, TEXT("BindToTrackedCameraIndex"), i, GEngineIni))
 	{
@@ -166,14 +130,8 @@ void UOculusXRMR_Settings::SaveToIni() const
 	GConfig->SetBool(OculusXRMRSettings, TEXT("bUseTrackedCameraResolution"), bUseTrackedCameraResolution, GEngineIni);
 	GConfig->SetInt(OculusXRMRSettings, TEXT("WidthPerView"), WidthPerView, GEngineIni);
 	GConfig->SetInt(OculusXRMRSettings, TEXT("HeightPerView"), HeightPerView, GEngineIni);
-	GConfig->SetInt(OculusXRMRSettings, TEXT("CapturingCamera"), (int32)CapturingCamera, GEngineIni);
 	GConfig->SetFloat(OculusXRMRSettings, TEXT("CastingLatency"), CastingLatency, GEngineIni);
 	GConfig->SetColor(OculusXRMRSettings, TEXT("BackdropColor"), BackdropColor, GEngineIni);
-	GConfig->SetFloat(OculusXRMRSettings, TEXT("HandPoseStateLatency"), HandPoseStateLatency, GEngineIni);
-	GConfig->SetColor(OculusXRMRSettings, TEXT("ChromaKeyColor"), ChromaKeyColor, GEngineIni);
-	GConfig->SetFloat(OculusXRMRSettings, TEXT("ChromaKeySimilarity"), ChromaKeySimilarity, GEngineIni);
-	GConfig->SetFloat(OculusXRMRSettings, TEXT("ChromaKeySmoothRange"), ChromaKeySmoothRange, GEngineIni);
-	GConfig->SetFloat(OculusXRMRSettings, TEXT("ChromaKeySpillRange"), ChromaKeySpillRange, GEngineIni);
 	GConfig->SetInt(OculusXRMRSettings, TEXT("BindToTrackedCameraIndex"), (int32)BindToTrackedCameraIndex, GEngineIni);
 	GConfig->SetInt(OculusXRMRSettings, TEXT("ExternalCompositionPostProcessEffects"), (int32)ExternalCompositionPostProcessEffects, GEngineIni);
 

@@ -130,7 +130,7 @@ FString UOculusXRAnchorBPFunctionLibrary::AnchorUUIDToString(const FOculusXRUUID
 }
 
 FOculusXRUUID UOculusXRAnchorBPFunctionLibrary::StringToAnchorUUID(const FString& Value)
-{ 
+{
 	// Static size for the max length of the string, two chars per hex digit, 16 digits.
 	checkf(Value.Len() == 32, TEXT("'%s' is not a valid UUID"), *Value);
 
@@ -139,11 +139,35 @@ FOculusXRUUID UOculusXRAnchorBPFunctionLibrary::StringToAnchorUUID(const FString
 
 	return FOculusXRUUID(newID.data);
 }
-
 bool UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(EOculusXRAnchorResult::Type result)
 {
 #if OCULUS_HMD_SUPPORTED_PLATFORMS
 	return OVRP_SUCCESS(result);
 #endif
 	return false;
+}
+
+const UOculusXRBaseAnchorComponent* UOculusXRAnchorBPFunctionLibrary::GetAnchorComponent(const FOculusXRSpaceQueryResult& QueryResult, EOculusXRSpaceComponentType ComponentType, UObject* Outer)
+{
+	switch (ComponentType)
+	{
+		case EOculusXRSpaceComponentType::Locatable:
+			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRLocatableAnchorComponent>(QueryResult.Space.Value, Outer);
+		case EOculusXRSpaceComponentType::ScenePlane:
+			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRPlaneAnchorComponent>(QueryResult.Space.Value, Outer);
+		case EOculusXRSpaceComponentType::SceneVolume:
+			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRVolumeAnchorComponent>(QueryResult.Space.Value, Outer);
+		case EOculusXRSpaceComponentType::SemanticClassification:
+			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRSemanticClassificationAnchorComponent>(QueryResult.Space.Value, Outer);
+		case EOculusXRSpaceComponentType::RoomLayout:
+			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRRoomLayoutAnchorComponent>(QueryResult.Space.Value, Outer);
+		case EOculusXRSpaceComponentType::SpaceContainer:
+			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRSpaceContainerAnchorComponent>(QueryResult.Space.Value, Outer);
+		case EOculusXRSpaceComponentType::Sharable:
+			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRSharableAnchorComponent>(QueryResult.Space.Value, Outer);
+		case EOculusXRSpaceComponentType::Storable:
+			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRStorableAnchorComponent>(QueryResult.Space.Value, Outer);
+		default:
+			return nullptr;
+	}
 }

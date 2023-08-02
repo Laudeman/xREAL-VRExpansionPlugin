@@ -18,13 +18,12 @@ public:
 
 	static inline FOculusXRHMDModule& Get()
 	{
-		return FModuleManager::LoadModuleChecked< FOculusXRHMDModule >("OculusXRHMD");
+		return FModuleManager::LoadModuleChecked<FOculusXRHMDModule>("OculusXRHMD");
 	}
 
 	// IModuleInterface
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-
 
 	// IHeadMountedDisplayModule
 	virtual FString GetModuleKeyName() const override;
@@ -36,8 +35,8 @@ public:
 	virtual FString GetAudioOutputDevice() override;
 	virtual FString GetDeviceSystemName() override;
 
-	virtual TSharedPtr< class IXRTrackingSystem, ESPMode::ThreadSafe > CreateTrackingSystem() override;
-	virtual TSharedPtr< IHeadMountedDisplayVulkanExtensions, ESPMode::ThreadSafe > GetVulkanExtensions() override;
+	virtual TSharedPtr<class IXRTrackingSystem, ESPMode::ThreadSafe> CreateTrackingSystem() override;
+	virtual TSharedPtr<IHeadMountedDisplayVulkanExtensions, ESPMode::ThreadSafe> GetVulkanExtensions() override;
 	virtual bool IsStandaloneStereoOnlyDevice() override;
 
 	// IOculusXRHMDModule
@@ -102,10 +101,12 @@ protected:
 
 	bool bPreInit;
 	bool bPreInitCalled;
-	void *OVRPluginHandle;
+	void* OVRPluginHandle;
 	uint64 GraphicsAdapterLuid;
-	TWeakPtr< IHeadMountedDisplay, ESPMode::ThreadSafe > HeadMountedDisplay;
-	TSharedPtr< IHeadMountedDisplayVulkanExtensions, ESPMode::ThreadSafe > VulkanExtensions;
+	TWeakPtr<IHeadMountedDisplay, ESPMode::ThreadSafe> HeadMountedDisplay;
+	TSharedPtr<IHeadMountedDisplayVulkanExtensions, ESPMode::ThreadSafe> VulkanExtensions;
+
+	friend class ::OculusXRHMD::FOculusXRHMD;
 
 #endif // OCULUS_HMD_SUPPORTED_PLATFORMS
 };

@@ -5,7 +5,6 @@
 
 #define LOCTEXT_NAMESPACE "OculusXRScene"
 
-
 //-------------------------------------------------------------------------------------------------
 // FOculusXRSceneModule
 //-------------------------------------------------------------------------------------------------
@@ -26,14 +25,12 @@ public:
 private:
 };
 
-#else	// OCULUS_SCENE_SUPPORTED_PLATFORMS
+#else // OCULUS_SCENE_SUPPORTED_PLATFORMS
 
 class FOculusXRSceneModule : public FDefaultModuleImpl
 {
-
 };
 
-#endif	// OCULUS_SCENE_SUPPORTED_PLATFORMS
-
+#endif // OCULUS_SCENE_SUPPORTED_PLATFORMS
 
 #undef LOCTEXT_NAMESPACE

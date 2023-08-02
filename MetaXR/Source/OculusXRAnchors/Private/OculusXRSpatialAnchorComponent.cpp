@@ -10,7 +10,7 @@ LICENSE file in the root directory of this source tree.
 
 DEFINE_LOG_CATEGORY(LogOculusSpatialAnchor);
 
-UOculusXRSpatialAnchorComponent::UOculusXRSpatialAnchorComponent(const FObjectInitializer& ObjectInitializer) 
+UOculusXRSpatialAnchorComponent::UOculusXRSpatialAnchorComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 }

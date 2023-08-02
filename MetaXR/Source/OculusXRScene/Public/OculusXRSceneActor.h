@@ -8,12 +8,11 @@
 #include "OculusXRSceneAnchorComponent.h"
 #include "OculusXRSceneActor.generated.h"
 
-
 /** EOculusXRLaunchCaptureFlowWhenMissingScene
 * Used to dictate whether the actor should launch the Capture Flow application when a scene is not detected on the device.
-* The Actor will check if a scene capture is either non-existent or invalid (ie. missing walls/ceiling/floor) before checking if Capture Flow 
+* The Actor will check if a scene capture is either non-existent or invalid (ie. missing walls/ceiling/floor) before checking if Capture Flow
 * should be launched.
-* 
+*
 * NEVER:	will never launch Flow Capture.
 * ONCE:		will only launch it once.  If the actor still doesn't detect that a scene was captured, it will not launch Capture Flow again.
 * ALWAYS:	will always re-launch Flow Capture if a scene was not detected on the device.
@@ -21,9 +20,9 @@
 UENUM(BlueprintType)
 enum EOculusXRLaunchCaptureFlowWhenMissingScene
 {
-	NEVER	UMETA(DisplayName = "Never"),
-	ONCE	UMETA(DisplayName = "Once"),
-	ALWAYS	UMETA(DisplayName = "Always")
+	NEVER UMETA(DisplayName = "Never"),
+	ONCE UMETA(DisplayName = "Once"),
+	ALWAYS UMETA(DisplayName = "Always")
 };
 
 /** FOculusXRSpawnedSceneAnchorProperties
@@ -40,26 +39,25 @@ struct FOculusXRSpawnedSceneAnchorProperties
 	UPROPERTY(EditAnywhere, Category = "Spawned Scene Anchor Properties")
 	TSoftObjectPtr<UStaticMesh> StaticMesh;
 
-	UPROPERTY(EditAnywhere, Category = "Spawned Scene Anchor Properties")
+	UPROPERTY(EditAnywhere, Category = "Spawned Scene Anchor Properties", Meta = (DeprecatedProperty, DeprecationMessage = "This property is deprecated. Alignment is done automatically at lower level."))
 	bool ForceParallelToFloor = false;
 
 	UPROPERTY(EditAnywhere, Category = "Spawned Scene Anchor Properties")
 	FVector AddOffset = FVector::ZeroVector;
 };
 
-
 /**
 * AOculusXRSceneActor
 * The purpose of this actor is to be able to spawn "scene anchor" actors.
-* 
+*
 * Each actor type (based on their semantic label) can be configured to be spawned with a specific mesh and actor component.
-* 
+*
 * Overall, it provides a simple interface to be able to quickly get a captured scene from Capture Flow populated at runtime.
-* It also provides a basic and flexible template to making use of the OculusAnchorSDK and UOculusXRRoomLayoutManagerComponent 
-* to drive the actor's logic.  This removes the need for the developer to implement a system from scratch that makes use of 
+* It also provides a basic and flexible template to making use of the OculusAnchorSDK and UOculusXRRoomLayoutManagerComponent
+* to drive the actor's logic.  This removes the need for the developer to implement a system from scratch that makes use of
 * the native methods and components.
 *
-* TLDR: 
+* TLDR:
 * - This actor populates a captured scene (created in Capture Flow) by spawning child actors with predefined actor and mesh components.
 * - Can be used as is, or can be derived or modified as needed depending on the application's needs.
 */
@@ -75,7 +73,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OculusXR|Scene Actor")
 	bool IsScenePopulated();
 
-	UFUNCTION(BlueprintCallable, Category = "OculusXR|Scene Actor")
+	UFUNCTION(BlueprintCallable, Category = "OculusXR|Scene Actor", Meta = (DeprecatedFunction, DeprecationMessage = "Is Room Layout Valid is deprecated and no longer returns any value but true. Please validate your room configuration in the way your application requires."))
 	bool IsRoomLayoutValid();
 
 	UFUNCTION(BlueprintCallable, Category = "OculusXR|Scene Actor")
@@ -94,16 +92,10 @@ public:
 	TArray<AActor*> GetActorsBySemanticLabel(const FString SemanticLabel);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OculusXR|Scene Actor")
-	bool bEnsureRoomIsValid = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OculusXR|Scene Actor")
 	TEnumAsByte<EOculusXRLaunchCaptureFlowWhenMissingScene> LauchCaptureFlowWhenMissingScene = EOculusXRLaunchCaptureFlowWhenMissingScene::ALWAYS;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OculusXR|Scene Actor", meta = (UIMin = 1, ClampMin = 1, UIMax = 1024, ClampMax = 1024))
 	int32 MaxQueries = 64;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OculusXR|Scene Actor")
-	bool bVerboseLog = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OculusXR|Scene Actor")
 	bool bPopulateSceneOnBeginPlay = true;
@@ -121,13 +113,18 @@ public:
 	virtual void EndPlay(EEndPlayReason::Type Reason) override;
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void PostLoad() override;
 
 private:
-	// Event delegate handlers
-	void AnchorQueryComplete_Handler(EOculusXRAnchorResult::Type AnchorResult, const TArray<FOculusXRSpaceQueryResult>& QueryResults);
+	EOculusXRAnchorResult::Type QueryAllRooms();
+	void RoomLayoutQueryComplete(EOculusXRAnchorResult::Type AnchorResult, const TArray<FOculusXRSpaceQueryResult>& QueryResults);
 
-	void SpatialAnchorQueryResult_Handler(FOculusXRUInt64 RequestId, FOculusXRUInt64 Space, FOculusXRUUID Uuid);
-	void SpatialAnchorQueryComplete_Handler(FOculusXRUInt64 RequestId, bool bResult);
+	EOculusXRAnchorResult::Type QueryRoomUUIDs(const FOculusXRUInt64 RoomSpaceID, const TArray<FOculusXRUUID>& RoomUUIDs);
+	void SceneRoomQueryComplete(EOculusXRAnchorResult::Type AnchorResult, const TArray<FOculusXRSpaceQueryResult>& QueryResults, const FOculusXRUInt64 RoomSpaceID);
+
+	void GetSemanticClassifications(uint64 Space, TArray<FString>& OutSemanticLabels) const;
+
+	// Scene capture event handler
 	void SceneCaptureComplete_Handler(FOculusXRUInt64 RequestId, bool bResult);
 
 	// Launches Capture Flow if (based on LauchCaptureFlowWhenMissingScene member value)
@@ -136,17 +133,18 @@ private:
 	// Resets states of the Actor
 	void ResetStates();
 
-	// Handles logic for making a spatial anchors request
-	bool QuerySpatialAnchors(const bool bRoomLayoutOnly);
-
 	// Validates UUID
 	bool IsValidUuid(const FOculusXRUUID& Uuid);
 
+	// Helper method to spawn an actor for anchor
+	AActor* SpawnActorWithSceneComponent(const FOculusXRUInt64& Space, const FOculusXRUInt64& RoomSpaceID, const TArray<FString>& SemanticClassifications, UClass* sceneAnchorComponentInstanceClass);
+
 	// Spawns a scene anchor
-	bool SpawnSceneAnchor(const FOculusXRUInt64& Space, const FVector& BoundedSize, const TArray<FString>& SemanticClassifications, const EOculusXRSpaceComponentType AnchorComponentType);
-	
+	AActor* SpawnSceneAnchor(AActor* Anchor, const FOculusXRUInt64& Space, const FOculusXRUInt64& RoomSpaceID, const FVector& BoundedPos, const FVector& BoundedSize, const TArray<FString>& SemanticClassifications, const EOculusXRSpaceComponentType AnchorComponentType);
+
 	// Components for room layout and spatial anchors functionalities
 	UOculusXRRoomLayoutManagerComponent* RoomLayoutManagerComponent = nullptr;
+
 
 	// Whether Capture Flow was already launched once
 	bool bCaptureFlowWasLaunched;
@@ -156,4 +154,7 @@ private:
 
 	// Whether we found a captured scene
 	bool bFoundCapturedScene;
+
+	UPROPERTY(Transient)
+	TMap<FOculusXRUInt64, FOculusXRRoomLayout> RoomLayouts;
 };

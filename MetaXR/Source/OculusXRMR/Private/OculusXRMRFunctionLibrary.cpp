@@ -9,6 +9,7 @@
 #include "OculusXRHMDPrivate.h"
 #include "IHeadMountedDisplay.h"
 
+#include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -24,7 +25,7 @@ void UOculusXRMRFunctionLibrary::GetAllTrackedCamera(TArray<FOculusXRTrackedCame
 {
 	TrackedCameras.Empty();
 
-	if (!FOculusXRMRModule::IsAvailable() || !FOculusXRMRModule::Get().IsInitialized() )
+	if (!FOculusXRMRModule::IsAvailable() || !FOculusXRMRModule::Get().IsInitialized())
 	{
 		UE_LOG(LogMR, Error, TEXT("OculusXRMR not available"));
 		return;
@@ -130,7 +131,7 @@ UOculusXRMR_Settings* UOculusXRMRFunctionLibrary::GetOculusXRMRSettings()
 
 USceneComponent* UOculusXRMRFunctionLibrary::GetTrackingReferenceComponent()
 {
-	USceneComponent * TrackingRef = nullptr;
+	USceneComponent* TrackingRef = nullptr;
 	if (FOculusXRMRModule::IsAvailable())
 	{
 		TrackingRef = FOculusXRMRModule::Get().GetMRState()->TrackingReferenceComponent;

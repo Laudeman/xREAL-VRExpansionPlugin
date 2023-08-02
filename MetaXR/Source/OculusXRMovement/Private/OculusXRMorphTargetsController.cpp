@@ -6,6 +6,8 @@ LICENSE file in the root directory of this source tree.
 */
 
 #include "OculusXRMorphTargetsController.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 
 #include "AnimationRuntime.h"
 
@@ -15,9 +17,10 @@ void FOculusXRMorphTargetsController::ResetMorphTargetCurves(USkinnedMeshCompone
 	{
 		TargetMeshComponent->ActiveMorphTargets.Reset();
 
-		if (TargetMeshComponent->SkeletalMesh)
+		USkeletalMesh* TargetMesh = Cast<USkeletalMesh>(TargetMeshComponent->GetSkinnedAsset());
+		if (TargetMesh != nullptr)
 		{
-			TargetMeshComponent->MorphTargetWeights.SetNum(TargetMeshComponent->SkeletalMesh->GetMorphTargets().Num());
+			TargetMeshComponent->MorphTargetWeights.SetNum(TargetMesh->GetMorphTargets().Num());
 
 			// we need this code to ensure the buffer gets cleared whether or not you have morphtarget curve set
 			// the case, where you had morphtargets weight on, and when you clear the weight, you want to make sure
@@ -36,11 +39,12 @@ void FOculusXRMorphTargetsController::ResetMorphTargetCurves(USkinnedMeshCompone
 
 void FOculusXRMorphTargetsController::ApplyMorphTargets(USkinnedMeshComponent* TargetMeshComponent)
 {
-	if (TargetMeshComponent && TargetMeshComponent->SkeletalMesh)
+	if (TargetMeshComponent != nullptr)
 	{
-		if (MorphTargetCurves.Num() > 0)
+		const USkeletalMesh* TargetMesh = Cast<USkeletalMesh>(TargetMeshComponent->GetSkinnedAsset());
+		if (TargetMesh != nullptr && MorphTargetCurves.Num() > 0)
 		{
-			FAnimationRuntime::AppendActiveMorphTargets(TargetMeshComponent->SkeletalMesh, MorphTargetCurves, TargetMeshComponent->ActiveMorphTargets, TargetMeshComponent->MorphTargetWeights);
+			FAnimationRuntime::AppendActiveMorphTargets(TargetMesh, MorphTargetCurves, TargetMeshComponent->ActiveMorphTargets, TargetMeshComponent->MorphTargetWeights);
 		}
 	}
 }

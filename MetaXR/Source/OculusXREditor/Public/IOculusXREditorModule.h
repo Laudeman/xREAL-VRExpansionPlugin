@@ -16,4 +16,3 @@ class FMenuBuilder;
 class IOculusXREditorModule : public IModuleInterface
 {
 };
-

@@ -17,7 +17,7 @@ bool FOculusXROpenXRHMD::IsStandaloneStereoOnlyDevice()
 {
 #if PLATFORM_ANDROID
 	const bool bIsStandaloneStereoDevice = FAndroidMisc::GetDeviceMake() == FString("Oculus");
-#else 
+#else
 	const bool bIsStandaloneStereoDevice = false;
 #endif
 	return bIsStandaloneStereoDevice;
@@ -31,7 +31,7 @@ bool FOculusXROpenXRHMD::GetRequiredExtensions(TArray<const ANSICHAR*>& OutExten
 bool FOculusXROpenXRHMD::GetInteractionProfile(XrInstance InInstance, FString& OutKeyPrefix, XrPath& OutPath, bool& OutHasHaptics)
 {
 	//UE_LOG(LogOculusOpenXRPlugin, Log, TEXT("Oculus OpenXR GetInteractionProfile"));
-	return false;	// if you return true, make sure OutPath and OutHasHaptics are initialized
+	return false; // if you return true, make sure OutPath and OutHasHaptics are initialized
 }
 
 bool FOculusXROpenXRHMD::GetSpectatorScreenController(FHeadMountedDisplayBase* InHMDBase, TUniquePtr<FDefaultSpectatorScreenController>& OutSpectatorScreenController)
@@ -39,7 +39,7 @@ bool FOculusXROpenXRHMD::GetSpectatorScreenController(FHeadMountedDisplayBase* I
 #if PLATFORM_ANDROID
 	OutSpectatorScreenController = nullptr;
 	return true;
-#else // PLATFORM_ANDROID
+#else  // PLATFORM_ANDROID
 	OutSpectatorScreenController = MakeUnique<FDefaultSpectatorScreenController>(InHMDBase);
 	return false;
 #endif // PLATFORM_ANDROID

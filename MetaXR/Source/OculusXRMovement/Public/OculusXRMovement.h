@@ -17,6 +17,7 @@ struct OCULUSXRMOVEMENT_API OculusXRMovement
 	static bool StartBodyTracking();
 	static bool StopBodyTracking();
 
+public:
 	static bool GetFaceState(FOculusXRFaceState& outOculusXRFaceState);
 	static bool IsFaceTrackingEnabled();
 	static bool IsFaceTrackingSupported();

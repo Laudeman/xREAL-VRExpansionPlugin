@@ -7,88 +7,86 @@
 namespace OculusXRHMD
 {
 
-//-------------------------------------------------------------------------------------------------
-// Utility functions
-//-------------------------------------------------------------------------------------------------
+	//-------------------------------------------------------------------------------------------------
+	// Utility functions
+	//-------------------------------------------------------------------------------------------------
 
-bool InGameThread()
-{
-	if (GIsGameThreadIdInitialized)
+	bool InGameThread()
 	{
-		return FPlatformTLS::GetCurrentThreadId() == GGameThreadId;
-	}
-	else
-	{
-		return true;
-	}
-}
-
-
-bool InRenderThread()
-{
-	if (GIsThreadedRendering && !GIsRenderingThreadSuspended.Load(EMemoryOrder::Relaxed))
-	{
-		return IsInActualRenderingThread();
-	}
-	else
-	{
-		return InGameThread();
-	}
-}
-
-
-bool InRHIThread()
-{
-	if (GIsThreadedRendering && !GIsRenderingThreadSuspended.Load(EMemoryOrder::Relaxed))
-	{
-		if (IsRHIThreadRunning())
+		if (GIsGameThreadIdInitialized)
 		{
-			if (IsInRHIThread())
-			{
-				return true;
-			}
-
-			if (IsInActualRenderingThread())
-			{
-				return GetImmediateCommandList_ForRenderCommand().Bypass();
-			}
-
-			return false;
+			return FPlatformTLS::GetCurrentThreadId() == GGameThreadId;
 		}
 		else
 		{
-			return IsInActualRenderingThread();
+			return true;
 		}
 	}
-	else
+
+	bool InRenderThread()
 	{
-		return InGameThread();
+		if (GIsThreadedRendering && !GIsRenderingThreadSuspended.Load(EMemoryOrder::Relaxed))
+		{
+			return IsInActualRenderingThread();
+		}
+		else
+		{
+			return InGameThread();
+		}
 	}
-}
 
-bool ConvertPose_Internal(const FPose& InPose, FPose& OutPose, const FQuat BaseOrientation, const FVector BaseOffset, float WorldToMetersScale)
-{
-	// apply base orientation correction
-	OutPose.Orientation = BaseOrientation.Inverse() * InPose.Orientation;
-	OutPose.Orientation.Normalize();
+	bool InRHIThread()
+	{
+		if (GIsThreadedRendering && !GIsRenderingThreadSuspended.Load(EMemoryOrder::Relaxed))
+		{
+			if (IsRHIThreadRunning())
+			{
+				if (IsInRHIThread())
+				{
+					return true;
+				}
 
-	// correct position according to BaseOrientation and BaseOffset.
-	OutPose.Position = (InPose.Position - BaseOffset) * WorldToMetersScale;
-	OutPose.Position = BaseOrientation.Inverse().RotateVector(OutPose.Position);
+				if (IsInActualRenderingThread())
+				{
+					return GetImmediateCommandList_ForRenderCommand().Bypass();
+				}
 
-	return true;
-}
+				return false;
+			}
+			else
+			{
+				return IsInActualRenderingThread();
+			}
+		}
+		else
+		{
+			return InGameThread();
+		}
+	}
 
-bool ConvertPose_Internal(const ovrpPosef& InPose, FPose& OutPose, const FQuat BaseOrientation, const FVector BaseOffset, float WorldToMetersScale)
-{
-	return ConvertPose_Internal(FPose(ToFQuat(InPose.Orientation), ToFVector(InPose.Position)), OutPose, BaseOrientation, BaseOffset, WorldToMetersScale);
-}
+	bool ConvertPose_Internal(const FPose& InPose, FPose& OutPose, const FQuat BaseOrientation, const FVector BaseOffset, float WorldToMetersScale)
+	{
+		// apply base orientation correction
+		OutPose.Orientation = BaseOrientation.Inverse() * InPose.Orientation;
+		OutPose.Orientation.Normalize();
 
-bool ConvertPose_Internal(const FPose& InPose, ovrpPosef& OutPose, const FQuat BaseOrientation, const FVector BaseOffset, float WorldToMetersScale)
-{
-	OutPose.Orientation = ToOvrpQuatf(BaseOrientation * InPose.Orientation);
-	OutPose.Position = ToOvrpVector3f(BaseOrientation.RotateVector(InPose.Position) / WorldToMetersScale + BaseOffset);
-	return true;
-}
+		// correct position according to BaseOrientation and BaseOffset.
+		OutPose.Position = (InPose.Position - BaseOffset) * WorldToMetersScale;
+		OutPose.Position = BaseOrientation.Inverse().RotateVector(OutPose.Position);
+
+		return true;
+	}
+
+	bool ConvertPose_Internal(const ovrpPosef& InPose, FPose& OutPose, const FQuat BaseOrientation, const FVector BaseOffset, float WorldToMetersScale)
+	{
+		return ConvertPose_Internal(FPose(ToFQuat(InPose.Orientation), ToFVector(InPose.Position)), OutPose, BaseOrientation, BaseOffset, WorldToMetersScale);
+	}
+
+	bool ConvertPose_Internal(const FPose& InPose, ovrpPosef& OutPose, const FQuat BaseOrientation, const FVector BaseOffset, float WorldToMetersScale)
+	{
+		OutPose.Orientation = ToOvrpQuatf(BaseOrientation * InPose.Orientation);
+		OutPose.Position = ToOvrpVector3f(BaseOrientation.RotateVector(InPose.Position) / WorldToMetersScale + BaseOffset);
+		return true;
+	}
 
 } // namespace OculusXRHMD

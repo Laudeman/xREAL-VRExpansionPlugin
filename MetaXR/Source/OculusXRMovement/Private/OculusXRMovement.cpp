@@ -6,6 +6,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 #include "OculusXRMovement.h"
+#include "OculusXRMovementLog.h"
 #include "OculusXRMovementModule.h"
 #include "OculusXRHMDPrivate.h"
 #include "OculusXRHMD.h"
@@ -20,11 +21,13 @@ namespace XRSpaceFlags
 	const uint64 XR_SPACE_LOCATION_POSITION_VALID_BIT = 0x00000002;
 } // namespace XRSpaceFlags
 
+
 bool OculusXRMovement::GetBodyState(FOculusXRBodyState& outOculusXRBodyState, float WorldToMeters)
 {
 	static_assert(ovrpBoneId_Body_End == (int)EOculusXRBoneID::COUNT, "The size of the OVRPlugin Bone ID enum should be the same as the EOculusXRBoneID enum.");
 
 	checkf(outOculusXRBodyState.Joints.Num() >= ovrpBoneId_Body_End, TEXT("Not enough joints in FOculusXRBodyState::Joints array. You must have at least %d joints"), ovrpBoneId_Body_End);
+	constexpr auto AvailableJoints = ovrpBoneId_Body_End;
 
 	ovrpBodyState OVRBodyState;
 	ovrpResult OVRBodyStateResult = FOculusXRHMDModule::GetPluginWrapper().GetBodyState(ovrpStep_Render, OVRP_CURRENT_FRAMEINDEX, &OVRBodyState);
@@ -33,11 +36,11 @@ bool OculusXRMovement::GetBodyState(FOculusXRBodyState& outOculusXRBodyState, fl
 	if (OVRP_SUCCESS(OVRBodyStateResult))
 	{
 		outOculusXRBodyState.IsActive = (OVRBodyState.IsActive == ovrpBool_True);
-		outOculusXRBodyState.Confidence = OVRBodyState.Confidence;		
+		outOculusXRBodyState.Confidence = OVRBodyState.Confidence;
 		outOculusXRBodyState.SkeletonChangedCount = OVRBodyState.SkeletonChangedCount;
 		outOculusXRBodyState.Time = static_cast<float>(OVRBodyState.Time);
 
-		for (int i = 0; i < ovrpBoneId_Body_End; ++i)
+		for (int i = 0; i < AvailableJoints; ++i)
 		{
 			ovrpBodyJointLocation OVRJointLocation = OVRBodyState.JointLocations[i];
 			ovrpPosef OVRJointPose = OVRJointLocation.Pose;
@@ -85,6 +88,7 @@ bool OculusXRMovement::IsBodyTrackingSupported()
 	return bResult;
 }
 
+
 bool OculusXRMovement::StartBodyTracking()
 {
 	return OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().StartBodyTracking());
@@ -97,13 +101,16 @@ bool OculusXRMovement::StopBodyTracking()
 
 bool OculusXRMovement::GetFaceState(FOculusXRFaceState& outOculusXRFaceState)
 {
-	static_assert(ovrpFaceExpression_Max == (int)EOculusXRFaceExpression::COUNT, "The size of the OVRPlugin Face Expression enum should be the same as the EOculusXRFaceExpression enum.");
+	const auto blendShapeCount = ovrpFaceExpression_Max;
+
+	static_assert(blendShapeCount == static_cast<int>(EOculusXRFaceExpression::COUNT), "The size of the OVRPlugin Face Expression enum should be the same as the EOculusXRFaceExpression enum.");
 
 	checkf(outOculusXRFaceState.ExpressionWeightConfidences.Num() >= ovrpFaceConfidence_Max, TEXT("Not enough expression weight confidences in FOculusXRFaceState::ExpressionWeightConfidences. Requires %d available elements in the array."), ovrpFaceConfidence_Max);
-	checkf(outOculusXRFaceState.ExpressionWeights.Num() >= ovrpFaceExpression_Max, TEXT("Not enough expression weights in FOculusXRFaceState::ExpressionWeights. Requires %d available elements in the array."), ovrpFaceExpression_Max);
+	checkf(outOculusXRFaceState.ExpressionWeights.Num() >= blendShapeCount, TEXT("Not enough expression weights in FOculusXRFaceState::ExpressionWeights. Requires %d available elements in the array."), blendShapeCount);
 
 	ovrpFaceState OVRFaceState;
 	ovrpResult OVRFaceStateResult = FOculusXRHMDModule::GetPluginWrapper().GetFaceState(ovrpStep_Render, OVRP_CURRENT_FRAMEINDEX, &OVRFaceState);
+
 	ensureMsgf(OVRFaceStateResult != ovrpFailure_NotYetImplemented, TEXT("Face tracking is not implemented on this platform."));
 
 	if (OVRP_SUCCESS(OVRFaceStateResult))
@@ -112,7 +119,7 @@ bool OculusXRMovement::GetFaceState(FOculusXRFaceState& outOculusXRFaceState)
 		outOculusXRFaceState.bIsEyeFollowingBlendshapesValid = (OVRFaceState.Status.IsEyeFollowingBlendshapesValid == ovrpBool_True);
 		outOculusXRFaceState.Time = static_cast<float>(OVRFaceState.Time);
 
-		for (int i = 0; i < ovrpFaceExpression_Max; ++i)
+		for (int i = 0; i < blendShapeCount; ++i)
 		{
 			outOculusXRFaceState.ExpressionWeights[i] = OVRFaceState.ExpressionWeights[i];
 		}
@@ -165,7 +172,6 @@ bool OculusXRMovement::StartFaceTracking()
 
 bool OculusXRMovement::StopFaceTracking()
 {
-
 	return OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().StopFaceTracking());
 }
 
@@ -236,3 +242,5 @@ bool OculusXRMovement::StopEyeTracking()
 {
 	return OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().StopEyeTracking());
 }
+
+#undef LOCTEXT_NAMESPACE

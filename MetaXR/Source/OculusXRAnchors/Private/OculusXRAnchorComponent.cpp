@@ -18,11 +18,11 @@ static TAutoConsoleVariable<int32> CVarOculusXRVerboseAnchorDebugXR(
 	TEXT("ovr.OculusXRVerboseAnchorDebug"),
 	0,
 	TEXT("Enables or disables verbose logging for Oculus anchors.\n")
-	TEXT("<=0: disabled (no printing)\n")
-	TEXT("  1: enabled  (verbose logging)\n"));
+		TEXT("<=0: disabled (no printing)\n")
+			TEXT("  1: enabled  (verbose logging)\n"));
 #endif
 
-UOculusXRAnchorComponent::UOculusXRAnchorComponent(const FObjectInitializer& ObjectInitializer) 
+UOculusXRAnchorComponent::UOculusXRAnchorComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bUpdateHeadSpaceTransform(true)
 	, AnchorHandle(0)
@@ -149,10 +149,10 @@ void UOculusXRAnchorComponent::UpdateAnchorTransform() const
 	AActor* Parent = GetOwner();
 	if (Parent)
 	{
-		if(AnchorHandle.Value)
+		if (AnchorHandle.Value)
 		{
 			FTransform OutTransform;
-			if(UOculusXRAnchorBPFunctionLibrary::GetAnchorTransformByHandle(AnchorHandle, OutTransform))
+			if (UOculusXRAnchorBPFunctionLibrary::GetAnchorTransformByHandle(AnchorHandle, OutTransform))
 			{
 #if WITH_EDITOR
 				// Link only head-space transform update
@@ -198,7 +198,8 @@ bool UOculusXRAnchorComponent::ToWorldSpacePose(FTransform CameraTransform, FTra
 	FVector OutHeadPosition;
 	FQuat OutHeadOrientation;
 	const bool bGetPose = OculusXRHMD->GetCurrentPose(OculusXRHMD->HMDDeviceId, OutHeadOrientation, OutHeadPosition);
-	if (!bGetPose) return false;
+	if (!bGetPose)
+		return false;
 
 	OculusXRHMD::FPose HeadPose(OutHeadOrientation, OutHeadPosition);
 

@@ -9,15 +9,15 @@
 UENUM()
 enum class EOculusXRPlatform : uint8
 {
-	PC UMETA(DisplayName="PC"),
-	Mobile UMETA(DisplayName="Mobile"),
-	Length UMETA(DisplayName="Invalid")
+	PC UMETA(DisplayName = "PC"),
+	Mobile UMETA(DisplayName = "Mobile"),
+	Length UMETA(DisplayName = "Invalid")
 };
 
 /**
  * 
  */
-UCLASS(config=Editor)
+UCLASS(config = Editor)
 class OCULUSXREDITOR_API UOculusXREditorSettings : public UObject
 {
 	GENERATED_BODY()
@@ -25,12 +25,12 @@ class OCULUSXREDITOR_API UOculusXREditorSettings : public UObject
 public:
 	UOculusXREditorSettings();
 
-	UPROPERTY(config, EditAnywhere, Category = MetaXR )
+	UPROPERTY(config, EditAnywhere, Category = MetaXR)
 	TMap<FName, bool> PerfToolIgnoreList;
-	
-	UPROPERTY(config, EditAnywhere, Category = MetaXR )
+
+	UPROPERTY(config, EditAnywhere, Category = MetaXR)
 	EOculusXRPlatform PerfToolTargetPlatform;
 
-	UPROPERTY(globalconfig, EditAnywhere, Category = MetaXR )
+	UPROPERTY(globalconfig, EditAnywhere, Category = MetaXR)
 	bool bAddMenuOption;
 };

@@ -1,23 +1,88 @@
 #include "OculusXRPassthroughLayerShapes.h"
+
+#include "OculusXRHMDPrivate.h"
 #include "Curves/CurveLinearColor.h"
+#include "OculusXRPluginWrapper.h"
 
 const FName FReconstructedLayer::ShapeName = FName("ReconstructedLayer");
 const FName FUserDefinedLayer::ShapeName = FName("UserDefinedLayer");
 
+FColorLutDesc::FColorLutDesc()
+	: Weight(0)
+	, ColorLuts{}
+{
+}
+
+FColorLutDesc::FColorLutDesc(const TArray<uint64>& InColorLuts, float InWeight)
+	: Weight(InWeight)
+	, ColorLuts(InColorLuts)
+{
+}
+
+FEdgeStyleParameters::FEdgeStyleParameters()
+	: bEnableEdgeColor(false)
+	, bEnableColorMap(false)
+	, bUseColorLuts(false)
+	, TextureOpacityFactor(1.0f)
+	, EdgeColor{}
+	, ColorMapType{}
+	, ColorMapData{}
+	, ColorLutDesc{} {
+
+	};
+
+FEdgeStyleParameters::FEdgeStyleParameters(
+	bool bEnableEdgeColor,
+	bool bEnableColorMap,
+	float TextureOpacityFactor,
+	float Brightness,
+	float Contrast,
+	float Posterize,
+	float Saturation,
+	FLinearColor EdgeColor,
+	FLinearColor ColorScale,
+	FLinearColor ColorOffset,
+	EOculusXRColorMapType InColorMapType,
+	const TArray<FLinearColor>& InColorMapGradient,
+	const FColorLutDesc& InLutDesc)
+	: bEnableEdgeColor(bEnableEdgeColor)
+	, bEnableColorMap(bEnableColorMap)
+	, TextureOpacityFactor(TextureOpacityFactor)
+	, Brightness(Brightness)
+	, Contrast(Contrast)
+	, Posterize(Posterize)
+	, Saturation(Saturation)
+	, EdgeColor(EdgeColor)
+	, ColorScale(ColorScale)
+	, ColorOffset(ColorOffset)
+	, ColorMapType(InColorMapType)
+	, ColorLutDesc(InLutDesc)
+{
+	bUseColorLuts = (InColorMapType == ColorMapType_ColorLut && InLutDesc.ColorLuts.Num() == 1)
+		|| (InColorMapType == ColorMapType_ColorLut_Interpolated && InLutDesc.ColorLuts.Num() == 2);
+	if ((InColorMapType == ColorMapType_ColorLut || InColorMapType == ColorMapType_ColorLut_Interpolated)
+		&& !bUseColorLuts)
+	{
+		ColorMapType = ColorMapType_None;
+	}
+	ColorMapData = GenerateColorMapData(InColorMapType, InColorMapGradient);
+};
 
 TArray<uint8> FEdgeStyleParameters::GenerateColorMapData(EOculusXRColorMapType InColorMapType, const TArray<FLinearColor>& InColorMapGradient)
 {
-	switch (InColorMapType) {
-	case ColorMapType_GrayscaleToColor: {
-		TArray<uint8> NewColorMapData = GenerateMonoBrightnessContrastPosterizeMap();
-		return GenerateMonoToRGBA(InColorMapGradient, NewColorMapData);
-	}
-	case ColorMapType_Grayscale:
-		return GenerateMonoBrightnessContrastPosterizeMap();
-	case ColorMapType_ColorAdjustment:
-		return GenerateBrightnessContrastSaturationColorMap();
-	default:
-		return TArray<uint8>();
+	switch (InColorMapType)
+	{
+		case ColorMapType_GrayscaleToColor:
+		{
+			TArray<uint8> NewColorMapData = GenerateMonoBrightnessContrastPosterizeMap();
+			return GenerateMonoToRGBA(InColorMapGradient, NewColorMapData);
+		}
+		case ColorMapType_Grayscale:
+			return GenerateMonoBrightnessContrastPosterizeMap();
+		case ColorMapType_ColorAdjustment:
+			return GenerateBrightnessContrastSaturationColorMap();
+		default:
+			return TArray<uint8>();
 	}
 }
 
@@ -72,7 +137,7 @@ TArray<uint8> FEdgeStyleParameters::GenerateBrightnessContrastSaturationColorMap
 	NewColorMapData.SetNum(3 * sizeof(float));
 	float newB = Brightness * 100.0f;
 	float newC = Contrast + 1.0f;
-	float newS = Saturation + 1.0f; 
+	float newS = Saturation + 1.0f;
 
 	uint8* Dest = NewColorMapData.GetData();
 	FMemory::Memcpy(Dest, &newB, sizeof(float));

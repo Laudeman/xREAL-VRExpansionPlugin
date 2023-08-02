@@ -30,12 +30,12 @@
 extern "C" {
 #endif
 
-// The following macros are only defined when building in UE4
+// The following macros are only defined when building in UE4 and UE5
 #if (                                                                                     \
     defined(UE_BUILD_DEBUG) || defined(UE_BUILD_DEVELOPMENT) || defined(UE_BUILD_TEST) || \
     defined(UE_BUILD_SHIPPING)) &&                                                        \
     defined(PLATFORM_ANDROID)
-// OVRPlugin does not support Android system callbacks in UE4.
+// OVRPlugin does not support Android system callbacks in UE4 and UE5.
 // Please use Optional Mobile Features Blueprint Library Plugin or include FAndroidMisc.h in your project
 #define OVRPLUGIN_JNI_LIB_EXCLUDED
 #endif
@@ -418,6 +418,12 @@ OVRP_EXPORT ovrpResult ovrp_SetControllerVibration2(ovrpController controllerMas
 /// Gets the controller state for the given controllers.
 OVRP_EXPORT ovrpResult ovrp_GetControllerState5(ovrpController controllerMask, ovrpControllerState5* controllerState);
 
+
+
+
+
+
+
 /// Sets the vibration state for the specified haptics locations on the given controllers.
 OVRP_EXPORT ovrpResult ovrp_SetControllerLocalizedVibration(
     ovrpController controllerMask,
@@ -500,7 +506,7 @@ OVRP_EXPORT ovrpResult ovrp_GetSystemVSyncCount2(int* systemVSyncCount);
 /// Sets the minimum number of vsyncs to wait after each frame.
 OVRP_EXPORT ovrpResult ovrp_SetSystemVSyncCount2(int systemVSyncCount);
 
-/// OVRPlugin does not support Android system callbacks in UE4.
+/// OVRPlugin does not support Android system callbacks in UE4 and UE5.
 /// Please use Optional Mobile Features Blueprint Library Plugin or include FAndroidMisc.h in your project
 #ifndef OVRPLUGIN_JNI_LIB_EXCLUDED
 /// Gets the current system volume level.
@@ -755,6 +761,21 @@ OVRP_EXPORT ovrpResult ovrp_IsRequestingASWData(ovrpBool* needASWData);
 
 OVRP_EXPORT ovrpResult ovrp_GetPredictedDisplayTime(int frameIndex, double* predictedDisplayTime);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 OVRP_EXPORT ovrpResult ovrp_GetHandTrackingEnabled(ovrpBool* handTrackingEnabled);
 OVRP_EXPORT ovrpResult ovrp_GetHandState(ovrpStep step, ovrpHand hand, ovrpHandState* handState);
 OVRP_EXPORT ovrpResult ovrp_GetHandState2(ovrpStep step, int frameIndex, ovrpHand hand, ovrpHandState* handState);
@@ -763,15 +784,28 @@ OVRP_EXPORT ovrpResult ovrp_GetHandState2(ovrpStep step, int frameIndex, ovrpHan
 
 
 OVRP_EXPORT ovrpResult ovrp_GetSkeleton2(ovrpSkeletonType skeletonType, ovrpSkeleton2* skeleton);
+
+
+
 OVRP_EXPORT ovrpResult ovrp_GetMesh(ovrpMeshType meshType, ovrpMesh* mesh);
 
 OVRP_EXPORT ovrpResult ovrp_GetBodyState(ovrpStep step, int frameIndex, ovrpBodyState* bodyState);
+
+
+
 OVRP_EXPORT ovrpResult ovrp_GetBodyTrackingEnabled(ovrpBool* enabled);
 OVRP_EXPORT ovrpResult ovrp_GetBodyTrackingSupported(ovrpBool* supported);
+
+
+
 
 OVRP_EXPORT ovrpResult ovrp_StartFaceTracking();
 OVRP_EXPORT ovrpResult ovrp_StopFaceTracking();
 OVRP_EXPORT ovrpResult ovrp_StartBodyTracking();
+
+
+
+
 OVRP_EXPORT ovrpResult ovrp_StopBodyTracking();
 OVRP_EXPORT ovrpResult ovrp_StartEyeTracking();
 OVRP_EXPORT ovrpResult ovrp_StopEyeTracking();
@@ -783,6 +817,8 @@ OVRP_EXPORT ovrpResult ovrp_GetSystemHmd3DofModeEnabled(ovrpBool* enabled);
 
 OVRP_EXPORT ovrpResult ovrp_SetClientColorDesc(ovrpColorSpace colorSpace);
 OVRP_EXPORT ovrpResult ovrp_GetHmdColorDesc(ovrpColorSpace* colorSpace);
+
+OVRP_EXPORT ovrpResult ovrp_SetEyeBufferSharpenType(ovrpLayerSubmitFlags sharpenType);
 
 // app should call this in a loop until there are no more events, which will return ovrpSuccess_EventUnavailable and an
 // event of type ovrpEventType_None ovrp_PollEvent and ovrp_PollEvent2 are both in use, Unity needed ovrp_PollEvent2 due
@@ -806,39 +842,47 @@ OVRP_EXPORT ovrpResult ovrp_GetSystemKeyboardDescription(
     ovrpTrackedKeyboardQueryFlags queryFlags,
     ovrpKeyboardDescription* keyboardDescription);
 
+OVRP_EXPORT ovrpResult ovrp_CreateVirtualKeyboard(const ovrpVirtualKeyboardCreateInfo* createInfo);
+OVRP_EXPORT ovrpResult ovrp_DestroyVirtualKeyboard();
+OVRP_EXPORT ovrpResult
+ovrp_SendVirtualKeyboardInput(const ovrpVirtualKeyboardInputInfo* info, ovrpPosef* interactorRootPose);
+OVRP_EXPORT ovrpResult ovrp_ChangeVirtualKeyboardTextContext(const char* textContext);
+OVRP_EXPORT ovrpResult
+ovrp_CreateVirtualKeyboardSpace(const ovrpVirtualKeyboardSpaceCreateInfo* createInfo, ovrpUInt64* keyboardSpace);
+OVRP_EXPORT ovrpResult ovrp_SuggestVirtualKeyboardLocation(const ovrpVirtualKeyboardLocationInfo* locationInfo);
+OVRP_EXPORT ovrpResult ovrp_GetVirtualKeyboardScale(float* scale);
+OVRP_EXPORT ovrpResult
+ovrp_GetVirtualKeyboardModelAnimationStates(ovrpVirtualKeyboardModelAnimationStates* animationStates);
+OVRP_EXPORT ovrpResult ovrp_GetVirtualKeyboardDirtyTextures(ovrpVirtualKeyboardTextureIds* textureIds);
+OVRP_EXPORT ovrpResult
+ovrp_GetVirtualKeyboardTextureData(ovrpUInt64 textureId, ovrpVirtualKeyboardTextureData* textureData);
+OVRP_EXPORT ovrpResult ovrp_SetVirtualKeyboardModelVisibility(const ovrpVirtualKeyboardModelVisibility* visibility);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+OVRP_EXPORT ovrpResult ovrp_QplMarkerStart(int markerId, int instanceKey, ovrpInt64 timestampMs);
+OVRP_EXPORT ovrpResult ovrp_QplMarkerEnd(int markerId, ovrpInt16 actionId, int instanceKey, ovrpInt64 timestampMs);
+OVRP_EXPORT ovrpResult ovrp_QplMarkerPoint(int markerId, const char* name, int instanceKey, ovrpInt64 timestampMs);
+OVRP_EXPORT ovrpResult ovrp_QplMarkerPointCached(int markerId, int nameHandle, int instanceKey, ovrpInt64 timestampMs);
+OVRP_EXPORT ovrpResult
+ovrp_QplMarkerAnnotation(int markerId, const char* annotationKey, const char* annotationValue, int instanceKey);
+OVRP_EXPORT ovrpResult ovrp_QplCreateMarkerHandle(const char* name, int* nameHandle);
+OVRP_EXPORT ovrpResult ovrp_QplDestroyMarkerHandle(int nameHandle);
+OVRP_EXPORT ovrpResult ovrp_OnEditorShutdown();
 
 /// Gets the current recent pose, acceleration, and velocity of the given node for the current time without any
 /// prediction
 OVRP_EXPORT ovrpResult ovrp_GetNodePoseStateImmediate(ovrpNode nodeId, ovrpPoseStatef* nodePoseState);
 
 OVRP_EXPORT ovrpResult ovrp_GetNodePoseStateAtTime(double time, ovrpNode nodeId, ovrpPoseStatef* pose);
+
+
+
+
+
+
+
+
+
+
 
 OVRP_EXPORT ovrpResult ovrp_GetRenderModelPaths(unsigned int index, char* path);
 OVRP_EXPORT ovrpResult ovrp_GetRenderModelProperties(const char* path, ovrpRenderModelProperties* properties);
@@ -874,6 +918,9 @@ OVRP_EXPORT ovrpResult ovrp_EnumerateSpaceSupportedComponents(
     ovrpUInt32* componentTypesCountOutput,
     ovrpSpaceComponentType* componentTypes);
 OVRP_EXPORT ovrpResult ovrp_QuerySpaces(const ovrpSpaceQueryInfo* queryInfo, ovrpUInt64* requestId);
+
+
+
 OVRP_EXPORT ovrpResult ovrp_RetrieveSpaceQueryResults(
     ovrpUInt64* requestId,
     ovrpUInt32 resultCapacityInput,
@@ -935,20 +982,35 @@ OVRP_EXPORT ovrpResult ovrp_RequestSceneCapture(const ovrpSceneCaptureRequest* r
 
 
 
+
+
+
+
+
+
+
+
+
+
 OVRP_EXPORT ovrpResult ovrp_GetFaceTrackingEnabled(ovrpBool* faceTrackingEnabled);
 
 OVRP_EXPORT ovrpResult ovrp_GetFaceTrackingSupported(ovrpBool* faceTrackingSupported);
 
+
+
+
+
 OVRP_EXPORT ovrpResult ovrp_GetFaceState(ovrpStep step, int frameIndex, ovrpFaceState* faceState);
+
+
+
+
 
 OVRP_EXPORT ovrpResult ovrp_GetEyeTrackingEnabled(ovrpBool* eyeTrackingEnabled);
 
 OVRP_EXPORT ovrpResult ovrp_GetEyeTrackingSupported(ovrpBool* eyeTrackingSupported);
 
 OVRP_EXPORT ovrpResult ovrp_GetEyeGazesState(ovrpStep step, int frameIndex, ovrpEyeGazesState* eyeGazesState);
-
-
-
 
 
 
@@ -1033,6 +1095,8 @@ OVRP_EXPORT ovrpResult ovrp_GetCurrentInteractionProfile(ovrpHand hand, ovrpInte
 
 
 
+OVRP_EXPORT ovrpResult ovrp_GetLayerRecommendedResolution(int layerId, ovrpSizei* recommendedDimensions);
+OVRP_EXPORT ovrpResult ovrp_GetEyeLayerRecommendedResolution(ovrpSizei* recommendedDimensions);
 
 
 
@@ -1040,6 +1104,15 @@ OVRP_EXPORT ovrpResult ovrp_GetCurrentInteractionProfile(ovrpHand hand, ovrpInte
 
 
 
+
+
+
+
+
+
+
+
+OVRP_EXPORT ovrpResult ovrp_IsLayerShapeSupported(ovrpShape shape, ovrpBool* isLayerShapeSupported);
 
 
 

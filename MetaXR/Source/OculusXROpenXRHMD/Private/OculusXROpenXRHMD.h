@@ -9,15 +9,17 @@ DECLARE_LOG_CATEGORY_EXTERN(LogOculusOpenXRPlugin, Log, All);
 class FOculusXROpenXRHMD : public IOculusXROpenXRHMDPlugin
 {
 private:
-	void *LoaderHandle;
+	void* LoaderHandle;
 
 public:
 	FOculusXROpenXRHMD()
 		: LoaderHandle(nullptr)
-	{ }
+	{
+	}
 
 	virtual ~FOculusXROpenXRHMD()
-	{ }
+	{
+	}
 
 	virtual void StartupModule() override
 	{

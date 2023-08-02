@@ -2,7 +2,6 @@
 
 #include "OculusXRPlatformToolSettings.h"
 
-
 UOculusXRPlatformToolSettings::UOculusXRPlatformToolSettings()
 	: OculusTargetPlatform(EOculusXRPlatformTarget::Rift)
 {
@@ -23,5 +22,3 @@ UOculusXRPlatformToolSettings::UOculusXRPlatformToolSettings()
 		OculusAssetConfigs[i].ConfigArray = TArray<FOculusXRAssetConfig>();
 	}
 }
-
-

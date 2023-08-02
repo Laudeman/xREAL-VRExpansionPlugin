@@ -25,9 +25,6 @@ public:
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "OculusXR|Scene Anchor Component")
 	TArray<FString> SemanticClassifications;
 
-	UPROPERTY(EditAnywhere, Category = "OculusXR|Scene Anchor Component")
-	bool ForceParallelToFloor = false;
-
-	UPROPERTY(EditAnywhere, Category = "OculusXR|Scene Anchor Component")
-	FVector AddOffset = FVector::ZeroVector;
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "OculusXR|Scene Anchor Component")
+	FOculusXRUInt64 RoomSpaceID = 0;
 };

@@ -7,7 +7,7 @@
 
 class FOculusAssetDirectory
 {
-public: 
+public:
 #if WITH_EDITORONLY_DATA
 	OCULUSXRHMD_API static void LoadForCook();
 	OCULUSXRHMD_API static void ReleaseAll();

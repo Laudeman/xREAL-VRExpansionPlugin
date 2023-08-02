@@ -6,6 +6,7 @@
 #include "Components/InputComponent.h"
 #include "Materials/MaterialInterface.h"
 
+#include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 
 UOculusXRHandComponent::UOculusXRHandComponent(const FObjectInitializer& ObjectInitializer)
@@ -31,7 +32,7 @@ void UOculusXRHandComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// Use custom mesh if a skeletal mesh is already set, else try to load the runtime mesh
-	if (SkeletalMesh)
+	if (GetSkinnedAsset())
 	{
 		bCustomHandMesh = true;
 		bSkeletalMeshInitialized = true;
@@ -49,7 +50,7 @@ void UOculusXRHandComponent::InitializeSkeletalMesh()
 	{
 		if (UOculusXRInputFunctionLibrary::GetHandSkeletalMesh(RuntimeSkeletalMesh, SkeletonType, MeshType))
 		{
-			SetSkeletalMesh(RuntimeSkeletalMesh);
+			SetSkinnedAssetAndUpdate(RuntimeSkeletalMesh, true);
 			if (MaterialOverride)
 			{
 				SetMaterial(0, MaterialOverride);
@@ -105,7 +106,7 @@ void UOculusXRHandComponent::TickComponent(float DeltaTime, enum ELevelTick Tick
 			}
 
 			// Update Bone Pose Rotations
-			if (SkeletalMesh)
+			if (GetSkinnedAsset())
 			{
 				UpdateBonePose();
 			}
@@ -157,12 +158,11 @@ void UOculusXRHandComponent::UpdateBonePose()
 				RootBoneRotation *= HandRootFixupRotation;
 				RootBoneRotation.Normalize();
 				BoneSpaceTransforms[0].SetRotation(RootBoneRotation);
-
 			}
 			else
 			{
 				// Set Remaing Bone Rotations
-				int32 BoneIndex = SkeletalMesh->GetRefSkeleton().FindBoneIndex(BoneElem.Value);
+				int32 BoneIndex = GetSkinnedAsset()->GetRefSkeleton().FindBoneIndex(BoneElem.Value);
 				if (BoneIndex >= 0)
 				{
 					FQuat BoneRotation = UOculusXRInputFunctionLibrary::GetBoneRotation(SkeletonType, (EOculusXRBone)BoneElem.Key);
@@ -180,7 +180,7 @@ void UOculusXRHandComponent::UpdateBonePose()
 		BoneSpaceTransforms[0].SetRotation(RootBoneRotation);
 
 		// Set Remaining Bone Rotations
-		for (uint32 BoneIndex = 1; BoneIndex < (uint32)SkeletalMesh->GetRefSkeleton().GetNum(); BoneIndex++)
+		for (uint32 BoneIndex = 1; BoneIndex < (uint32)GetSkinnedAsset()->GetRefSkeleton().GetNum(); BoneIndex++)
 		{
 			FQuat BoneRotation = UOculusXRInputFunctionLibrary::GetBoneRotation(SkeletonType, (EOculusXRBone)BoneIndex);
 			BoneSpaceTransforms[BoneIndex].SetRotation(BoneRotation);

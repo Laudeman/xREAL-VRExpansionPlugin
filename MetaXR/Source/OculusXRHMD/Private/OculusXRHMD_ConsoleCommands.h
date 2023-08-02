@@ -9,35 +9,35 @@
 namespace OculusXRHMD
 {
 
-//-------------------------------------------------------------------------------------------------
-// FConsoleCommands
-//-------------------------------------------------------------------------------------------------
+	//-------------------------------------------------------------------------------------------------
+	// FConsoleCommands
+	//-------------------------------------------------------------------------------------------------
 
-class FConsoleCommands : private FSelfRegisteringExec
-{
-public:
-	FConsoleCommands(class FOculusXRHMD* InHMDPtr);
+	class FConsoleCommands : private FSelfRegisteringExec
+	{
+	public:
+		FConsoleCommands(class FOculusXRHMD* InHMDPtr);
 
-	// FSelfRegisteringExec interface
-	virtual bool Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar) override;
-private:
-	FAutoConsoleCommand UpdateOnRenderThreadCommand;
-	FAutoConsoleCommand PixelDensityMinCommand;
-	FAutoConsoleCommand PixelDensityMaxCommand;
-	FAutoConsoleCommand HQBufferCommand;
-	FAutoConsoleCommand HQDistortionCommand;
-	FAutoConsoleCommand ShowGlobalMenuCommand;
-	FAutoConsoleCommand ShowQuitMenuCommand;
+		// FSelfRegisteringExec interface
+		virtual bool Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar) override;
+
+	private:
+		FAutoConsoleCommand UpdateOnRenderThreadCommand;
+		FAutoConsoleCommand PixelDensityMinCommand;
+		FAutoConsoleCommand PixelDensityMaxCommand;
+		FAutoConsoleCommand HQBufferCommand;
+		FAutoConsoleCommand HQDistortionCommand;
+		FAutoConsoleCommand ShowGlobalMenuCommand;
+		FAutoConsoleCommand ShowQuitMenuCommand;
 
 #if !UE_BUILD_SHIPPING
-	// Debug console commands
-	FAutoConsoleCommand StatsCommand;
-	FAutoConsoleCommand CubemapCommand;
-	FAutoConsoleCommand ShowSettingsCommand;
-	FAutoConsoleCommand IPDCommand;
+		// Debug console commands
+		FAutoConsoleCommand StatsCommand;
+		FAutoConsoleCommand CubemapCommand;
+		FAutoConsoleCommand ShowSettingsCommand;
+		FAutoConsoleCommand IPDCommand;
 #endif // !UE_BUILD_SHIPPING
-};
-
+	};
 
 } // namespace OculusXRHMD
 

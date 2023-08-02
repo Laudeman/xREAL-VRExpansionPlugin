@@ -11,6 +11,7 @@ LICENSE file in the root directory of this source tree.
 
 #include "OculusXRMovementTypes.generated.h"
 
+
 UENUM(BlueprintType)
 enum class EOculusXRBoneID : uint8
 {
@@ -84,7 +85,7 @@ enum class EOculusXRBoneID : uint8
 	BodyRightHandLittleIntermediate = 67,
 	BodyRightHandLittleDistal = 68,
 	BodyRightHandLittleTip = 69,
-	COUNT = 70,
+	COUNT = 70 UMETA(Hidden),
 };
 
 USTRUCT(BlueprintType)
@@ -196,7 +197,7 @@ enum class EOculusXRFaceExpression : uint8
 	UpperLidRaiserR = 60,
 	UpperLipRaiserL = 61,
 	UpperLipRaiserR = 62,
-	COUNT = 63,
+	COUNT = 63 UMETA(Hidden),
 };
 
 UENUM(BlueprintType)
@@ -267,7 +268,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "OculusXR|Movement")
 	TArray<FOculusXREyeGazeState> EyeGazes;
-	
+
 	UPROPERTY(BlueprintReadOnly, Category = "OculusXR|Movement")
 	float Time;
 };

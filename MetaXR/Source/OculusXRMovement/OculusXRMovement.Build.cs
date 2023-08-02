@@ -6,6 +6,12 @@ namespace UnrealBuildTool.Rules
 	{
 		public OculusXRMovement(ReadOnlyTargetRules Target) : base(Target)
 		{
+			PublicDependencyModuleNames.AddRange(
+				new string[] {
+					"LiveLinkInterface",
+					"LiveLinkAnimationCore",
+				});
+
 			PrivateDependencyModuleNames.AddRange(
 				new string[]
 				{
@@ -14,6 +20,7 @@ namespace UnrealBuildTool.Rules
 					"ApplicationCore",
 					"Engine",
 					"InputCore",
+					"LiveLink",
 					"HeadMountedDisplay",
 					"OVRPluginXR",
 					"OculusXRHMD",
@@ -21,7 +28,6 @@ namespace UnrealBuildTool.Rules
 
 			PrivateIncludePaths.AddRange(
 				new string[] {
-					// Relative to Engine\Plugins\Runtime\OculusXR\OculusXRVR\Source
 					"OculusXRHMD/Private",
 				});
 		}

@@ -7,6 +7,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 #include "OculusXRSpatialAnchorManager.h"
+#include "OculusXRAnchorBPFunctionLibrary.h"
 
 namespace OculusXRAnchors
 {
@@ -15,4 +16,4 @@ namespace OculusXRAnchors
 		EOculusXRAnchorResult::Type Result = CreateAnchor(InTransform, OutRequestId, FTransform::Identity);
 		return UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(Result);
 	}
-}
+} // namespace OculusXRAnchors

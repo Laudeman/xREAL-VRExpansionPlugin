@@ -10,6 +10,8 @@ LICENSE file in the root directory of this source tree.
 #include "OculusXRMovementFunctionLibrary.h"
 #include "OculusXRMovementHelpers.h"
 #include "OculusXRMovementLog.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 
 int UOculusXRFaceTrackingComponent::TrackingInstanceCount = 0;
 
@@ -227,16 +229,20 @@ bool UOculusXRFaceTrackingComponent::InitializeFaceTracking()
 		return false;
 	}
 
-	if (TargetMeshComponent && TargetMeshComponent->SkeletalMesh)
+	if (TargetMeshComponent != nullptr)
 	{
-		const TMap<FName, int32>& MorphTargetIndexMap = TargetMeshComponent->SkeletalMesh->GetMorphTargetIndexMap();
-
-		for (const auto& it : ExpressionNames)
+		USkeletalMesh* TargetMesh = Cast<USkeletalMesh>(TargetMeshComponent->GetSkinnedAsset());
+		if (TargetMesh != nullptr)
 		{
-			ExpressionValid[static_cast<int32>(it.Key)] = MorphTargetIndexMap.Contains(it.Value);
-		}
+			const TMap<FName, int32>& MorphTargetIndexMap = TargetMesh->GetMorphTargetIndexMap();
 
-		return true;
+			for (const auto& it : ExpressionNames)
+			{
+				ExpressionValid[static_cast<int32>(it.Key)] = MorphTargetIndexMap.Contains(it.Value);
+			}
+
+			return true;
+		}
 	}
 
 	return false;

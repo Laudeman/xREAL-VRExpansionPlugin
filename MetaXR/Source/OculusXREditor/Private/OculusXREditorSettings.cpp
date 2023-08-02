@@ -2,11 +2,7 @@
 
 #include "OculusXREditorSettings.h"
 
-
 UOculusXREditorSettings::UOculusXREditorSettings()
 	: PerfToolTargetPlatform(EOculusXRPlatform::PC)
 {
-
 }
-
-

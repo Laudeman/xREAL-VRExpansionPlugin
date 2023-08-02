@@ -9,15 +9,15 @@
 UENUM()
 enum class EOculusXRPlatformTarget : uint8
 {
-	Rift UMETA(DisplayName="Rift"),
-	Quest UMETA(DisplayName="Quest"),
-	Length UMETA(DisplayName="Invalid")
+	Rift UMETA(DisplayName = "Rift"),
+	Quest UMETA(DisplayName = "Quest"),
+	Length UMETA(DisplayName = "Invalid")
 };
 
 UENUM()
 enum class EOculusXRGamepadEmulation : uint8
 {
-	Off UMETA(DisplayName="Off"),
+	Off UMETA(DisplayName = "Off"),
 	Twinstick UMETA(DisplayName = "Twinstick"),
 	RightDPad UMETA(DisplayName = "Right D Pad"),
 	LeftDPad UMETA(DisplayName = "Left D Pad"),
@@ -27,10 +27,10 @@ enum class EOculusXRGamepadEmulation : uint8
 UENUM()
 enum class EOculusXRAssetType : uint8
 {
-	Default UMETA(DisplayName="Default"),
-	Store UMETA(DisplayName="Store"),
-	Language_Pack UMETA(DisplayName="Language Pack"),
-	Length UMETA(DisplayName="Invlaid"),
+	Default UMETA(DisplayName = "Default"),
+	Store UMETA(DisplayName = "Store"),
+	Language_Pack UMETA(DisplayName = "Language Pack"),
+	Length UMETA(DisplayName = "Invlaid"),
 };
 
 USTRUCT()
@@ -78,7 +78,7 @@ struct FOculusXRAssetConfigArray
 /**
  * 
  */
-UCLASS(config=Editor)
+UCLASS(config = Editor)
 class OCULUSXREDITOR_API UOculusXRPlatformToolSettings : public UObject
 {
 	GENERATED_BODY()

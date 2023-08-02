@@ -9,6 +9,7 @@ LICENSE file in the root directory of this source tree.
 #include "OculusXRAnchorLatentActions.h"
 #include "OculusXRAnchorsPrivate.h"
 #include "OculusXRHMD.h"
+#include "OculusXRAnchorBPFunctionLibrary.h"
 
 //
 // Create Spatial Anchor
@@ -28,8 +29,7 @@ void UOculusXRAsyncAction_CreateSpatialAnchor::Activate()
 		AnchorTransform,
 		TargetActor,
 		FOculusXRSpatialAnchorCreateDelegate::CreateUObject(this, &UOculusXRAsyncAction_CreateSpatialAnchor::HandleCreateComplete),
-		Result
-	);
+		Result);
 
 	if (!bStartedAsync)
 	{
@@ -70,7 +70,6 @@ void UOculusXRAsyncAction_CreateSpatialAnchor::HandleCreateComplete(EOculusXRAnc
 	SetReadyToDestroy();
 }
 
-
 //
 // Erase Space
 //
@@ -97,8 +96,7 @@ void UOculusXRAsyncAction_EraseAnchor::Activate()
 	bool bStartedAsync = OculusXRAnchors::FOculusXRAnchors::EraseAnchor(
 		AnchorComponent,
 		FOculusXRAnchorEraseDelegate::CreateUObject(this, &UOculusXRAsyncAction_EraseAnchor::HandleEraseAnchorComplete),
-		Result
-	);
+		Result);
 
 	if (!bStartedAsync)
 	{
@@ -139,7 +137,6 @@ void UOculusXRAsyncAction_EraseAnchor::HandleEraseAnchorComplete(EOculusXRAnchor
 	SetReadyToDestroy();
 }
 
-
 //
 // Save Space
 //
@@ -167,8 +164,7 @@ void UOculusXRAsyncAction_SaveAnchor::Activate()
 		AnchorComponent,
 		StorageLocation,
 		FOculusXRAnchorSaveDelegate::CreateUObject(this, &UOculusXRAsyncAction_SaveAnchor::HandleSaveAnchorComplete),
-		Result
-	);
+		Result);
 
 	if (!bStartedAsync)
 	{
@@ -209,7 +205,6 @@ void UOculusXRAsyncAction_SaveAnchor::HandleSaveAnchorComplete(EOculusXRAnchorRe
 	SetReadyToDestroy();
 }
 
-
 //
 // Save Spaces
 //
@@ -228,8 +223,7 @@ void UOculusXRAsyncAction_SaveAnchors::Activate()
 		TargetAnchors,
 		StorageLocation,
 		FOculusXRAnchorSaveListDelegate::CreateUObject(this, &UOculusXRAsyncAction_SaveAnchors::HandleSaveAnchorsComplete),
-		Result
-	);
+		Result);
 
 	if (!bStartedAsync)
 	{
@@ -279,7 +273,6 @@ void UOculusXRAsyncAction_SaveAnchors::HandleSaveAnchorsComplete(EOculusXRAnchor
 
 	SetReadyToDestroy();
 }
-
 
 //
 // Query Spaces
@@ -338,7 +331,6 @@ void UOculusXRAsyncAction_QueryAnchors::HandleQueryAnchorsResults(EOculusXRAncho
 	SetReadyToDestroy();
 }
 
-
 //
 // Set Component Status
 //
@@ -366,8 +358,7 @@ void UOculusXRAsyncAction_SetAnchorComponentStatus::Activate()
 		bEnabled,
 		0,
 		FOculusXRAnchorSetComponentStatusDelegate::CreateUObject(this, &UOculusXRAsyncAction_SetAnchorComponentStatus::HandleSetComponentStatusComplete),
-		Result
-	);
+		Result);
 
 	if (!bStartedAsync)
 	{
@@ -410,6 +401,52 @@ void UOculusXRAsyncAction_SetAnchorComponentStatus::HandleSetComponentStatusComp
 	SetReadyToDestroy();
 }
 
+//
+// Set Scene Component Status
+//
+void UOculusXRAsyncAction_SetComponentStatus::Activate()
+{
+	EOculusXRAnchorResult::Type Result;
+	bool bStartedAsync = OculusXRAnchors::FOculusXRAnchors::SetComponentStatus(
+		Component->GetSpace(),
+		Component->GetType(),
+		bEnabled,
+		0,
+		FOculusXRAnchorSetAnchorComponentStatusDelegate::CreateUObject(this, &UOculusXRAsyncAction_SetComponentStatus::HandleSetComponentStatusComplete),
+		Result);
+
+	if (!bStartedAsync)
+	{
+		UE_LOG(LogOculusXRAnchors, Warning, TEXT("Failed to start async OVR Plugin call for SetComponentStatus latent action."));
+
+		Failure.Broadcast(Result);
+	}
+}
+
+UOculusXRAsyncAction_SetComponentStatus* UOculusXRAsyncAction_SetComponentStatus::OculusXRAsyncSetComponentStatus(UOculusXRBaseAnchorComponent* Component, bool bEnabled)
+{
+	UOculusXRAsyncAction_SetComponentStatus* Action = NewObject<UOculusXRAsyncAction_SetComponentStatus>();
+	Action->Component = Component;
+	Action->bEnabled = bEnabled;
+
+	Action->RegisterWithGameInstance(GWorld);
+
+	return Action;
+}
+
+void UOculusXRAsyncAction_SetComponentStatus::HandleSetComponentStatusComplete(EOculusXRAnchorResult::Type SetStatusResult, uint64 Space, EOculusXRSpaceComponentType SpaceComponentType)
+{
+	if (UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(SetStatusResult))
+	{
+		Success.Broadcast(Component, SetStatusResult);
+	}
+	else
+	{
+		Failure.Broadcast(SetStatusResult);
+	}
+
+	SetReadyToDestroy();
+}
 
 //
 // Share Spaces
@@ -437,8 +474,7 @@ void UOculusXRAsyncAction_ShareAnchors::Activate()
 		TargetAnchors,
 		ToShareWithIds,
 		FOculusXRAnchorShareDelegate::CreateUObject(this, &UOculusXRAsyncAction_ShareAnchors::HandleShareAnchorsComplete),
-		Result
-	);
+		Result);
 
 	if (!bStartedAsync)
 	{

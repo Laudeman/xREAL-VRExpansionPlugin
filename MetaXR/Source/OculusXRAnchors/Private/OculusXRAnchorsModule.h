@@ -6,7 +6,6 @@
 
 #define LOCTEXT_NAMESPACE "OculusAnchors"
 
-
 //-------------------------------------------------------------------------------------------------
 // FOculusXRAnchorsModule
 //-------------------------------------------------------------------------------------------------
@@ -30,14 +29,12 @@ private:
 	OculusXRAnchors::FOculusXRAnchors Anchors;
 };
 
-#else	// OCULUS_ANCHORS_SUPPORTED_PLATFORMS
+#else // OCULUS_ANCHORS_SUPPORTED_PLATFORMS
 
 class FOculusXRAnchorsModule : public FDefaultModuleImpl
 {
-
 };
 
-#endif	// OCULUS_ANCHORS_SUPPORTED_PLATFORMS
-
+#endif // OCULUS_ANCHORS_SUPPORTED_PLATFORMS
 
 #undef LOCTEXT_NAMESPACE

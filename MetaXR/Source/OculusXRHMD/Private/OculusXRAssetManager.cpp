@@ -21,8 +21,7 @@ enum EOculusAsset
 	OculusAssetTotal
 };
 
-FSoftObjectPath FOculusAssetDirectory::AssetListing[OculusAssetTotal] =
-{
+FSoftObjectPath FOculusAssetDirectory::AssetListing[OculusAssetTotal] = {
 	FString(TEXT("/OculusXR/Meshes/LeftTouchForQuestRiftSController.LeftTouchForQuestRiftSController")),
 	FString(TEXT("/OculusXR/Meshes/RightTouchForQuestRiftSController.RightTouchForQuestRiftSController"))
 };
@@ -75,7 +74,6 @@ void FOculusAssetDirectory::ReleaseAll()
 }
 #endif // WITH_EDITORONLY_DATA
 
-
 /* OculusAssetManager_Impl
  *****************************************************************************/
 
@@ -90,13 +88,12 @@ namespace OculusAssetManager_Impl
 		FSoftObjectPath MeshAssetRef;
 	};
 
-	static FRenderableDevice RenderableDevices[] =
-	{
+	static FRenderableDevice RenderableDevices[] = {
 #if PLATFORM_ANDROID
-		{ ovrpNode_HandLeft,  ovrpSystemHeadset_Oculus_Quest, ovrpSystemHeadset_Oculus_Quest_2, FOculusAssetDirectory::AssetListing[LeftTouchRiftS] },
+		{ ovrpNode_HandLeft, ovrpSystemHeadset_Oculus_Quest, ovrpSystemHeadset_Oculus_Quest_2, FOculusAssetDirectory::AssetListing[LeftTouchRiftS] },
 		{ ovrpNode_HandRight, ovrpSystemHeadset_Oculus_Quest, ovrpSystemHeadset_Oculus_Quest_2, FOculusAssetDirectory::AssetListing[RightTouchRiftS] },
-#else 
-		{ ovrpNode_HandLeft,  ovrpSystemHeadset_Rift_S, ovrpSystemHeadset_Oculus_Link_Quest_2, FOculusAssetDirectory::AssetListing[LeftTouchRiftS] },
+#else
+		{ ovrpNode_HandLeft, ovrpSystemHeadset_Rift_S, ovrpSystemHeadset_Oculus_Link_Quest_2, FOculusAssetDirectory::AssetListing[LeftTouchRiftS] },
 		{ ovrpNode_HandRight, ovrpSystemHeadset_Rift_S, ovrpSystemHeadset_Oculus_Link_Quest_2, FOculusAssetDirectory::AssetListing[RightTouchRiftS] },
 #endif
 	};
@@ -105,8 +102,7 @@ namespace OculusAssetManager_Impl
 #endif // #if OCULUS_HMD_SUPPORTED_PLATFORMS
 
 	static UObject* FindDeviceMesh(const int32 DeviceID);
-};
-
+}; // namespace OculusAssetManager_Impl
 
 static UObject* OculusAssetManager_Impl::FindDeviceMesh(const int32 DeviceID)
 {
@@ -186,7 +182,7 @@ bool FOculusAssetManager::EnumerateRenderableDevices(TArray<int32>& DeviceListOu
 	}
 
 	return true;
-#else 
+#else
 	return false;
 #endif
 }
@@ -198,38 +194,38 @@ int32 FOculusAssetManager::GetDeviceId(EControllerHand ControllerHand)
 
 	switch (ControllerHand)
 	{
-	case EControllerHand::AnyHand:
-		// @TODO: maybe check if the right is tracking, if not choose left (if tracking)?
-	case EControllerHand::Right:
-		ControllerOVRNode = ovrpNode_HandRight;
-		break;
-	case EControllerHand::Left:
-		ControllerOVRNode = ovrpNode_HandLeft;
-		break;
+		case EControllerHand::AnyHand:
+			// @TODO: maybe check if the right is tracking, if not choose left (if tracking)?
+		case EControllerHand::Right:
+			ControllerOVRNode = ovrpNode_HandRight;
+			break;
+		case EControllerHand::Left:
+			ControllerOVRNode = ovrpNode_HandLeft;
+			break;
 
-	case EControllerHand::ExternalCamera:
-		ControllerOVRNode = ovrpNode_TrackerZero;
-		break;
-// 	case EControllerHand::Special_1:
-// 		ControllerOVRNode = ovrpNode_TrackerOne;
-// 		break;
-// 	case EControllerHand::Special_2:
-// 		ControllerOVRNode = ovrpNode_TrackerTwo;
-// 		break;
-// 	case EControllerHand::Special_3:
-// 		ControllerOVRNode = ovrpNode_TrackerThree;
-// 		break;
+		case EControllerHand::ExternalCamera:
+			ControllerOVRNode = ovrpNode_TrackerZero;
+			break;
+			// 	case EControllerHand::Special_1:
+			// 		ControllerOVRNode = ovrpNode_TrackerOne;
+			// 		break;
+			// 	case EControllerHand::Special_2:
+			// 		ControllerOVRNode = ovrpNode_TrackerTwo;
+			// 		break;
+			// 	case EControllerHand::Special_3:
+			// 		ControllerOVRNode = ovrpNode_TrackerThree;
+			// 		break;
 
-// 	case EControllerHand::Special_4:
-// 		ControllerOVRNode = ovrpNode_DeviceObjectZero;
-// 		break;
+			// 	case EControllerHand::Special_4:
+			// 		ControllerOVRNode = ovrpNode_DeviceObjectZero;
+			// 		break;
 
-	default:
-		// ControllerOVRNode = ovrpNode_None => returns -1
-		break;
+		default:
+			// ControllerOVRNode = ovrpNode_None => returns -1
+			break;
 	}
 	return OculusXRHMD::ToExternalDeviceId(ControllerOVRNode);
-#else 
+#else
 	return INDEX_NONE;
 #endif
 }
@@ -261,4 +257,3 @@ UPrimitiveComponent* FOculusAssetManager::CreateRenderComponent(const int32 Devi
 	OnLoadComplete.ExecuteIfBound(NewRenderComponent);
 	return NewRenderComponent;
 }
-

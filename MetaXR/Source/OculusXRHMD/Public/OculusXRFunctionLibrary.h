@@ -2,7 +2,7 @@
 
 #pragma once
 #include "CoreMinimal.h"
-#include "IHeadMountedDisplay.h"
+#include "OculusXRHMDTypes.h"
 #include "UObject/ObjectMacros.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "IOculusXRHMDModule.h"
@@ -12,235 +12,6 @@ namespace OculusXRHMD
 {
 	class FOculusXRHMD;
 }
-
-/* Tracked device types corresponding to ovrTrackedDeviceType enum*/
-UENUM(BlueprintType)
-enum class EOculusXRTrackedDeviceType : uint8
-{
-	None UMETA(DisplayName = "No Devices"),
-	HMD	UMETA(DisplayName = "HMD"),
-	LTouch	UMETA(DisplayName = "Left Hand"),
-	RTouch	UMETA(DisplayName = "Right Hand"),
-	Touch		UMETA(DisplayName = "All Hands"),
-    DeviceObjectZero    UMETA(DisplayName = "DeviceObject Zero"),
-	All	UMETA(DisplayName = "All Devices")
-};
-
-USTRUCT(BlueprintType, meta = (DisplayName = "HMD User Profile Data Field"))
-struct FOculusXRHmdUserProfileField
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY(BlueprintReadWrite, Category = "Input|HeadMountedDisplay")
-	FString FieldName;
-
-	UPROPERTY(BlueprintReadWrite, Category = "Input|HeadMountedDisplay")
-	FString FieldValue;
-
-	FOculusXRHmdUserProfileField() {}
-	FOculusXRHmdUserProfileField(const FString& Name, const FString& Value) :
-		FieldName(Name), FieldValue(Value) {}
-};
-
-USTRUCT(BlueprintType, meta = (DisplayName = "HMD User Profile Data"))
-struct FOculusXRHmdUserProfile
-{
-	GENERATED_USTRUCT_BODY()
-
-	/** Name of the user's profile. */
-	UPROPERTY(BlueprintReadWrite, Category = "Input|HeadMountedDisplay")
-	FString Name;
-
-	/** Gender of the user ("male", "female", etc). */
-	UPROPERTY(BlueprintReadWrite, Category = "Input|HeadMountedDisplay")
-	FString Gender;
-
-	/** Height of the player, in meters */
-	UPROPERTY(BlueprintReadWrite, Category = "Input|HeadMountedDisplay")
-	float PlayerHeight;
-
-	/** Height of the player, in meters */
-	UPROPERTY(BlueprintReadWrite, Category = "Input|HeadMountedDisplay")
-	float EyeHeight;
-
-	/** Interpupillary distance of the player, in meters */
-	UPROPERTY(BlueprintReadWrite, Category = "Input|HeadMountedDisplay")
-	float IPD;
-
-	/** Neck-to-eye distance, in meters. X - horizontal, Y - vertical. */
-	UPROPERTY(BlueprintReadWrite, Category = "Input|HeadMountedDisplay")
-	FVector2D NeckToEyeDistance;
-
-	UPROPERTY(BlueprintReadWrite, Category = "Input|HeadMountedDisplay")
-	TArray<FOculusXRHmdUserProfileField> ExtraFields;
-
-	FOculusXRHmdUserProfile() :
-		PlayerHeight(0.f), EyeHeight(0.f), IPD(0.f), NeckToEyeDistance(FVector2D::ZeroVector) {}
-};
-
-UENUM(BlueprintType)
-enum class EOculusXRFoveatedRenderingMethod : uint8
-{
-	FixedFoveatedRendering = 0,
-	EyeTrackedFoveatedRendering = 1,
-};
-
-UENUM(BlueprintType)
-enum class EOculusXRFoveatedRenderingLevel : uint8
-{
-	Off = 0,
-	Low = 1,
-	Medium = 2,
-	High = 3,
-	// High foveation setting with more detail toward the bottom of the view and more foveation near the top
-	HighTop = 4
-};
-
-/* Guardian boundary types*/
-UENUM(BlueprintType)
-enum class EOculusXRBoundaryType : uint8
-{
-	Boundary_Outer	UMETA(DisplayName = "Outer Boundary"),
-	Boundary_PlayArea	UMETA(DisplayName = "Play Area"),
-};
-
-UENUM(BlueprintType)
-enum class EOculusXRColorSpace : uint8
-{
-	/// The default value from GetHmdColorSpace until SetClientColorDesc is called. Only valid on PC, and will be remapped to Quest on Mobile
-	Unknown = 0,
-	/// No color correction, not recommended for production use. See documentation for more info
-	Unmanaged = 1,
-	/// Color space for standardized color across all Oculus HMDs with D65 white point
-	Rec_2020 = 2,
-	/// Rec. 709 is used on Oculus Go and shares the same primary color coordinates as sRGB
-	Rec_709 = 3,
-	/// Oculus Rift CV1 uses a unique color space, see documentation for more info
-	Rift_CV1 = 4	UMETA(DisplayName = "Rift CV1"),
-	/// Oculus Rift S uses a unique color space, see documentation for more info
-	Rift_S = 5,
-	/// Oculus Quest's native color space is slightly different than Rift CV1
-	Quest = 6		UMETA(DisplayName = "Quest 1"),
-	/// DCI-P3 color space. See documentation for more details
-	P3 = 7			UMETA(DisplayName = "P3 (Recommended)"),
-	/// Similar to sRGB but with deeper greens using D65 white point
-	Adobe_RGB = 8,
-};
-
-/*
-* Hand tracking settings. Please check https://developer.oculus.com/documentation/unreal/unreal-hand-tracking/
-* for detailed information.
-*/
-UENUM(BlueprintType)
-enum class EOculusXRHandTrackingSupport : uint8
-{
-	ControllersOnly,
-	ControllersAndHands,
-	HandsOnly,
-};
-
-UENUM(BlueprintType)
-enum class EOculusXRHandTrackingFrequency : uint8
-{
-	LOW,
-	HIGH,
-	MAX,
-};
-
-UENUM(BlueprintType)
-enum class EOculusXRHandTrackingVersion : uint8
-{
-	Default,
-	V1,
-	V2,
-};
-
-UENUM(BlueprintType)
-enum class EOculusXRProcessorPerformanceLevel : uint8
-{
-	PowerSavings = 0 UMETA(DisplayName = "PowerSavings", ToolTip = "Usually used in non-XR section (head-locked / static screen), during which power savings are to be prioritized"),
-	SustainedLow = 1 UMETA(DisplayName = "SustainedLow", ToolTip = "App enters a low and stable complexity section, during which reducing power is more important than occasional late rendering frames"),
-	SustainedHigh = 2 UMETA(DisplayName = "SustainedHigh", ToolTip = "Let XR Runtime to perform consistent XR compositing and frame rendering within a thermally sustainable range"),
-	Boost = 3 UMETA(DisplayName = "Boost(*)", ToolTip = "Allow XR Runtime to step up beyond the thermally sustainable range for short period. (Currently equivalent to SustainedHigh and not recommended to be used on Quest)")
-};
-
-UENUM(BlueprintType)
-enum class EOculusXRDeviceType : uint8
-{
-	//mobile HMDs 
-	OculusMobile_Deprecated0 = 0,
-	OculusQuest,
-	OculusQuest2,
-	MetaQuestPro,
-
-	//PC HMDs
-	Rift = 100,
-	Rift_S,
-	Quest_Link,
-	Quest2_Link,
-	MetaQuestProLink,
-
-	//default
-	OculusUnknown = 200,
-};
-
-UENUM(BlueprintType)
-enum class EOculusXRControllerType : uint8
-{
-	None = 0,
-	MetaQuestTouch = 1,
-	MetaQuestTouchPro = 2,
-	Unknown = 0x7f,
-};
-
-UENUM(BlueprintType)
-enum class EOculusXRXrApi : uint8
-{
-	OVRPluginOpenXR = 0 UMETA(DisplayName = "Oculus OVRPlugin + OpenXR backend (current recommended)", ToolTip = "Oculus plugin integration using OpenXR backend on both Mobile and PC. All new features will ship on backend for the forseeable future."),
-	
-	NativeOpenXR = 1 UMETA(DisplayName = "Epic Native OpenXR with Oculus vendor extensions", ToolTip = "Disable Legacy Oculus in favor of the native OpenXR implementation, with Oculus vendor extensions. Must enable the OpenXR plugin. This will be where Epic focuses XR development going forward. Oculus OpenXR extensions may be moved into a separate plugin (or plugins) in the future to improve modularity. The features supported by OpenXR are listed in the OpenXR specification on khronos.org, and the features supported by a given runtime can be verified with the \"OpenXR Explorer\" application on GitHub."),
-};
-
-/*
-* Information about relationships between a triggered boundary (EOculusXRBoundaryType::Boundary_Outer or
-* EOculusXRBoundaryType::Boundary_PlayArea) and a device or point in the world.
-* All dimensions, points, and vectors are returned in Unreal world coordinate space.
-*/
-USTRUCT(BlueprintType)
-struct FOculusXRGuardianTestResult
-{
-	GENERATED_BODY()
-
-	/** Is there a triggering interaction between the device/point and specified boundary? */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boundary Test Result")
-	bool IsTriggering = false;
-
-	/** Device type triggering boundary (EOculusXRTrackedDeviceType::None if BoundaryTestResult corresponds to a point rather than a device) */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boundary Test Result")
-	EOculusXRTrackedDeviceType DeviceType = EOculusXRTrackedDeviceType::None;
-
-	/** Distance of device/point to surface of boundary specified by BoundaryType */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boundary Test Result")
-	float ClosestDistance = 0.0f;
-
-	/** Closest point on surface corresponding to specified boundary */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boundary Test Result")
-	FVector ClosestPoint = FVector(0.0f);
-
-	/** Normal of closest point */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boundary Test Result")
-	FVector ClosestPointNormal = FVector(0.0f, 0.0f, 1.0f);
-};
-
-UENUM()
-enum class EOculusXRControllerPoseAlignment : uint8
-{
-	Default = 0 UMETA(ToolTip = "Default pose alignment used in all versions of the Meta XR plugin. Recommended pose for compatibility with previous assets designed for the Meta XR plugin."),
-
-	Grip = 1 UMETA(ToolTip = "Grip pose alignment as defined by OpenXR. Use this for cross-plugin compatibility with assets designed for the native OpenXR grip pose."),
-
-	Aim = 2 UMETA(ToolTip = "Aim pose alignment as defined by OpenXR. Use this for cross-plugin compatibility with assets designed for the native OpenXR aim pose."),
-};
 
 UCLASS()
 class OCULUSXRHMD_API UOculusXRFunctionLibrary : public UBlueprintFunctionLibrary
@@ -257,7 +28,7 @@ class OCULUSXRHMD_API UOculusXRFunctionLibrary : public UBlueprintFunctionLibrar
 	 * @param bUsePositionForPlayerCamera	(in) Should be set to 'true' if the position is going to be used to update position of the camera manually.
 	 * @param PositionScale		(in) The 3D scale that will be applied to position.
 	 */
-	UFUNCTION(BlueprintPure, Category="OculusLibrary")
+	UFUNCTION(BlueprintPure, Category = "OculusLibrary")
 	static void GetPose(FRotator& DeviceRotation, FVector& DevicePosition, FVector& NeckPosition, bool bUseOrienationForPlayerCamera = false, bool bUsePositionForPlayerCamera = false, const FVector PositionScale = FVector::ZeroVector);
 
 	/**
@@ -281,8 +52,7 @@ class OCULUSXRHMD_API UOculusXRFunctionLibrary : public UBlueprintFunctionLibrar
 	/**
 	* Set the CPU and GPU levels as hints to the Oculus device (Deprecated).
 	*/
-	UFUNCTION(BlueprintCallable, Category = "OculusLibrary", meta=(DeprecatedFunction, 
-		DeprecatedMessage="Deprecated. Please use Get/SetSuggestedCpuAndGpuPerformanceLevels instead"))
+	UFUNCTION(BlueprintCallable, Category = "OculusLibrary", meta = (DeprecatedFunction, DeprecatedMessage = "Deprecated. Please use Get/SetSuggestedCpuAndGpuPerformanceLevels instead"))
 	static void SetCPUAndGPULevels(int CPULevel, int GPULevel);
 
 	/**
@@ -340,7 +110,7 @@ class OCULUSXRHMD_API UOculusXRFunctionLibrary : public UBlueprintFunctionLibrar
 	 * @param PosScale3D	(in) the scale to apply to the HMD position.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "OculusLibrary", meta = (DeprecatedFunction, DeprecationMessage = "This feature is no longer supported."))
-	static void SetPositionScale3D(FVector PosScale3D) { }
+	static void SetPositionScale3D(FVector PosScale3D) {}
 
 	/**
 	 * Sets 'base rotation' - the rotation that will be subtracted from
@@ -492,7 +262,7 @@ class OCULUSXRHMD_API UOculusXRFunctionLibrary : public UBlueprintFunctionLibrar
 	static void SetColorScaleAndOffset(FLinearColor ColorScale, FLinearColor ColorOffset, bool bApplyToAllLayers = false);
 
 	/**
-	* Returns true if system headset is in 3dof mode 
+	* Returns true if system headset is in 3dof mode
 	*/
 	UFUNCTION(BlueprintPure, Category = "OculusLibrary")
 	static bool GetSystemHmd3DofModeEnabled();
@@ -508,7 +278,6 @@ class OCULUSXRHMD_API UOculusXRFunctionLibrary : public UBlueprintFunctionLibrar
 	*/
 	UFUNCTION(BlueprintCallable, Category = "OculusLibrary")
 	static void SetClientColorDesc(EOculusXRColorSpace ColorSpace);
-
 
 	/**
 	* Turns on or off local dimming
@@ -527,6 +296,17 @@ class OCULUSXRHMD_API UOculusXRFunctionLibrary : public UBlueprintFunctionLibrar
 	*/
 	UFUNCTION(BlueprintCallable, Category = "OculusLibrary")
 	static bool IsColorPassthroughSupported();
+
+
+
+	/**
+	 * Get a system recommendation on whether Passthrough should be active.
+	 * When set, it is recommended for apps which optionally support an MR experience
+	 * with Passthrough to default to that mode.
+	 * Currently, this is determined based on whether the user has Passthrough active in the home environment.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "OculusLibrary")
+	static bool IsPassthroughRecommended();
 
 	/**
 	 * Returns IStereoLayers interface to work with overlays.
@@ -548,7 +328,7 @@ class OCULUSXRHMD_API UOculusXRFunctionLibrary : public UBlueprintFunctionLibrar
 	static bool IsGuardianConfigured();
 
 	/**
-	* Returns the list of points in UE world space of the requested Boundary Type 
+	* Returns the list of points in UE world space of the requested Boundary Type
 	* @param BoundaryType			(in) An enum representing the boundary type requested, either Outer Boundary (exact guardian bounds) or PlayArea (rectangle inside the Outer Boundary)
 	* @param UsePawnSpace			(in) Boolean indicating to return the points in world space or pawn space
 	*/

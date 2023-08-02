@@ -14,6 +14,7 @@ namespace UnrealBuildTool.Rules
 					"Engine",
 					"OculusXRHMD",
 					"OVRPluginXR",
+					"ProceduralMeshComponent",
 				});
 
 			PrivateIncludePaths.AddRange(

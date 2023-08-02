@@ -11,6 +11,7 @@ LICENSE file in the root directory of this source tree.
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "OculusXRAnchorTypes.h"
 #include "OculusXRAnchorComponent.h"
+#include "OculusXRAnchorComponents.h"
 #include "OculusXRAnchorLatentActions.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOculusXR_LatentAction_CreateSpatialAnchor_Success, UOculusXRAnchorComponent*, Anchor, EOculusXRAnchorResult::Type, Result);
@@ -30,6 +31,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOculusXR_LatentAction_QueryAnchors_
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOculusXR_LatentAction_SetComponentStatus_Success, UOculusXRAnchorComponent*, Anchor, EOculusXRSpaceComponentType, ComponentType, bool, Enabled, EOculusXRAnchorResult::Type, Result);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOculusXR_LatentAction_SetComponentStatus_Failure, EOculusXRAnchorResult::Type, Result);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOculusXR_LatentAction_SetAnchorComponentStatus_Success, UOculusXRBaseAnchorComponent*, Component, EOculusXRAnchorResult::Type, Result);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOculusXR_LatentAction_SetAnchorComponentStatus_Failure, EOculusXRAnchorResult::Type, Result);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOculusXR_LatentAction_ShareAnchors_Success, const TArray<UOculusXRAnchorComponent*>&, SharedAnchors, const TArray<FString>&, UserIds, EOculusXRAnchorResult::Type, Result);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOculusXR_LatentAction_ShareAnchors_Failure, EOculusXRAnchorResult::Type, Result);
@@ -63,7 +67,6 @@ private:
 	void HandleCreateComplete(EOculusXRAnchorResult::Type CreateResult, UOculusXRAnchorComponent* Anchor);
 };
 
-
 //
 // Erase Anchor
 //
@@ -92,7 +95,6 @@ public:
 private:
 	void HandleEraseAnchorComplete(EOculusXRAnchorResult::Type EraseResult, FOculusXRUUID UUID);
 };
-
 
 //
 // Save Anchor
@@ -123,7 +125,6 @@ private:
 	void HandleSaveAnchorComplete(EOculusXRAnchorResult::Type SaveResult, UOculusXRAnchorComponent* Anchor);
 };
 
-
 //
 // Save Anchors
 //
@@ -151,7 +152,6 @@ public:
 private:
 	void HandleSaveAnchorsComplete(EOculusXRAnchorResult::Type SaveResult, const TArray<UOculusXRAnchorComponent*>& SavedSpaces);
 };
-
 
 //
 // Query Anchors
@@ -181,7 +181,6 @@ public:
 private:
 	void HandleQueryAnchorsResults(EOculusXRAnchorResult::Type QueryResult, const TArray<FOculusXRSpaceQueryResult>& Results);
 };
-
 
 //
 // Set Component Status
@@ -213,6 +212,33 @@ private:
 	void HandleSetComponentStatusComplete(EOculusXRAnchorResult::Type SetStatusResult, UOculusXRAnchorComponent* Anchor, EOculusXRSpaceComponentType SpaceComponentType, bool bResultEnabled);
 };
 
+//
+// Set Anchor Component Status
+//
+UCLASS()
+class OCULUSXRANCHORS_API UOculusXRAsyncAction_SetComponentStatus : public UBlueprintAsyncActionBase
+{
+	GENERATED_BODY()
+public:
+	virtual void Activate() override;
+
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
+	static UOculusXRAsyncAction_SetComponentStatus* OculusXRAsyncSetComponentStatus(UOculusXRBaseAnchorComponent* Component, bool bEnabled);
+
+	UPROPERTY(BlueprintAssignable)
+	FOculusXR_LatentAction_SetAnchorComponentStatus_Success Success;
+
+	UPROPERTY(BlueprintAssignable)
+	FOculusXR_LatentAction_SetAnchorComponentStatus_Failure Failure;
+
+	// Target actor
+	UPROPERTY(Transient)
+	UOculusXRBaseAnchorComponent* Component;
+	bool bEnabled;
+
+private:
+	void HandleSetComponentStatusComplete(EOculusXRAnchorResult::Type SetStatusResult, uint64 Space, EOculusXRSpaceComponentType SpaceComponentType);
+};
 
 //
 // Share Anchors

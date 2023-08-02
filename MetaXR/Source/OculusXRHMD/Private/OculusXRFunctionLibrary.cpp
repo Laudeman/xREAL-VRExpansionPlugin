@@ -18,16 +18,7 @@ UOculusXRFunctionLibrary::UOculusXRFunctionLibrary(const FObjectInitializer& Obj
 
 OculusXRHMD::FOculusXRHMD* UOculusXRFunctionLibrary::GetOculusXRHMD()
 {
-#if OCULUS_HMD_SUPPORTED_PLATFORMS
-	if (GEngine && GEngine->XRSystem.IsValid())
-	{
-		if (GEngine->XRSystem->GetSystemName() == OculusXRHMD::FOculusXRHMD::OculusSystemName)
-		{
-			return static_cast<OculusXRHMD::FOculusXRHMD*>(GEngine->XRSystem.Get());
-		}
-	}
-#endif
-	return nullptr;
+	return OculusXRHMD::FOculusXRHMD::GetOculusXRHMD();
 }
 
 void UOculusXRFunctionLibrary::GetPose(FRotator& DeviceRotation, FVector& DevicePosition, FVector& NeckPosition, bool bUseOrienationForPlayerCamera, bool bUsePositionForPlayerCamera, const FVector PositionScale)
@@ -407,25 +398,26 @@ EOculusXRDeviceType UOculusXRFunctionLibrary::GetDeviceType()
 	{
 		if (OculusXRHMD->GetSettings())
 		{
-			switch (OculusXRHMD->GetSettings()->SystemHeadset) {
-			case ovrpSystemHeadset_Oculus_Quest:
-				return EOculusXRDeviceType::OculusQuest;
-			case ovrpSystemHeadset_Oculus_Quest_2:
-				return EOculusXRDeviceType::OculusQuest2;
-			case ovrpSystemHeadset_Meta_Quest_Pro:
-				return EOculusXRDeviceType::MetaQuestPro;
-			case ovrpSystemHeadset_Rift_CV1:
-				return EOculusXRDeviceType::Rift;
-			case ovrpSystemHeadset_Rift_S:
-				return EOculusXRDeviceType::Rift_S;
-			case ovrpSystemHeadset_Oculus_Link_Quest:
-				return EOculusXRDeviceType::Quest_Link;
-			case ovrpSystemHeadset_Oculus_Link_Quest_2:
-				return EOculusXRDeviceType::Quest2_Link;
-			case ovrpSystemHeadset_Meta_Link_Quest_Pro:
-				return EOculusXRDeviceType::MetaQuestProLink;
-			default:
-				break;
+			switch (OculusXRHMD->GetSettings()->SystemHeadset)
+			{
+				case ovrpSystemHeadset_Oculus_Quest:
+					return EOculusXRDeviceType::OculusQuest_Deprecated;
+				case ovrpSystemHeadset_Oculus_Quest_2:
+					return EOculusXRDeviceType::OculusQuest2;
+				case ovrpSystemHeadset_Meta_Quest_Pro:
+					return EOculusXRDeviceType::MetaQuestPro;
+				case ovrpSystemHeadset_Rift_CV1:
+					return EOculusXRDeviceType::Rift;
+				case ovrpSystemHeadset_Rift_S:
+					return EOculusXRDeviceType::Rift_S;
+				case ovrpSystemHeadset_Oculus_Link_Quest:
+					return EOculusXRDeviceType::Quest_Link_Deprecated;
+				case ovrpSystemHeadset_Oculus_Link_Quest_2:
+					return EOculusXRDeviceType::Quest2_Link;
+				case ovrpSystemHeadset_Meta_Link_Quest_Pro:
+					return EOculusXRDeviceType::MetaQuestProLink;
+				default:
+					break;
 			}
 		}
 	}
@@ -439,12 +431,12 @@ EOculusXRControllerType UOculusXRFunctionLibrary::GetControllerType(EControllerH
 	auto getOVRPHand = [](EControllerHand hand) {
 		switch (hand)
 		{
-		case EControllerHand::Left:
-			return ovrpHand::ovrpHand_Left;
-		case EControllerHand::Right:
-			return ovrpHand::ovrpHand_Right;
-		default:
-			return ovrpHand::ovrpHand_None;
+			case EControllerHand::Left:
+				return ovrpHand::ovrpHand_Left;
+			case EControllerHand::Right:
+				return ovrpHand::ovrpHand_Right;
+			default:
+				return ovrpHand::ovrpHand_None;
 		}
 		return ovrpHand::ovrpHand_None;
 	};
@@ -452,19 +444,19 @@ EOculusXRControllerType UOculusXRFunctionLibrary::GetControllerType(EControllerH
 	auto getEControllerType = [](ovrpInteractionProfile profile) {
 		switch (profile)
 		{
-		case ovrpInteractionProfile::ovrpInteractionProfile_Touch:
-			return EOculusXRControllerType::MetaQuestTouch;
-		case ovrpInteractionProfile::ovrpInteractionProfile_TouchPro:
-			return EOculusXRControllerType::MetaQuestTouchPro;
-		default:
-			return EOculusXRControllerType::None;
+			case ovrpInteractionProfile::ovrpInteractionProfile_Touch:
+				return EOculusXRControllerType::MetaQuestTouch;
+			case ovrpInteractionProfile::ovrpInteractionProfile_TouchPro:
+				return EOculusXRControllerType::MetaQuestTouchPro;
+			default:
+				return EOculusXRControllerType::None;
 		}
 		return EOculusXRControllerType::None;
 	};
 
 	ovrpInteractionProfile interactionProfile = ovrpInteractionProfile::ovrpInteractionProfile_None;
 	ovrpHand hand = getOVRPHand(deviceHand);
-	if(hand == ovrpHand::ovrpHand_None)
+	if (hand == ovrpHand::ovrpHand_None)
 		return EOculusXRControllerType::Unknown;
 	if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetCurrentInteractionProfile(hand, &interactionProfile)))
 	{
@@ -532,7 +524,6 @@ void UOculusXRFunctionLibrary::EnablePositionTracking(bool bPositionTracking)
 #endif
 }
 
-
 void UOculusXRFunctionLibrary::EnableOrientationTracking(bool bOrientationTracking)
 {
 #if OCULUS_HMD_SUPPORTED_PLATFORMS
@@ -573,12 +564,12 @@ static ovrpBoundaryType ToOvrpBoundaryType(EOculusXRBoundaryType Source)
 {
 	switch (Source)
 	{
-	case EOculusXRBoundaryType::Boundary_PlayArea:
-		return ovrpBoundary_PlayArea;
+		case EOculusXRBoundaryType::Boundary_PlayArea:
+			return ovrpBoundary_PlayArea;
 
-	case EOculusXRBoundaryType::Boundary_Outer:
-	default:
-		return ovrpBoundary_Outer;
+		case EOculusXRBoundaryType::Boundary_Outer:
+		default:
+			return ovrpBoundary_Outer;
 	}
 }
 #endif // OCULUS_HMD_SUPPORTED_PLATFORMS
@@ -616,37 +607,41 @@ TArray<FVector> UOculusXRFunctionLibrary::GetGuardianPoints(EOculusXRBoundaryTyp
 	OculusXRHMD::FOculusXRHMD* OculusXRHMD = GetOculusXRHMD();
 	if (OculusXRHMD != nullptr)
 	{
-		ovrpBoundaryType obt = ToOvrpBoundaryType(BoundaryType);
-		int NumPoints = 0;
-
-		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetBoundaryGeometry3(obt, NULL, &NumPoints)))
+		ovrpBool bBoundaryConfigured = false;
+		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetBoundaryConfigured2(&bBoundaryConfigured)) && bBoundaryConfigured)
 		{
-			//allocate points
-			const int BufferSize = NumPoints;
-			ovrpVector3f* BoundaryPoints = new ovrpVector3f[BufferSize];
+			ovrpBoundaryType obt = ToOvrpBoundaryType(BoundaryType);
+			int NumPoints = 0;
 
-			if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetBoundaryGeometry3(obt, BoundaryPoints, &NumPoints)))
+			if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetBoundaryGeometry3(obt, NULL, &NumPoints)))
 			{
-				NumPoints = FMath::Min(BufferSize, NumPoints);
-				check(NumPoints <= BufferSize); // For static analyzer
-				BoundaryPointList.Reserve(NumPoints);
+				//allocate points
+				const int BufferSize = NumPoints;
+				ovrpVector3f* BoundaryPoints = new ovrpVector3f[BufferSize];
 
-				for (int i = 0; i < NumPoints; i++)
+				if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetBoundaryGeometry3(obt, BoundaryPoints, &NumPoints)))
 				{
-					FVector point;
-					if (UsePawnSpace)
-					{
-						point = OculusXRHMD->ConvertVector_M2U(BoundaryPoints[i]);
-					}
-					else
-					{
-						point = OculusXRHMD->ScaleAndMovePointWithPlayer(BoundaryPoints[i]);
-					}
-					BoundaryPointList.Add(point);
-				}
-			}
+					NumPoints = FMath::Min(BufferSize, NumPoints);
+					check(NumPoints <= BufferSize); // For static analyzer
+					BoundaryPointList.Reserve(NumPoints);
 
-			delete[] BoundaryPoints;
+					for (int i = 0; i < NumPoints; i++)
+					{
+						FVector point;
+						if (UsePawnSpace)
+						{
+							point = OculusXRHMD->ConvertVector_M2U(BoundaryPoints[i]);
+						}
+						else
+						{
+							point = OculusXRHMD->ScaleAndMovePointWithPlayer(BoundaryPoints[i]);
+						}
+						BoundaryPointList.Add(point);
+					}
+				}
+
+				delete[] BoundaryPoints;
+			}
 		}
 	}
 #endif
@@ -678,28 +673,32 @@ FTransform UOculusXRFunctionLibrary::GetPlayAreaTransform()
 	OculusXRHMD::FOculusXRHMD* OculusXRHMD = GetOculusXRHMD();
 	if (OculusXRHMD != nullptr)
 	{
-		int NumPoints = 4;
-		ovrpVector3f BoundaryPoints[4];
+		ovrpBool bBoundaryConfigured = false;
+		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetBoundaryConfigured2(&bBoundaryConfigured)) && bBoundaryConfigured)
+		{
+			int NumPoints = 4;
+			ovrpVector3f BoundaryPoints[4];
 
-		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetBoundaryGeometry3(ovrpBoundary_PlayArea, BoundaryPoints, &NumPoints)))
-		{	
-			FVector ConvertedPoints[4];
-
-			for (int i = 0; i < NumPoints; i++)
+			if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetBoundaryGeometry3(ovrpBoundary_PlayArea, BoundaryPoints, &NumPoints)))
 			{
-				ConvertedPoints[i] = OculusXRHMD->ScaleAndMovePointWithPlayer(BoundaryPoints[i]);
+				FVector ConvertedPoints[4];
+
+				for (int i = 0; i < NumPoints; i++)
+				{
+					ConvertedPoints[i] = OculusXRHMD->ScaleAndMovePointWithPlayer(BoundaryPoints[i]);
+				}
+
+				float metersScale = OculusXRHMD->GetWorldToMetersScale();
+
+				FVector Edge = ConvertedPoints[1] - ConvertedPoints[0];
+				float Angle = FMath::Acos((Edge).GetSafeNormal() | FVector::RightVector);
+				FQuat Rotation(FVector::UpVector, Edge.X < 0 ? Angle : -Angle);
+
+				FVector Position = (ConvertedPoints[0] + ConvertedPoints[1] + ConvertedPoints[2] + ConvertedPoints[3]) / 4;
+				FVector Scale(FVector::Distance(ConvertedPoints[3], ConvertedPoints[0]) / metersScale, FVector::Distance(ConvertedPoints[1], ConvertedPoints[0]) / metersScale, 1.0);
+
+				return FTransform(Rotation, Position, Scale);
 			}
-
-			float metersScale = OculusXRHMD->GetWorldToMetersScale();
-
-			FVector Edge = ConvertedPoints[1] - ConvertedPoints[0];
-			float Angle = FMath::Acos((Edge).GetSafeNormal() | FVector::RightVector);
-			FQuat Rotation(FVector::UpVector, Edge.X < 0 ? Angle : -Angle);
-			
-			FVector Position = (ConvertedPoints[0] + ConvertedPoints[1] + ConvertedPoints[2] + ConvertedPoints[3]) / 4;
-			FVector Scale(FVector::Distance(ConvertedPoints[3], ConvertedPoints[0]) / metersScale, FVector::Distance(ConvertedPoints[1], ConvertedPoints[0]) / metersScale, 1.0);
-
-			return FTransform(Rotation, Position, Scale);
 		}
 	}
 #endif
@@ -821,8 +820,8 @@ void UOculusXRFunctionLibrary::SetClientColorDesc(EOculusXRColorSpace ColorSpace
 void UOculusXRFunctionLibrary::SetLocalDimmingOn(bool LocalDimmingOn)
 {
 #if OCULUS_HMD_SUPPORTED_PLATFORMS
-	OculusXRHMD::FOculusXRHMD* OculusHMD = GetOculusXRHMD();
-	if (OculusHMD != nullptr)
+	OculusXRHMD::FOculusXRHMD* OculusXRHMD = GetOculusXRHMD();
+	if (OculusXRHMD != nullptr)
 	{
 		UE_LOG(LogHMD, Log, TEXT("SetLocalDimmingOn %d"), LocalDimmingOn);
 		FOculusXRHMDModule::GetPluginWrapper().SetLocalDimming(LocalDimmingOn);
@@ -830,14 +829,16 @@ void UOculusXRFunctionLibrary::SetLocalDimmingOn(bool LocalDimmingOn)
 #endif
 }
 
-bool UOculusXRFunctionLibrary::IsPassthroughSupported() {
+bool UOculusXRFunctionLibrary::IsPassthroughSupported()
+{
 #if OCULUS_HMD_SUPPORTED_PLATFORMS
-	OculusXRHMD::FOculusXRHMD* OculusHMD = GetOculusXRHMD();
-	if (OculusHMD != nullptr)
+	OculusXRHMD::FOculusXRHMD* OculusXRHMD = GetOculusXRHMD();
+	if (OculusXRHMD != nullptr)
 	{
 		ovrpInsightPassthroughCapabilityFlags capabilities;
 
-		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetPassthroughCapabilityFlags(&capabilities))) {
+		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetPassthroughCapabilityFlags(&capabilities)))
+		{
 			return (capabilities & ovrpInsightPassthroughCapabilityFlags::ovrpInsightPassthroughCapabilityFlags_Passthrough)
 				== ovrpInsightPassthroughCapabilityFlags::ovrpInsightPassthroughCapabilityFlags_Passthrough;
 		}
@@ -848,21 +849,40 @@ bool UOculusXRFunctionLibrary::IsPassthroughSupported() {
 	return false;
 }
 
-bool UOculusXRFunctionLibrary::IsColorPassthroughSupported() {
+bool UOculusXRFunctionLibrary::IsColorPassthroughSupported()
+{
 #if OCULUS_HMD_SUPPORTED_PLATFORMS
-	OculusXRHMD::FOculusXRHMD* OculusHMD = GetOculusXRHMD();
-	if (OculusHMD != nullptr)
+	OculusXRHMD::FOculusXRHMD* OculusXRHMD = GetOculusXRHMD();
+	if (OculusXRHMD != nullptr)
 	{
 		ovrpInsightPassthroughCapabilityFlags capabilities;
-		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetPassthroughCapabilityFlags(&capabilities))) {
+		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetPassthroughCapabilityFlags(&capabilities)))
+		{
 			return (capabilities & ovrpInsightPassthroughCapabilityFlags::ovrpInsightPassthroughCapabilityFlags_Color)
 				== ovrpInsightPassthroughCapabilityFlags::ovrpInsightPassthroughCapabilityFlags_Color;
 		}
-
 		return false;
 	}
 #endif
 	return false;
 }
 
+
+
+bool UOculusXRFunctionLibrary::IsPassthroughRecommended()
+{
+#if OCULUS_HMD_SUPPORTED_PLATFORMS
+	const OculusXRHMD::FOculusXRHMD* OculusHMD = GetOculusXRHMD();
+	if (OculusHMD != nullptr)
+	{
+		ovrpPassthroughPreferences Preferences;
+		if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetPassthroughPreferences(&Preferences)))
+		{
+			return (Preferences.Flags & ovrpPassthroughPreferenceFlags::ovrpPassthroughPreferenceFlags_DefaultToActive)
+				== ovrpPassthroughPreferenceFlags::ovrpPassthroughPreferenceFlags_DefaultToActive;
+		};
+	}
+#endif
+	return false;
+}
 #undef LOCTEXT_NAMESPACE

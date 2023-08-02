@@ -7,7 +7,6 @@
 #define LOCTEXT_NAMESPACE "OculusXRMR"
 
 enum class EOculusXRMR_CompositionMethod : uint8;
-enum class EOculusXRMR_CameraDeviceEnum : uint8;
 enum class EOculusXRMR_DepthQuality : uint8;
 
 class UOculusXRMR_Settings;
@@ -26,7 +25,7 @@ public:
 
 	static inline FOculusXRMRModule& Get()
 	{
-		return FModuleManager::GetModuleChecked< FOculusXRMRModule >("OculusXRMR");
+		return FModuleManager::GetModuleChecked<FOculusXRMRModule>("OculusXRMR");
 	}
 
 	// IOculusXRMRModule
@@ -54,8 +53,6 @@ private:
 
 	/** Initialize the tracked physical camera */
 	void SetupExternalCamera();
-	/** Close the tracked physical camera */
-	void CloseExternalCamera();
 	/** Set up the needed settings and actors for MRC in-game */
 	void SetupInGameCapture();
 	/** Destroy actors for MRC in-game */
@@ -65,7 +62,6 @@ private:
 
 	/** Handle changes on specific settings */
 	void OnCompositionMethodChanged(EOculusXRMR_CompositionMethod OldVal, EOculusXRMR_CompositionMethod NewVal);
-	void OnCapturingCameraChanged(EOculusXRMR_CameraDeviceEnum OldVal, EOculusXRMR_CameraDeviceEnum NewVal);
 	void OnIsCastingChanged(bool OldVal, bool NewVal);
 	void OnUseDynamicLightingChanged(bool OldVal, bool NewVal);
 	void OnDepthQualityChanged(EOculusXRMR_DepthQuality OldVal, EOculusXRMR_DepthQuality NewVal);
@@ -96,6 +92,5 @@ private:
 	void OnPieEnded(bool bIsSimulating);
 #endif
 };
-
 
 #undef LOCTEXT_NAMESPACE

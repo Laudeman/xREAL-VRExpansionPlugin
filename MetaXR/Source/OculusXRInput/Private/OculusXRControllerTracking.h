@@ -15,27 +15,27 @@ class UHapticFeedbackEffect_Base;
 
 namespace OculusXRInput
 {
-class FOculusXRControllerTracking
-{
-public:
-	static void PlayHapticEffect(
-		UHapticFeedbackEffect_Base* HapticEffect,
-		EControllerHand Hand,
-		EOculusXRHandHapticsLocation Location = EOculusXRHandHapticsLocation::Hand,
-		bool bAppend = false,
-		float Scale = 1.f,
-		bool bLoop = false);
+	class FOculusXRControllerTracking
+	{
+	public:
+		static void PlayHapticEffect(
+			UHapticFeedbackEffect_Base* HapticEffect,
+			EControllerHand Hand,
+			EOculusXRHandHapticsLocation Location = EOculusXRHandHapticsLocation::Hand,
+			bool bAppend = false,
+			float Scale = 1.f,
+			bool bLoop = false);
 
-	static int PlayHapticEffect(EControllerHand Hand, TArray<uint8>& Amplitudes, int SampleRate, bool bPCM = false, bool bAppend = false);
+		static int PlayHapticEffect(EControllerHand Hand, TArray<uint8>& Amplitudes, int SampleRate, bool bPCM = false, bool bAppend = false);
 
-	static void StopHapticEffect(EControllerHand Hand, EOculusXRHandHapticsLocation Location = EOculusXRHandHapticsLocation::Hand);
+		static void StopHapticEffect(EControllerHand Hand, EOculusXRHandHapticsLocation Location = EOculusXRHandHapticsLocation::Hand);
 
-	static void SetHapticsByValue(float Frequency, float Amplitude, EControllerHand Hand, EOculusXRHandHapticsLocation Location = EOculusXRHandHapticsLocation::Hand);
+		static void SetHapticsByValue(float Frequency, float Amplitude, EControllerHand Hand, EOculusXRHandHapticsLocation Location = EOculusXRHandHapticsLocation::Hand);
 
-	static float GetControllerSampleRateHz(EControllerHand Hand);
+		static float GetControllerSampleRateHz(EControllerHand Hand);
 
-	static int GetMaxHapticDuration(EControllerHand Hand);
-};
+		static int GetMaxHapticDuration(EControllerHand Hand);
+	};
 
 } // namespace OculusXRInput
 

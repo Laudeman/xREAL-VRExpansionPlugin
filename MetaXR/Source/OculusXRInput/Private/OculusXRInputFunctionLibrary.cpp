@@ -22,35 +22,35 @@ EOculusXRFinger UOculusXRInputFunctionLibrary::ConvertBoneToFinger(const EOculus
 {
 	switch (Bone)
 	{
-	case EOculusXRBone::Index_1:
-	case EOculusXRBone::Index_2:
-	case EOculusXRBone::Index_3:
-	case EOculusXRBone::Index_Tip:
-		return EOculusXRFinger::Index;
-	case EOculusXRBone::Middle_1:
-	case EOculusXRBone::Middle_2:
-	case EOculusXRBone::Middle_3:
-	case EOculusXRBone::Middle_Tip:
-		return EOculusXRFinger::Middle;
-	case EOculusXRBone::Pinky_0:
-	case EOculusXRBone::Pinky_1:
-	case EOculusXRBone::Pinky_2:
-	case EOculusXRBone::Pinky_3:
-	case EOculusXRBone::Pinky_Tip:
-		return EOculusXRFinger::Pinky;
-	case EOculusXRBone::Ring_1:
-	case EOculusXRBone::Ring_2:
-	case EOculusXRBone::Ring_3:
-	case EOculusXRBone::Ring_Tip:
-		return EOculusXRFinger::Ring;
-	case EOculusXRBone::Thumb_0:
-	case EOculusXRBone::Thumb_1:
-	case EOculusXRBone::Thumb_2:
-	case EOculusXRBone::Thumb_3:
-	case EOculusXRBone::Thumb_Tip:
-		return EOculusXRFinger::Thumb;
-	default:
-		return EOculusXRFinger::Invalid;
+		case EOculusXRBone::Index_1:
+		case EOculusXRBone::Index_2:
+		case EOculusXRBone::Index_3:
+		case EOculusXRBone::Index_Tip:
+			return EOculusXRFinger::Index;
+		case EOculusXRBone::Middle_1:
+		case EOculusXRBone::Middle_2:
+		case EOculusXRBone::Middle_3:
+		case EOculusXRBone::Middle_Tip:
+			return EOculusXRFinger::Middle;
+		case EOculusXRBone::Pinky_0:
+		case EOculusXRBone::Pinky_1:
+		case EOculusXRBone::Pinky_2:
+		case EOculusXRBone::Pinky_3:
+		case EOculusXRBone::Pinky_Tip:
+			return EOculusXRFinger::Pinky;
+		case EOculusXRBone::Ring_1:
+		case EOculusXRBone::Ring_2:
+		case EOculusXRBone::Ring_3:
+		case EOculusXRBone::Ring_Tip:
+			return EOculusXRFinger::Ring;
+		case EOculusXRBone::Thumb_0:
+		case EOculusXRBone::Thumb_1:
+		case EOculusXRBone::Thumb_2:
+		case EOculusXRBone::Thumb_3:
+		case EOculusXRBone::Thumb_Tip:
+			return EOculusXRFinger::Thumb;
+		default:
+			return EOculusXRFinger::Invalid;
 	}
 }
 
@@ -120,8 +120,12 @@ bool UOculusXRInputFunctionLibrary::IsHandPositionValid(const EOculusXRHandType 
 
 FString UOculusXRInputFunctionLibrary::GetBoneName(EOculusXRBone BoneId)
 {
-	uint32 ovrBoneId = OculusXRInput::FOculusHandTracking::ToOvrBone(BoneId);
-	return OculusXRInput::FOculusHandTracking::GetBoneName(ovrBoneId);
+	const auto ovrBoneId = OculusXRInput::FOculusHandTracking::ToOvrBone(BoneId);
+	if (ovrBoneId == ovrpBoneId_Invalid)
+	{
+		return OculusXRInput::FOculusHandTracking::GetBoneName(static_cast<uint8>(EOculusXRBone::Invalid));
+	}
+	return OculusXRInput::FOculusHandTracking::GetBoneName(static_cast<uint8>(ovrBoneId));
 }
 
 void UOculusXRInputFunctionLibrary::PlayCurveHapticEffect(class UHapticFeedbackEffect_Curve* HapticEffect, EControllerHand Hand, EOculusXRHandHapticsLocation Location, float Scale, bool bLoop)

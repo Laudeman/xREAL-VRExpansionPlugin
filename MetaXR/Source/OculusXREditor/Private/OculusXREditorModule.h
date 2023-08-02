@@ -1,4 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+/*
+Copyright (c) Meta Platforms, Inc. and affiliates.
+All rights reserved.
+This source code is licensed under the license found in the
+LICENSE file in the root directory of this source tree.
+*/
 
 #pragma once
 
@@ -19,7 +24,8 @@ enum class ECheckBoxState : uint8;
 class FOculusXREditorModule : public IOculusXREditorModule
 {
 public:
-	FOculusXREditorModule() : bModuleValid(false) {};
+	FOculusXREditorModule()
+		: bModuleValid(false){};
 
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
@@ -29,15 +35,16 @@ public:
 	void RegisterSettings();
 	void UnregisterSettings();
 
-	void PluginButtonClicked();
+	void PluginOpenPerfWindow();
 	FReply PluginClickFn(bool text);
+
+	void PluginOpenPlatWindow();
 
 public:
 	static const FName OculusPerfTabName;
 	static const FName OculusPlatToolTabName;
 
 private:
-
 	void AddToolbarExtension(FToolBarBuilder& Builder);
 	TSharedRef<SWidget> CreateToolbarEntryMenu(TSharedPtr<class FUICommandList> Commands);
 	void AddMenuExtension(FMenuBuilder& Builder);

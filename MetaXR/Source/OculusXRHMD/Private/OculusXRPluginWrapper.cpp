@@ -46,17 +46,15 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 	return false;
 #endif
 
-
 	struct OculusEntryPoint
 	{
 		const char* EntryPointName;
 		void** EntryPointPtr;
 	};
 
-#define OCULUS_BIND_ENTRY_POINT(Func)	{ "ovrp_"#Func, (void**)&wrapper->Func }
+#define OCULUS_BIND_ENTRY_POINT(Func) { "ovrp_" #Func, (void**)&wrapper->Func }
 
-	OculusEntryPoint entryPointArray[] =
-	{
+	OculusEntryPoint entryPointArray[] = {
 		// OVR_Plugin.h
 
 		OCULUS_BIND_ENTRY_POINT(PreInitialize5),
@@ -237,6 +235,9 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 		OCULUS_BIND_ENTRY_POINT(GetLocalDimmingSupported),
 		OCULUS_BIND_ENTRY_POINT(SetLocalDimming),
 		OCULUS_BIND_ENTRY_POINT(GetCurrentInteractionProfile),
+		OCULUS_BIND_ENTRY_POINT(GetLayerRecommendedResolution),
+		OCULUS_BIND_ENTRY_POINT(IsLayerShapeSupported),
+
 
 #ifndef OVRPLUGIN_JNI_LIB_EXCLUDED
 		OCULUS_BIND_ENTRY_POINT(GetSystemVolume2),
@@ -245,11 +246,11 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 
 		// Anchors
 		OCULUS_BIND_ENTRY_POINT(LocateSpace),
-		OCULUS_BIND_ENTRY_POINT(CreateSpatialAnchor),            
-		OCULUS_BIND_ENTRY_POINT(DestroySpace),                   
-		OCULUS_BIND_ENTRY_POINT(SetSpaceComponentStatus),            
-		OCULUS_BIND_ENTRY_POINT(GetSpaceComponentStatus),            
-		OCULUS_BIND_ENTRY_POINT(EnumerateSpaceSupportedComponents),   
+		OCULUS_BIND_ENTRY_POINT(CreateSpatialAnchor),
+		OCULUS_BIND_ENTRY_POINT(DestroySpace),
+		OCULUS_BIND_ENTRY_POINT(SetSpaceComponentStatus),
+		OCULUS_BIND_ENTRY_POINT(GetSpaceComponentStatus),
+		OCULUS_BIND_ENTRY_POINT(EnumerateSpaceSupportedComponents),
 		OCULUS_BIND_ENTRY_POINT(QuerySpaces),
 		OCULUS_BIND_ENTRY_POINT(RetrieveSpaceQueryResults),
 		OCULUS_BIND_ENTRY_POINT(SaveSpace),
@@ -261,20 +262,23 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 		OCULUS_BIND_ENTRY_POINT(DestroySpaceUser),
 
 		// Scene
-		OCULUS_BIND_ENTRY_POINT(GetSpaceContainer),     
+		OCULUS_BIND_ENTRY_POINT(GetSpaceContainer),
 		OCULUS_BIND_ENTRY_POINT(GetSpaceBoundingBox2D),
-		OCULUS_BIND_ENTRY_POINT(GetSpaceBoundingBox3D), 
+		OCULUS_BIND_ENTRY_POINT(GetSpaceBoundingBox3D),
 		OCULUS_BIND_ENTRY_POINT(GetSpaceSemanticLabels),
 		OCULUS_BIND_ENTRY_POINT(GetSpaceRoomLayout),
-		OCULUS_BIND_ENTRY_POINT(GetSpaceBoundary2D),    
+		OCULUS_BIND_ENTRY_POINT(GetSpaceBoundary2D),
 		OCULUS_BIND_ENTRY_POINT(RequestSceneCapture),
 
+	// Local Groups
+
 		// MovementSDK
-		OCULUS_BIND_ENTRY_POINT(GetBodyState),
 		OCULUS_BIND_ENTRY_POINT(GetBodyTrackingEnabled),
 		OCULUS_BIND_ENTRY_POINT(GetBodyTrackingSupported),
-		OCULUS_BIND_ENTRY_POINT(StartBodyTracking),
 		OCULUS_BIND_ENTRY_POINT(StopBodyTracking),
+		OCULUS_BIND_ENTRY_POINT(StartBodyTracking),
+		OCULUS_BIND_ENTRY_POINT(GetBodyState),
+
 		OCULUS_BIND_ENTRY_POINT(GetFaceTrackingEnabled),
 		OCULUS_BIND_ENTRY_POINT(GetFaceTrackingSupported),
 		OCULUS_BIND_ENTRY_POINT(GetFaceState),
@@ -297,7 +301,13 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 		OCULUS_BIND_ENTRY_POINT(DestroyInsightPassthroughGeometryInstance),
 		OCULUS_BIND_ENTRY_POINT(UpdateInsightPassthroughGeometryTransform),
 		OCULUS_BIND_ENTRY_POINT(SetInsightPassthroughStyle),
+		OCULUS_BIND_ENTRY_POINT(SetInsightPassthroughStyle2),
 		OCULUS_BIND_ENTRY_POINT(GetPassthroughCapabilityFlags),
+		OCULUS_BIND_ENTRY_POINT(CreatePassthroughColorLut),
+		OCULUS_BIND_ENTRY_POINT(DestroyPassthroughColorLut),
+		OCULUS_BIND_ENTRY_POINT(UpdatePassthroughColorLut),
+		OCULUS_BIND_ENTRY_POINT(GetPassthroughCapabilities),
+		OCULUS_BIND_ENTRY_POINT(GetPassthroughPreferences),
 
 		// OVR_Plugin_MixedReality.h
 
@@ -309,36 +319,6 @@ bool OculusPluginWrapper::InitializeOculusPluginWrapper(OculusPluginWrapper* wra
 		OCULUS_BIND_ENTRY_POINT(GetExternalCameraName),
 		OCULUS_BIND_ENTRY_POINT(GetExternalCameraIntrinsics),
 		OCULUS_BIND_ENTRY_POINT(GetExternalCameraExtrinsics),
-		OCULUS_BIND_ENTRY_POINT(GetExternalCameraCalibrationRawPose),
-		OCULUS_BIND_ENTRY_POINT(OverrideExternalCameraFov),
-		OCULUS_BIND_ENTRY_POINT(GetUseOverriddenExternalCameraFov),
-		OCULUS_BIND_ENTRY_POINT(OverrideExternalCameraStaticPose),
-		OCULUS_BIND_ENTRY_POINT(GetUseOverriddenExternalCameraStaticPose),
-		OCULUS_BIND_ENTRY_POINT(GetExternalCameraPose),
-		OCULUS_BIND_ENTRY_POINT(ConvertPoseToCameraSpace),
-		OCULUS_BIND_ENTRY_POINT(ResetDefaultExternalCamera),
-		OCULUS_BIND_ENTRY_POINT(SetDefaultExternalCamera),
-		OCULUS_BIND_ENTRY_POINT(EnumerateAllCameraDevices),
-		OCULUS_BIND_ENTRY_POINT(EnumerateAvailableCameraDevices),
-		OCULUS_BIND_ENTRY_POINT(UpdateCameraDevices),
-		OCULUS_BIND_ENTRY_POINT(IsCameraDeviceAvailable2),
-		OCULUS_BIND_ENTRY_POINT(SetCameraDevicePreferredColorFrameSize),
-		OCULUS_BIND_ENTRY_POINT(OpenCameraDevice),
-		OCULUS_BIND_ENTRY_POINT(CloseCameraDevice),
-		OCULUS_BIND_ENTRY_POINT(HasCameraDeviceOpened2),
-		OCULUS_BIND_ENTRY_POINT(GetCameraDeviceIntrinsicsParameters),
-		OCULUS_BIND_ENTRY_POINT(IsCameraDeviceColorFrameAvailable2),
-		OCULUS_BIND_ENTRY_POINT(GetCameraDeviceColorFrameSize),
-		OCULUS_BIND_ENTRY_POINT(GetCameraDeviceColorFrameBgraPixels),
-		OCULUS_BIND_ENTRY_POINT(DoesCameraDeviceSupportDepth),
-		OCULUS_BIND_ENTRY_POINT(GetCameraDeviceDepthSensingMode),
-		OCULUS_BIND_ENTRY_POINT(SetCameraDeviceDepthSensingMode),
-		OCULUS_BIND_ENTRY_POINT(GetCameraDevicePreferredDepthQuality),
-		OCULUS_BIND_ENTRY_POINT(SetCameraDevicePreferredDepthQuality),
-		OCULUS_BIND_ENTRY_POINT(IsCameraDeviceDepthFrameAvailable),
-		OCULUS_BIND_ENTRY_POINT(GetCameraDeviceDepthFrameSize),
-		OCULUS_BIND_ENTRY_POINT(GetCameraDeviceDepthFramePixels),
-		OCULUS_BIND_ENTRY_POINT(GetCameraDeviceDepthConfidencePixels),
 
 		// OVR_Plugin_Media.h
 

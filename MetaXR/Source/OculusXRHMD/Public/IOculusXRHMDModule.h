@@ -6,7 +6,7 @@
 #include "HeadMountedDisplayTypes.h"
 
 // Oculus support is not available on Windows XP
-#define OCULUS_HMD_SUPPORTED_PLATFORMS (PLATFORM_WINDOWS && WINVER > 0x0502)  || (PLATFORM_ANDROID_ARM || PLATFORM_ANDROID_ARM64)
+#define OCULUS_HMD_SUPPORTED_PLATFORMS (PLATFORM_WINDOWS && WINVER > 0x0502) || (PLATFORM_ANDROID_ARM || PLATFORM_ANDROID_ARM64)
 
 //-------------------------------------------------------------------------------------------------
 // IOculusXRHMDModule
@@ -19,7 +19,6 @@
 class IOculusXRHMDModule : public IHeadMountedDisplayModule
 {
 public:
-
 	/**
 	 * Singleton-like access to this module's interface.  This is just for convenience!
 	 * Beware of calling this during the shutdown phase, though.  Your module might have been unloaded already.
@@ -28,7 +27,7 @@ public:
 	 */
 	static inline IOculusXRHMDModule& Get()
 	{
-		return FModuleManager::LoadModuleChecked< IOculusXRHMDModule >("OculusXRHMD");
+		return FModuleManager::LoadModuleChecked<IOculusXRHMDModule>("OculusXRHMD");
 	}
 
 	/**
@@ -70,7 +69,7 @@ public:
 	* @param Profile		(out) Structure to hold current user profile.
 	* @return (boolean)	True, if user profile was acquired.
 	*/
-	virtual bool GetUserProfile(struct FOculusXRHmdUserProfile& Profile)=0;
+	virtual bool GetUserProfile(struct FOculusXRHmdUserProfile& Profile) = 0;
 
 	/**
 	* Sets 'base rotation' - the rotation that will be subtracted from

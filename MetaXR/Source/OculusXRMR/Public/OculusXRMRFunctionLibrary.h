@@ -27,7 +27,7 @@ public:
 	// Get the component that the OculusXRMR camera is tracking. When this is null, the camera will track the player pawn.
 	UFUNCTION(BlueprintCallable, Category = "OculusLibrary|MR")
 	static USceneComponent* GetTrackingReferenceComponent();
- 
+
 	// Set the component for the OculusXRMR camera to track. If this is set to null, the camera will track the player pawn.
 	UFUNCTION(BlueprintCallable, Category = "OculusLibrary|MR")
 	static bool SetTrackingReferenceComponent(USceneComponent* Component);
@@ -49,7 +49,6 @@ public:
 	static bool IsMrcActive();
 
 public:
-
 	static class OculusXRHMD::FOculusXRHMD* GetOculusXRHMD();
 
 	/** Retrieve an array of all (calibrated) tracked cameras which were calibrated through the CameraTool */

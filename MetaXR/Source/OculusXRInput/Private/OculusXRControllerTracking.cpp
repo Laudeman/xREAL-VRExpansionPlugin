@@ -63,4 +63,4 @@ namespace OculusXRInput
 #endif
 		return 0;
 	}
-}
+} // namespace OculusXRInput

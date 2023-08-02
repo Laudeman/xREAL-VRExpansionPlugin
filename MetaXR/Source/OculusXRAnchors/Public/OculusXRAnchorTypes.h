@@ -42,9 +42,10 @@ namespace EOculusXRAnchorResult
 		Failure_SpaceMappingInsufficient = -2001,
 		Failure_SpaceLocalizationFailed = -2002,
 		Failure_SpaceNetworkTimeout = -2003,
-		Failure_SpaceNetworkRequestFailed = -2004
+		Failure_SpaceNetworkRequestFailed = -2004,
+
 	};
-}
+} // namespace EOculusXRAnchorResult
 
 USTRUCT(BlueprintType)
 struct OCULUSXRANCHORS_API FOculusXRUUID
@@ -53,7 +54,7 @@ struct OCULUSXRANCHORS_API FOculusXRUUID
 
 	FOculusXRUUID();
 	FOculusXRUUID(const ovrpXRUuidArray& UuidArray);
-	
+
 	bool operator==(const FOculusXRUUID& Other) const;
 	bool operator!=(const FOculusXRUUID& Other) const;
 
@@ -71,7 +72,7 @@ struct OCULUSXRANCHORS_API FOculusXRUUID
 	uint8 UUIDBytes[OCULUSXR_UUID_SIZE];
 };
 
-template<>
+template <>
 struct TStructOpsTypeTraits<FOculusXRUUID> : public TStructOpsTypeTraitsBase2<FOculusXRUUID>
 {
 	enum
@@ -82,13 +83,14 @@ struct TStructOpsTypeTraits<FOculusXRUUID> : public TStructOpsTypeTraitsBase2<FO
 	};
 };
 
-USTRUCT( BlueprintType )
+USTRUCT(BlueprintType)
 struct OCULUSXRANCHORS_API FOculusXRUInt64
 {
 	GENERATED_BODY()
 
-	FOculusXRUInt64() : FOculusXRUInt64(0) { }
-	FOculusXRUInt64( const uint64& Value ) { this->Value = Value; }
+	FOculusXRUInt64()
+		: FOculusXRUInt64(0) {}
+	FOculusXRUInt64(const uint64& Value) { this->Value = Value; }
 
 	operator uint64() const { return Value; }
 	bool operator==(const FOculusXRUInt64& Right) const;
@@ -96,7 +98,7 @@ struct OCULUSXRANCHORS_API FOculusXRUInt64
 
 	UPROPERTY()
 	uint64 Value;
-	
+
 	bool IsEqual(const FOculusXRUInt64& Other) const
 	{
 		return Other.Value == Value;
@@ -108,11 +110,11 @@ struct OCULUSXRANCHORS_API FOculusXRUInt64
 	}
 
 	uint64 GetValue() const { return Value; };
-	
+
 	void SetValue(const uint64 Val) { Value = Val; };
 };
 
-template<>
+template <>
 struct TStructOpsTypeTraits<FOculusXRUInt64> : public TStructOpsTypeTraitsBase2<FOculusXRUInt64>
 {
 	enum
@@ -124,8 +126,8 @@ struct TStructOpsTypeTraits<FOculusXRUInt64> : public TStructOpsTypeTraitsBase2<
 UENUM(BlueprintType)
 enum class EOculusXRSpaceQueryFilterType : uint8
 {
-	None = 0                  UMETA(DisplayName = "No Filter"),
-	FilterByIds = 1			  UMETA(DisplayName = "Filter queries by UUIDs"),
+	None = 0 UMETA(DisplayName = "No Filter"),
+	FilterByIds = 1 UMETA(DisplayName = "Filter queries by UUIDs"),
 	FilterByComponentType = 2 UMETA(DisplayName = "Filter queries by component type")
 };
 
@@ -133,30 +135,30 @@ enum class EOculusXRSpaceQueryFilterType : uint8
 UENUM(BlueprintType)
 enum class EOculusXRSpaceStorageLocation : uint8
 {
-	Invalid = 0		UMETA(DisplayName = "Invalid"),
-	Local = 1 << 0 	UMETA(DisplayName = "Local"),
-	Cloud = 1 << 1 	UMETA(DisplayName = "Cloud")
+	Invalid = 0 UMETA(DisplayName = "Invalid"),
+	Local = 1 << 0 UMETA(DisplayName = "Local"),
+	Cloud = 1 << 1 UMETA(DisplayName = "Cloud")
 };
 
 UENUM(BlueprintType)
 enum class EOculusXRSpaceStoragePersistenceMode : uint8
 {
-	Invalid = 0		UMETA(Hidden),
-	Indefinite = 1	UMETA(DisplayName = "Indefinite"),
+	Invalid = 0 UMETA(Hidden),
+	Indefinite = 1 UMETA(DisplayName = "Indefinite"),
 };
 
 UENUM(BlueprintType)
 enum class EOculusXRSpaceComponentType : uint8
 {
-	Locatable = 0				UMETA(DisplayName = "Locatable"),
-	Storable = 1				UMETA(DisplayName = "Storable"),
-	Sharable = 2                UMETA(DisplayName = "Sharable"),
-	ScenePlane = 3				UMETA(DisplayName = "ScenePlane"),
-	SceneVolume = 4				UMETA(DisplayName = "SceneVolume"),
-	SemanticClassification = 5	UMETA(DisplayName = "SemanticClassification"),
-	RoomLayout = 6				UMETA(DisplayName = "RoomLayout"),
-	SpaceContainer = 7			UMETA(DisplayName = "SpaceContainer"),
-	Undefined = 8				UMETA(DisplayName = "Not defined"),
+	Locatable = 0 UMETA(DisplayName = "Locatable"),
+	Storable = 1 UMETA(DisplayName = "Storable"),
+	Sharable = 2 UMETA(DisplayName = "Sharable"),
+	ScenePlane = 3 UMETA(DisplayName = "ScenePlane"),
+	SceneVolume = 4 UMETA(DisplayName = "SceneVolume"),
+	SemanticClassification = 5 UMETA(DisplayName = "SemanticClassification"),
+	RoomLayout = 6 UMETA(DisplayName = "RoomLayout"),
+	SpaceContainer = 7 UMETA(DisplayName = "SpaceContainer"),
+	Undefined = 8 UMETA(DisplayName = "Not defined"),
 };
 
 USTRUCT(BlueprintType)
@@ -164,12 +166,10 @@ struct OCULUSXRANCHORS_API FOculusXRSpaceQueryInfo
 {
 	GENERATED_BODY()
 public:
-	FOculusXRSpaceQueryInfo() :
-		MaxQuerySpaces(1024),
-		Timeout(0),
-		Location(EOculusXRSpaceStorageLocation::Local),
-		FilterType(EOculusXRSpaceQueryFilterType::None)
-	{}
+	FOculusXRSpaceQueryInfo()
+		: MaxQuerySpaces(1024), Timeout(0), Location(EOculusXRSpaceStorageLocation::Local), FilterType(EOculusXRSpaceQueryFilterType::None)
+	{
+	}
 
 	UPROPERTY(BlueprintReadWrite, Category = "OculusXR|SpatialAnchor")
 	int MaxQuerySpaces;
@@ -195,8 +195,10 @@ struct OCULUSXRANCHORS_API FOculusXRSpaceQueryResult
 {
 	GENERATED_BODY()
 public:
-	FOculusXRSpaceQueryResult() : Space(0), UUID(), Location(EOculusXRSpaceStorageLocation::Invalid) {}
-	FOculusXRSpaceQueryResult(FOculusXRUInt64 SpaceHandle, FOculusXRUUID ID, EOculusXRSpaceStorageLocation SpaceLocation) : Space(SpaceHandle), UUID(ID), Location(SpaceLocation) {}
+	FOculusXRSpaceQueryResult()
+		: Space(0), UUID(), Location(EOculusXRSpaceStorageLocation::Invalid) {}
+	FOculusXRSpaceQueryResult(FOculusXRUInt64 SpaceHandle, FOculusXRUUID ID, EOculusXRSpaceStorageLocation SpaceLocation)
+		: Space(SpaceHandle), UUID(ID), Location(SpaceLocation) {}
 
 	UPROPERTY(BlueprintReadWrite, Category = "OculusXR|SpatialAnchor")
 	FOculusXRUInt64 Space;
@@ -213,6 +215,6 @@ struct OCULUSXRANCHORS_API FOculusXRSpaceQueryFilterValues
 {
 	GENERATED_BODY()
 public:
-	TArray<FOculusXRUUID> Uuids; // used if filtering by UUIDs
+	TArray<FOculusXRUUID> Uuids;						// used if filtering by UUIDs
 	TArray<EOculusXRSpaceComponentType> ComponentTypes; // used if filtering by component types
 };

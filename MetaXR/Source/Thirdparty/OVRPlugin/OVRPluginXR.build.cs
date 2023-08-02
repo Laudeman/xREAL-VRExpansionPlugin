@@ -6,6 +6,8 @@ public class OVRPluginXR : ModuleRules
 {
 	public OVRPluginXR(ReadOnlyTargetRules Target) : base(Target)
 	{
+
+
 		Type = ModuleType.External;
 
 		string SourceDirectory = "$(PluginDir)/Source/ThirdParty/OVRPlugin/OVRPlugin/";
@@ -14,7 +16,6 @@ public class OVRPluginXR : ModuleRules
 
 		if (Target.Platform == UnrealTargetPlatform.Android)
 		{
-			RuntimeDependencies.Add(SourceDirectory + "Lib/armeabi-v7a/OpenXR/libOVRPlugin.so");
 			RuntimeDependencies.Add(SourceDirectory + "Lib/arm64-v8a/OpenXR/libOVRPlugin.so");
 		}
 	}

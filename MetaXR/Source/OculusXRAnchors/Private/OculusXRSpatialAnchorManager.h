@@ -20,6 +20,6 @@ namespace OculusXRAnchors
 		{
 		}
 
-		static bool CreateSpatialAnchor(const FTransform &InTransform, uint64 &OutRequestId);
-	};	
-}
+		static bool CreateSpatialAnchor(const FTransform& InTransform, uint64& OutRequestId);
+	};
+} // namespace OculusXRAnchors
