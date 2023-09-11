@@ -36,6 +36,10 @@
 		{
 			"Name": "ChaosVehiclesPlugin",
 			"Enabled": true
-		}
+		},
+    {
+      "Name": "OpenXRExpansionPlugin",
+      "Enabled": true
+    }
 	]
 }
