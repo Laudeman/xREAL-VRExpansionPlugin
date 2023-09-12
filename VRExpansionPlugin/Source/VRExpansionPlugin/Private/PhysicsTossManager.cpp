@@ -3,23 +3,45 @@
 #include "PhysicsTossManager.h"
 #include "Kismet/GameplayStatics.h"
 
+UPhysicsTossManager::UPhysicsTossManager(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
+{
+    PrimaryComponentTick.bStartWithTickEnabled = false;
+    PrimaryComponentTick.bCanEverTick = true;
+    DistanceToStartSlowing = 100.0f;
+    MinimumSpeed = 200.0f;
+    CancelDistance = 20.0f;
+}
+
+void UPhysicsTossManager::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    RunThrowing();
+}
+
+void UPhysicsTossManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+    CancelToss();
+}
+
 void UPhysicsTossManager::ServersideToss_Implementation(UPrimitiveComponent* TargetObject, UGripMotionControllerComponent* TargetMotionController)
 {
     if (!ObjectBeingThrown->IsValidLowLevel())
     {
         if (TargetObject->IsValidLowLevel())
         {
-            IVRGripInterface* objectOwnerGripInterface = Cast<IVRGripInterface>(TargetObject->GetOwner());
-            if (objectOwnerGripInterface)
+            //IVRGripInterface* objectOwnerGripInterface = Cast<IVRGripInterface>(TargetObject->GetOwner());
+            if (TargetObject->GetOwner()->Implements<UVRGripInterface>())
             {
-                bool isHeld = nullptr;
+                bool isHeld = false;
                 TArray<FBPGripPair> holdingControllers;
-                objectOwnerGripInterface->IsHeld(holdingControllers, isHeld);
+                IVRGripInterface::Execute_IsHeld(TargetObject->GetOwner(), holdingControllers, isHeld);
                 if (!isHeld)
                 {
                     OwningMotionController = TargetMotionController;
                     ObjectBeingThrown = TargetObject;
-                    TargetObject->OnComponentHit.AddDynamic(this, &UPhysicsTossManager::CancelThrow);
+                    ObjectBeingThrown->OnComponentHit.AddDynamic(this, &UPhysicsTossManager::CancelThrow);
                     ObjectBeingThrown->SetSimulatePhysics(true);
                     RunToss(isHeld);
                     ToggleTick();
@@ -27,16 +49,14 @@ void UPhysicsTossManager::ServersideToss_Implementation(UPrimitiveComponent* Tar
             }
         }
     }
-    ObjectBeingThrown = TargetObject;
-    OwningMotionController = TargetMotionController;
-    ToggleTick();
 }
 
 void UPhysicsTossManager::RunToss_Implementation(bool IsHeld)
 {
     FVector throwVelocity = OwningMotionController->GetPivotLocation() - ObjectBeingThrown->GetComponentLocation();
     float currentDistanceSQ = throwVelocity.SizeSquared();
-    FVector normalVector = throwVelocity.GetSafeNormal(0.0001f);
+    FVector normalVector = throwVelocity;
+    normalVector.Normalize(0.0001f);
 
     if (currentDistanceSQ > FMath::Square(CancelDistance) && !IsHeld)
     {
@@ -56,12 +76,33 @@ void UPhysicsTossManager::RunToss_Implementation(bool IsHeld)
         }
         else
         {
-            CancelToss();
+            CancelThrowing(ObjectBeingThrown);
         }
     }
     else
     {
-        CancelToss();
+        CancelThrowing(ObjectBeingThrown);
+    }
+}
+
+void UPhysicsTossManager::RunThrowing_Implementation()
+{
+    if (ObjectBeingThrown->IsValidLowLevel())
+    {
+        bool isHeld = false;
+        TArray<FBPGripPair> holdingControllers;
+        // Use this if you want to check the owner instead but the blueprint implementation didn't do this.
+        //if (ObjectBeingThrown->GetOwner()->Implements<UVRGripInterface>())
+        if (ObjectBeingThrown->Implements<UVRGripInterface>())
+        {
+            //IVRGripInterface::Execute_IsHeld(ObjectBeingThrown->GetOwner(), holdingControllers, isHeld);
+            IVRGripInterface::Execute_IsHeld(ObjectBeingThrown, holdingControllers, isHeld);
+        }
+        RunToss(isHeld);
+    }
+    else
+    {
+        CancelThrowing(ObjectBeingThrown);
     }
 }
 

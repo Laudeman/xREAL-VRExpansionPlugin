@@ -16,29 +16,38 @@ class VREXPANSIONPLUGIN_API UPhysicsTossManager : public UActorComponent
 
 public:
 
-	UFUNCTION(BlueprintNativeEvent)
+	UPhysicsTossManager(const FObjectInitializer& ObjectInitializer);
+
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void ServersideToss(UPrimitiveComponent* TargetObject, UGripMotionControllerComponent* TargetMotionController);
 
 	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void RunToss(bool IsHeld);
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void RunThrowing();
+
 	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void CancelToss();
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void CancelThrowing(UPrimitiveComponent* ObjectToCancel);
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void CancelThrow(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, BlueprintPure)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, BlueprintPure)
 	void IsThrowing(bool& Throwing);
 
 	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void ToggleTick();
 public:
 	/** Please add a variable description */
