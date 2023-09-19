@@ -18,6 +18,9 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 {
 	GENERATED_BODY()
 	public:
+
+	ATeleportController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Laser")
 	void SetLaserBeamActive(bool LaserBeamActive);
@@ -77,6 +80,9 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent)
 	void FilterGrabspline(UPARAM(ref) TArray<FVector>& Locations, UPARAM(ref) FVector& Target, int32 ClosestIndex, double ClosestDist);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void DisableWidgetActivation();
 protected:
 	/** TODO: Change this back to a private function, had to switch it to protected in order to use it as BlueprintNativeEvent.*/
 	/** Please add a function description */
