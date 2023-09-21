@@ -83,6 +83,13 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 
 	UFUNCTION(BlueprintNativeEvent)
 	void DisableWidgetActivation();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void RumbleController(float Intensity);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void TossToHand();
+
 protected:
 	/** TODO: Change this back to a private function, had to switch it to protected in order to use it as BlueprintNativeEvent.*/
 	/** Please add a function description */
@@ -92,6 +99,10 @@ public:
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	double TeleportLaunchVelocity;
+
+	// Haptic feedback to play when teleportation is activated
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
+	TObjectPtr<UHapticFeedbackEffect_Base> TeleportHapticEffect;
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")

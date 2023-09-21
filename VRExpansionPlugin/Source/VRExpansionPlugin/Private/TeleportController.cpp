@@ -4,6 +4,8 @@
 #include "TeleportController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "VRExpansionFunctionLibrary.h"
+#include "DrawDebugHelpers.h"
 #include "NavigationSystem.h"
 
 ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitializer)
@@ -253,9 +255,9 @@ void ATeleportController::CreateLaserSpline_Implementation()
 {
     if (bUseSmoothLaser)
     {
-        for (int i = 0; i < NumberOfLaserSplinePoints - 1; i++)
+        for (int i = 0; i < NumberOfLaserSplinePoints; i++)
         {
-            // Might need to specify the actual spline mesh to use, maybe a variable that is set in the blueprint?
+           // TODO: specify the actual spline mesh to use, maybe a variable that is set in the blueprint?
            USplineMeshComponent* smc = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass()); 
            smc->AttachToComponent(Scene, FAttachmentTransformRules::KeepRelativeTransform);
            smc->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -267,11 +269,94 @@ void ATeleportController::CreateLaserSpline_Implementation()
 
 void ATeleportController::FilterGrabspline_Implementation(UPARAM(ref) TArray<FVector> &Locations, UPARAM(ref) FVector &Target, int32 ClosestIndex, double ClosestDist)
 {
-    
+    if (Locations.Num() > 1)
+    {
+        for (int i = 0; i < Locations.Num(); i++)
+        {
+            float distance = (Locations[i] - Target).SquaredLength();
+            if (distance < ClosestDist || ClosestDist == 0.0f)
+            {
+                ClosestDist = distance;
+                ClosestIndex = i;
+            }
+        }
+
+        for (int i = Locations.Num() - 1; i >= 0; i--)
+        {
+            if (i > ClosestIndex)
+            {
+                Locations.RemoveAt(i);
+            }
+        }
+
+        Locations[ClosestIndex] = Target;
+
+    }
 }
 
 void ATeleportController::UpdateLaserBeam_Implementation(double Deltatime, FVector SmoothedLoc, EDrawDebugTrace::Type DrawType)
 {
+    if (IsLaserBeamActive)
+    {
+        LaserHighlightingObject = nullptr;
+        WidgetInteraction->InteractionDistance = LaserBeamMaxDistance;
+        FVector teleWorldLoc;
+        FVector teleForwardVector;
+        GetTeleWorldLocAndForwardVector(teleWorldLoc, teleForwardVector);
+        FVector laserStart = teleWorldLoc;
+        FVector laserEnd = teleWorldLoc + (teleForwardVector * LaserBeamMaxDistance);
+        FCollisionQueryParams collisionParams;
+        collisionParams.AddIgnoredActors(TArray<AActor*>({this, OwningMotionController->GetOwner()}));
+        bool successfulCollision = GetWorld()->LineTraceSingleByChannel(LastLaserHitResult, laserStart, laserEnd, ECC_Visibility, collisionParams, FCollisionResponseParams::DefaultResponseParam);
+
+        // Smooth Laser Beam
+        if (bUseSmoothLaser)
+        {
+            // Might need to recalculate the TeleWorldLocAndForwardVector here
+            FVector smoothedValue = EuroLowPassFilter.RunFilterSmoothing(teleWorldLoc + (LastLaserHitResult.Time * LaserBeamMaxDistance * teleForwardVector), Deltatime);
+            UVRExpansionFunctionLibrary::SmoothUpdateLaserSpline(LaserSpline, LaserSplineMeshes, teleWorldLoc, smoothedValue, teleForwardVector, LaserBeamRadius);
+            FHitResult hitResult;
+            FVector smoothLineTraceEnd = smoothedValue + ((smoothedValue - teleWorldLoc).Normalize() * 100.0f);
+            FCollisionQueryParams smoothCollisionParams;
+            smoothCollisionParams.AddIgnoredActors(TArray<AActor*>({this, OwningMotionController->GetOwner()}));
+
+            if (DrawSmoothLaserTrace)
+            {
+                DrawDebugLine(GetWorld(), teleWorldLoc, smoothLineTraceEnd, FColor::Red, false, .01f, 0, 1.0f);
+            }
+
+            if (GetWorld()->LineTraceSingleByChannel(hitResult, teleWorldLoc, smoothLineTraceEnd, ECollisionChannel::ECC_Visibility, smoothCollisionParams, FCollisionResponseParams::DefaultResponseParam))
+            {
+                LastLaserHitResult = hitResult;
+                WidgetInteraction->SetCustomHitResult(LastLaserHitResult);
+                LaserHighlightingObject = hitResult.GetComponent();
+            }
+
+            else
+            {
+                WidgetInteraction->SetCustomHitResult(hitResult);
+            }
+
+        }
+
+        // Normal Laser Beam
+        else
+        {
+            FVector scale = FVector(LastLaserHitResult.Time * LaserBeamMaxDistance, 1.0f, 1.0f);
+            LaserBeam->SetWorldScale3D(scale);
+            if (successfulCollision)
+            {
+                WidgetInteraction->SetCustomHitResult(LastLaserHitResult);
+                LaserBeamEndPoint->SetRelativeLocation(FVector(LastLaserHitResult.Time * LaserBeamMaxDistance, 0.0f, 0.0f));
+                LaserBeamEndPoint->SetHiddenInGame(false);
+            }
+            else
+            {
+                LaserBeamEndPoint->SetHiddenInGame(true);
+            }
+        }
+
+    }
 }
 
 void ATeleportController::DisableWidgetActivation_Implementation()
@@ -279,4 +364,19 @@ void ATeleportController::DisableWidgetActivation_Implementation()
     WidgetInteraction->SetCustomHitResult(FHitResult());
     // There was a delay here in the blueprint, could cause problems?
     WidgetInteraction->Deactivate();
+}
+
+void ATeleportController::RumbleController_Implementation(float Intensity)
+{
+    if (OwningMotionController->IsValidLowLevel())
+    {
+        EControllerHand hand;
+        OwningMotionController->GetHandType(hand);
+        GetWorld()->GetFirstPlayerController()->PlayHapticEffect(TeleportHapticEffect, hand, Intensity);
+    }
+}
+
+void ATeleportController::TossToHand_Implementation()
+{
+
 }
