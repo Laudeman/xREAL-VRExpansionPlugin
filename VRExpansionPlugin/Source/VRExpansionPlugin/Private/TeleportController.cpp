@@ -6,6 +6,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "VRExpansionFunctionLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "xREAL_VRCharacter.h"
 #include "NavigationSystem.h"
 
 ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitializer)
@@ -376,7 +377,47 @@ void ATeleportController::RumbleController_Implementation(float Intensity)
     }
 }
 
+ void ATeleportController::StartedUseHeldObjectLeft_Implementation()
+ {
+    EControllerHand hand;
+    OwningMotionController->GetHandType(hand);
+    if (hand == EControllerHand::Left)
+    {
+        TossToHand();
+    }
+ }
+
+ void ATeleportController::StartedUseHeldObjectRight_Implementation()
+ {
+    EControllerHand hand;
+    OwningMotionController->GetHandType(hand);
+    if (!(hand == EControllerHand::Left))
+    {
+        TossToHand();
+    }
+ }
+
+
 void ATeleportController::TossToHand_Implementation()
 {
+    if (IsLaserBeamActive)
+    {
+        //UseHeldObjectDispatch.Broadcast(LaserHighlightingObject, );
 
+        bool isThrowing, isOverWidget;
+        PhysicsTossManager->IsThrowing(isThrowing);
+        isOverWidget = WidgetInteraction->IsOverInteractableWidget() || WidgetInteraction->IsOverFocusableWidget();
+
+        if (!isThrowing && !isOverWidget && LaserHighlightingObject->IsValidLowLevel())
+        {
+            AxREAL_VRCharacter* vrCharacter = Cast<AxREAL_VRCharacter>(OwningMotionController->GetOwner());
+            if (vrCharacter->IsValidLowLevel())
+            {
+                EControllerHand hand;
+                OwningMotionController->GetHandType(hand);
+                //TODO: Implement the following function in the AxREAL_VRCharacter class
+                //vrCharacter->NotifyServerOfTossRequest(hand == EControllerHand::Left, LaserHighlightingObject);
+            }
+        }
+    }
 }

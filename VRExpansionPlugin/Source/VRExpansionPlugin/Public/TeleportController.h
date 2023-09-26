@@ -10,8 +10,8 @@
 #include "Components/WidgetInteractionComponent.h"
 #include "Enums/EGripState.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Haptics/HapticFeedbackEffect_Base.h"
 #include "TeleportController.generated.h"
-
 
 UCLASS(Blueprintable, BlueprintType)
 class VREXPANSIONPLUGIN_API ATeleportController : public AActor
@@ -88,7 +88,14 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 	void RumbleController(float Intensity);
 
 	UFUNCTION(BlueprintNativeEvent)
+	void StartedUseHeldObjectLeft();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void StartedUseHeldObjectRight();
+
+	UFUNCTION(BlueprintNativeEvent)
 	void TossToHand();
+
 
 protected:
 	/** TODO: Change this back to a private function, had to switch it to protected in order to use it as BlueprintNativeEvent.*/
