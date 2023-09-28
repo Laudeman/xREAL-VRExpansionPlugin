@@ -21,6 +21,8 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 
 	ATeleportController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	virtual void BeginPlay() override;
+
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Laser")
 	void SetLaserBeamActive(bool LaserBeamActive);

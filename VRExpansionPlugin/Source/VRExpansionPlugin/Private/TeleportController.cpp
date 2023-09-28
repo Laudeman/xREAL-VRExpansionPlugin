@@ -17,6 +17,23 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
     bNetLoadOnClient = false;
 }
 
+void ATeleportController::BeginPlay()
+{
+    Super::BeginPlay();
+    APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+    if (playerController->IsValidLowLevel())
+    {
+        playerController->InputComponent->BindAction("TeleportLeft", IE_Pressed, this, &ATeleportController::ActivateTeleporter);
+        playerController->InputComponent->BindAction("TeleportLeft", IE_Released, this, &ATeleportController::DisableTeleporter);
+        playerController->InputComponent->BindAction("TeleportRight", IE_Pressed, this, &ATeleportController::ActivateTeleporter);
+        playerController->InputComponent->BindAction("TeleportRight", IE_Released, this, &ATeleportController::DisableTeleporter);
+        playerController->InputComponent->BindAction("UseHeldObjectLeft", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectLeft);
+        playerController->InputComponent->BindAction("UseHeldObjectRight", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectRight);
+
+    }
+}
+
 void ATeleportController::SetLaserBeamActive_Implementation(bool LaserBeamActive)
 {
     if (LaserBeamActive != IsLaserBeamActive)
