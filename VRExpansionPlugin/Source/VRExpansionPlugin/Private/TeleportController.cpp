@@ -20,7 +20,29 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
 void ATeleportController::BeginPlay()
 {
     Super::BeginPlay();
+
     APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+    TeleportCylinder->SetVisibility(false, true);
+
+    if (OwningMotionController->IsValidLowLevel())
+    {
+        LaserSpline->AttachToComponent(OwningMotionController, FAttachmentTransformRules::FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
+        LaserBeam->AttachToComponent(OwningMotionController, FAttachmentTransformRules::FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
+        LaserBeamEndPoint->AttachToComponent(OwningMotionController, FAttachmentTransformRules::FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
+        LaserBeamEndPoint->SetRelativeScale3D(FVector(.2f, .2f, .2f));
+
+        if (OwningMotionController->IsLocallyControlled())
+        {
+            EnableInput(playerController);
+            AVRCharacter* vrCharacter = Cast<AVRCharacter>(OwningMotionController->GetOwner());
+            if (vrCharacter)
+            {
+                vrCharacter->OnCharacterTeleported_Bind.AddDynamic(this, &ATeleportController::CancelTracking);
+                SetOwner(vrCharacter);
+            }
+        }
+    }
 
     if (playerController->IsValidLowLevel())
     {
@@ -32,6 +54,14 @@ void ATeleportController::BeginPlay()
         playerController->InputComponent->BindAction("UseHeldObjectRight", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectRight);
 
     }
+}
+
+void ATeleportController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    Super::EndPlay(EndPlayReason);
+    ClearArc();
+    ClearLaserBeam();
+    DisableWidgetActivation();
 }
 
 void ATeleportController::SetLaserBeamActive_Implementation(bool LaserBeamActive)
@@ -437,4 +467,9 @@ void ATeleportController::TossToHand_Implementation()
             }
         }
     }
+}
+
+void ATeleportController::CancelTracking_Implementation()
+{
+    PhysicsTossManager->CancelToss();
 }

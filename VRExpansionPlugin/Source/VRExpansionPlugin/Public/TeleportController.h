@@ -23,6 +23,10 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Laser")
 	void SetLaserBeamActive(bool LaserBeamActive);
@@ -97,6 +101,9 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 
 	UFUNCTION(BlueprintNativeEvent)
 	void TossToHand();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void CancelTracking();
 
 
 protected:
