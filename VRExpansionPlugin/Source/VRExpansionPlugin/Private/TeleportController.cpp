@@ -27,9 +27,9 @@ void ATeleportController::BeginPlay()
 
     if (OwningMotionController->IsValidLowLevel())
     {
-        LaserSpline->AttachToComponent(OwningMotionController, FAttachmentTransformRules::FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
-        LaserBeam->AttachToComponent(OwningMotionController, FAttachmentTransformRules::FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
-        LaserBeamEndPoint->AttachToComponent(OwningMotionController, FAttachmentTransformRules::FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
+        LaserSpline->AttachToComponent(OwningMotionController, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
+        LaserBeam->AttachToComponent(OwningMotionController, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
+        LaserBeamEndPoint->AttachToComponent(OwningMotionController, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
         LaserBeamEndPoint->SetRelativeScale3D(FVector(.2f, .2f, .2f));
 
         if (OwningMotionController->IsLocallyControlled())
@@ -54,6 +54,11 @@ void ATeleportController::BeginPlay()
         playerController->InputComponent->BindAction("UseHeldObjectRight", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectRight);
 
     }
+}
+
+void ATeleportController::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
 }
 
 void ATeleportController::EndPlay(const EEndPlayReason::Type EndPlayReason)
