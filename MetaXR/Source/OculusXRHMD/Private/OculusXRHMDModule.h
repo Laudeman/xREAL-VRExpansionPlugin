@@ -91,7 +91,7 @@ public:
 
 #if OCULUS_HMD_SUPPORTED_PLATFORMS
 	OCULUSXRHMD_API static void* GetOVRPluginHandle();
-	OCULUSXRHMD_API static inline OculusPluginWrapper& GetPluginWrapper() { return PluginWrapper; }
+	OCULUSXRHMD_API static OculusPluginWrapper& GetPluginWrapper();
 	virtual bool PoseToOrientationAndPosition(const FQuat& InOrientation, const FVector& InPosition, FQuat& OutOrientation, FVector& OutPosition) const override;
 
 protected:

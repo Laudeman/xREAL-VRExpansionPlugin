@@ -9,12 +9,14 @@ namespace UnrealBuildTool.Rules
 	{
 		public OculusXROpenXRHMD(ReadOnlyTargetRules Target) : base(Target)
 		{
+			bUseUnity = true;
+
 			var EngineDir = Path.GetFullPath(Target.RelativeEnginePath);
 
 			PublicIncludePaths.AddRange(
 				new string[] {
-                    // Relative to Engine\Plugins\OculusXR\Source\OculusOpenXR\Source
-                    Path.Combine(EngineDir, "Plugins/Runtime/OpenXR/Source/OpenXRHMD/Private"),
+					// Relative to Engine\Plugins\OculusXR\Source\OculusOpenXR\Source
+					Path.Combine(EngineDir, "Plugins/Runtime/OpenXR/Source/OpenXRHMD/Private"),
 					Path.Combine(EngineDir, "Source/Runtime/Renderer/Private"),
 					Path.Combine(EngineDir, "Source/Runtime/OpenGLDrv/Private"),
 					Path.Combine(EngineDir, "Source/Runtime/Engine/Classes/Components"),

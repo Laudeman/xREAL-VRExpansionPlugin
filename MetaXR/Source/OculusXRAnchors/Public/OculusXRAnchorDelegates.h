@@ -124,4 +124,5 @@ public:
 	 */
 	DECLARE_MULTICAST_DELEGATE_TwoParams(FOculusXRSceneCaptureCompleteDelegate, FOculusXRUInt64 /*requestId*/, bool /*success*/);
 	static OCULUSXRANCHORS_API FOculusXRSceneCaptureCompleteDelegate OculusSceneCaptureComplete;
+
 };

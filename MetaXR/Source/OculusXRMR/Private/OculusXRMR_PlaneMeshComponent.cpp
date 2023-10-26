@@ -16,6 +16,9 @@
 #include "Engine/Engine.h"
 #include "MaterialShared.h"
 #include "Launch/Resources/Version.h"
+#include "SceneInterface.h"
+#include "TextureResource.h"
+
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 2) || ENGINE_MAJOR_VERSION > 5
 #include "MaterialDomain.h"
 #include "Materials/MaterialRenderProxy.h"
@@ -70,7 +73,7 @@ public:
 
 		// Grab material
 		Material = Component->GetMaterial(0);
-		if (Material == NULL)
+		if (Material == nullptr)
 		{
 			Material = UMaterial::GetDefaultMaterial(MD_Surface);
 		}
@@ -95,7 +98,7 @@ public:
 		{
 			const bool bWireframe = AllowDebugViewmodes() && ViewFamily.EngineShowFlags.Wireframe;
 
-			FMaterialRenderProxy* MaterialProxy = NULL;
+			FMaterialRenderProxy* MaterialProxy = nullptr;
 			if (bWireframe)
 			{
 				auto WireframeMaterialInstance = new FColoredMaterialRenderProxy(
@@ -247,7 +250,7 @@ void UOculusXRMR_PlaneMeshComponent::Place(const FVector& Center, const FVector&
 
 FPrimitiveSceneProxy* UOculusXRMR_PlaneMeshComponent::CreateSceneProxy()
 {
-	FPrimitiveSceneProxy* Proxy = NULL;
+	FPrimitiveSceneProxy* Proxy = nullptr;
 	if (CustomMeshTris.Num() > 0)
 	{
 		Proxy = new FOculusXRMR_PlaneMeshSceneProxy(this, PlaneRenderTarget);

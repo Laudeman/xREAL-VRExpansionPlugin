@@ -61,7 +61,7 @@ TSharedPtr<IInputDevice> FOculusXRInputModule::GetInputDevice() const
 	{
 		return OculusXRInputDevice.Pin();
 	}
-	return NULL;
+	return nullptr;
 }
 
 #endif // OCULUS_INPUT_SUPPORTED_PLATFORMS

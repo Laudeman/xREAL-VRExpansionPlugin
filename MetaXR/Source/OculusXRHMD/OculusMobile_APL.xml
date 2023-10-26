@@ -36,7 +36,7 @@
 		<setBoolFromPropertyContains result="bSupportMetaQuest" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="SupportedDevices" contains="Quest"/>
 		<setBoolFromPropertyContains result="bSupportMetaQuest2" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="SupportedDevices" contains="Quest2"/>
 		<setBoolFromPropertyContains result="bSupportMetaQuestPro" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="SupportedDevices" contains="QuestPro"/>
-		
+		<setBoolFromPropertyContains result="bSupportMetaQuest3" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="SupportedDevices" contains="Quest3"/>
 
 		<setBoolFromProperty result="bShowLaunchImage" ini="Engine" section="/Script/AndroidRuntimeSettings.AndroidRuntimeSettings" property="bShowLaunchImage" default="false"/>
 		<setBoolFromProperty result="bRequiresSystemKeyboard" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="bRequiresSystemKeyboard" default="false"/>
@@ -57,8 +57,11 @@
 		<setBoolIsEqual result="bColorSpaceAdobeRGB" arg1="$S(ColorSpace)" arg2="Adobe_RGB"/>
 		<setBoolFromProperty result="bInsightPassthroughEnabled" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="bInsightPassthroughEnabled" default="false"/>
 		<setBoolFromProperty result="bAnchorSupportEnabled" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="bAnchorSupportEnabled" default="false"/>
+		<setBoolFromProperty result="bAnchorSharingEnabled" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="bAnchorSharingEnabled" default="false"/>
 		<setBoolFromProperty result="bSceneSupportEnabled" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="bSceneSupportEnabled" default="false"/>
 		<setBoolFromProperty result="bSupportEyeTrackedFoveatedRendering" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="bSupportEyeTrackedFoveatedRendering" default="false"/>
+		<setStringFromProperty result="ProcessorFavor" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="ProcessorFavor" default="FavorEqually"/>
+		<setBoolIsEqual result="bProcessorFavorEqually" arg1="$S(ProcessorFavor)" arg2="FavorEqually"/>
 
 		<!-- check for experimental feature support from config -->
 		<setBoolFromProperty result="bSupportExperimentalFeatures" ini="Engine" section="/Script/OculusXRHMD.OculusXRHMDRuntimeSettings" property="bSupportExperimentalFeatures" default="false"/>
@@ -227,9 +230,12 @@
 				<if condition="bAnchorSupportEnabled">
 					<true>
 						<addPermission android:name="com.oculus.permission.USE_ANCHOR_API"/>
-						<addPermission android:name="com.oculus.permission.ACCESS_TRACKING_ENV"/>
+					</true>
+				</if>
+				<!-- Add Flag for Shared Anchors -->
+				<if condition="bAnchorSharingEnabled">
+					<true>
 						<addPermission android:name="com.oculus.permission.IMPORT_EXPORT_IOT_MAP_DATA"/>
-						<addPermission android:name="android.permission.INTERACT_ACROSS_USERS"/>
 					</true>
 				</if>
 				<!-- Add Flags for Scene-->
@@ -294,7 +300,11 @@
 					<setStringAdd result="devicesString" arg1="$S(devicesString)" arg2="cambria|"/>
 				</true>
 			</if>
-			
+			<if condition="bSupportMetaQuest3">
+				<true>
+					<setStringAdd result="devicesString" arg1="$S(devicesString)" arg2="eureka|"/>
+				</true>
+			</if>
 			<setIntLength result="devicesStringLength" source="$S(devicesString)"/>
 			<setBoolIsGreater result="bDevicesSupported" arg1="$I(devicesStringLength)" arg2="0"/>
 			<if condition="bDevicesSupported">
@@ -406,6 +416,27 @@
 					</if>
 					<addElement tag="application" name="oculusSplashColorspace"/>
 				</true>
+			</if>
+
+			<!-- Add tradeCpuForGpuAmount Amount -->
+			<if condition="bProcessorFavorEqually">
+				<false>
+					<setBoolIsEqual result="bFavorGPU" arg1="$S(ProcessorFavor)" arg2="FavorGPU"/>
+					<setBoolIsEqual result="bFavorCPU" arg1="$S(ProcessorFavor)" arg2="FavorCPU"/>
+					<setElement result="tradeCpuForGpuAmount" value="meta-data"/>
+					<addAttribute tag="$tradeCpuForGpuAmount" name="android:name" value="com.oculus.trade_cpu_for_gpu_amount"/>
+					<if condition="bFavorGPU">
+						<true>
+							<addAttribute tag="$tradeCpuForGpuAmount" name="android:value" value="1"/>
+						</true>
+					</if>
+					<if condition="bFavorCPU">
+						<true>
+							<addAttribute tag="$tradeCpuForGpuAmount" name="android:value" value="-1"/>
+						</true>
+					</if>
+					<addElement tag="application" name="tradeCpuForGpuAmount"/>
+				</false>
 			</if>
 		</loopElements>
 

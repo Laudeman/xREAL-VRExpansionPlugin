@@ -52,7 +52,7 @@ namespace
 			ovrpNode deviceNode = ToOvrpNode(TrackedCamera.AttachedTrackedDevice);
 			ovrpBool nodePresent = ovrpBool_False;
 			result = FOculusXRHMDModule::GetPluginWrapper().GetNodePresent2(deviceNode, &nodePresent);
-			if (!OVRP_SUCCESS(result))
+			if (OVRP_FAILURE(result))
 			{
 				UE_LOG(LogMR, Warning, TEXT("Unable to check if AttachedTrackedDevice is present"));
 				return false;
@@ -74,7 +74,7 @@ namespace
 			}
 
 			result = CurrentFrame ? FOculusXRHMDModule::GetPluginWrapper().GetNodePoseState3(ovrpStep_Render, CurrentFrame->FrameNumber, deviceNode, &cameraPoseState) : ovrpFailure;
-			if (!OVRP_SUCCESS(result))
+			if (OVRP_FAILURE(result))
 			{
 				UE_LOG(LogMR, Warning, TEXT("Unable to retrieve AttachedTrackedDevice pose state"));
 				return false;
@@ -109,7 +109,7 @@ AOculusXRMR_CastingCameraActor::AOculusXRMR_CastingCameraActor(const FObjectInit
 	PlaneMeshComponent->SetVisibility(false);
 #endif
 
-	OpaqueColoredMaterial = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), NULL, TEXT("/OculusXR/Materials/OculusMR_OpaqueColoredMaterial")));
+	OpaqueColoredMaterial = Cast<UMaterial>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/OculusXR/Materials/OculusMR_OpaqueColoredMaterial")));
 	if (!OpaqueColoredMaterial)
 	{
 		UE_LOG(LogMR, Warning, TEXT("Invalid OpaqueColoredMaterial"));

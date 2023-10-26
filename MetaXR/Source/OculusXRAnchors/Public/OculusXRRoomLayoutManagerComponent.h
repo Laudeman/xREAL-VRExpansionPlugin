@@ -56,6 +56,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OculusXR|Room Layout Manager")
 	bool GetRoomLayout(FOculusXRUInt64 Space, UPARAM(ref) FOculusXRRoomLayout& RoomLayoutOut, int32 MaxWallsCapacity = 64);
 
+	// Loads mesh data (vertices, indeces) associated with the space into UProceduralMeshComponent
+	UFUNCTION(BlueprintCallable, Category = "OculusXR|Room Layout Manager")
+	bool LoadTriangleMesh(FOculusXRUInt64 Space, class UProceduralMeshComponent* Mesh, bool CreateCollision) const;
 
 protected:
 	UPROPERTY(Transient)

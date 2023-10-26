@@ -297,7 +297,23 @@ class OCULUSXRHMD_API UOculusXRFunctionLibrary : public UBlueprintFunctionLibrar
 	UFUNCTION(BlueprintCallable, Category = "OculusLibrary")
 	static bool IsColorPassthroughSupported();
 
+	UFUNCTION(BlueprintCallable, Category = "OculusLibrary")
+	static void StartEnvironmentDepth(bool RemoveHands);
 
+	UFUNCTION(BlueprintCallable, Category = "OculusLibrary")
+	static void StopEnvironmentDepth();
+
+	/**
+	* Sets the occlusions mode using environment depth.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OculusLibrary", meta = (WorldContext = "WorldContextObject"))
+	static void SetXROcclusionsMode(UObject* WorldContextObject, EOculusXROcclusionsMode Mode);
+
+	/**
+	* Sets the eyebuffer sharpen type. This amplifies contrast and fine details.
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OculusLibrary")
+	static void SetEyeBufferSharpenType(EOculusXREyeBufferSharpenType EyeBufferSharpenType);
 
 	/**
 	 * Get a system recommendation on whether Passthrough should be active.

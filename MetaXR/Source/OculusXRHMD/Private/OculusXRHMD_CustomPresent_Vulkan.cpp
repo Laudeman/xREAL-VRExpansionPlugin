@@ -32,6 +32,9 @@ namespace OculusXRHMD
 		virtual void* GetOvrpDevice() const override;
 		virtual void* GetOvrpCommandQueue() const override;
 		virtual FTextureRHIRef CreateTexture_RenderThread(uint32 InSizeX, uint32 InSizeY, EPixelFormat InFormat, FClearValueBinding InBinding, uint32 InNumMips, uint32 InNumSamples, uint32 InNumSamplesTileMem, ERHIResourceType InResourceType, ovrpTextureHandle InTexture, ETextureCreateFlags InTexCreateFlags) override;
+		// This is a hack to turn force FSR off when we allocate our FDM to avoid a crash on Quest 3
+		// TODO: Remove this for UE 5.3 after there's an engine-side fix
+		virtual void UseFragmentDensityMapOverShadingRate_RHIThread() override;
 #ifdef WITH_OCULUS_BRANCH
 		virtual void UpdateFoveationOffsets_RHIThread(bool bUseTileOffsets, FIntPoint TileOffsets[2]) override;
 #endif // WITH_OCULUS_BRANCH
@@ -126,6 +129,17 @@ namespace OculusXRHMD
 			default:
 				return nullptr;
 		}
+	}
+
+	// This is a hack to turn force FSR off when we allocate our FDM to avoid a crash on Quest 3
+	// TODO: Remove this for UE 5.3 after there's an engine-side fix
+	void FVulkanCustomPresent::UseFragmentDensityMapOverShadingRate_RHIThread()
+	{
+		CheckInRHIThread();
+		SCOPED_NAMED_EVENT(UseFragmentDensityMapOverShadingRate_RHIThread, FColor::Red);
+
+		GRHIVariableRateShadingImageDataType = VRSImage_Fractional;
+		GRHIVariableRateShadingImageFormat = PF_R8G8;
 	}
 
 #ifdef WITH_OCULUS_BRANCH

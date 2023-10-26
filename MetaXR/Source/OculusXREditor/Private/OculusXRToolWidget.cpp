@@ -70,7 +70,7 @@ TSharedRef<SHorizontalBox> SOculusToolWidget::CreateSimpleSetting(SimpleSetting*
 EVisibility SOculusToolWidget::IsVisible(FName tag) const
 {
 	const SimpleSetting* setting = SimpleSettings.Find(tag);
-	checkf(setting != NULL, TEXT("Failed to find tag %s."), *tag.ToString());
+	checkf(setting != nullptr, TEXT("Failed to find tag %s."), *tag.ToString());
 	if (SettingIgnored(setting->tag))
 		return EVisibility::Collapsed;
 	UOculusXREditorSettings* EditorSettings = GetMutableDefault<UOculusXREditorSettings>();
@@ -105,7 +105,7 @@ bool SOculusToolWidget::SettingIgnored(FName settingKey) const
 {
 	UOculusXREditorSettings* EditorSettings = GetMutableDefault<UOculusXREditorSettings>();
 	bool* ignoreSetting = EditorSettings->PerfToolIgnoreList.Find(settingKey);
-	return (ignoreSetting != NULL && *ignoreSetting == true);
+	return (ignoreSetting != nullptr && *ignoreSetting == true);
 }
 
 TSharedRef<SVerticalBox> SOculusToolWidget::NewCategory(TSharedRef<SScrollBox> scroller, FText heading)
@@ -260,7 +260,7 @@ void SOculusToolWidget::RebuildLayout()
 	for (TObjectIterator<ULightComponentBase> LightItr; LightItr; ++LightItr)
 	{
 		AActor* owner = LightItr->GetOwner();
-		if (owner != NULL && (owner->IsRootComponentStationary() || owner->IsRootComponentMovable()) && !owner->IsHiddenEd() && LightItr->IsVisible() && owner->IsEditable() && owner->IsSelectable() && LightItr->GetWorld() == GEditor->GetEditorWorldContext().World())
+		if (owner != nullptr && (owner->IsRootComponentStationary() || owner->IsRootComponentMovable()) && !owner->IsHiddenEd() && LightItr->IsVisible() && owner->IsEditable() && owner->IsSelectable() && LightItr->GetWorld() == GEditor->GetEditorWorldContext().World())
 		{
 			// GetFullGroupName() must be used as the key as GetName() is not unique
 			FString lightIgnoreKey = "IgnoreLight_" + LightItr->GetFullGroupName(false);
@@ -275,7 +275,7 @@ void SOculusToolWidget::RebuildLayout()
 	{
 		box = NewCategory(scroller, LOCTEXT("DynamicLightsHeader", "<RichTextBlock.Bold>Dynamic Lights:</>\nThe following lights are not static. They will use dynamic lighting instead of lightmaps, and will be much more expensive on the GPU. (Most of the cost will show up in the GPU profiler as ShadowDepths and ShadowProjectonOnOpaque.) In some cases they will also give superior results. This is a fidelity-performance tradeoff. <a href=\"https://docs.unrealengine.com/en-us/Engine/Rendering/LightingAndShadows/LightMobility\" id=\"HyperlinkDecorator\">Read more.</>\nFixes: select the light and change its mobility to stationary to pre-compute its lighting. You will need to rebuild lightmaps. Alternatively, you can disable Cast Shadows."));
 
-		for (auto it = DynamicLights.CreateIterator(); it; ++it)
+		for (TPair<FString, TWeakObjectPtr<ULightComponentBase>>& Kvp : DynamicLights)
 		{
 			/* clang-format off */
 			box.Get().AddSlot().Padding(5, 5).AutoHeight()
@@ -284,19 +284,19 @@ void SOculusToolWidget::RebuildLayout()
 				+ SHorizontalBox::Slot().FillWidth(5).VAlign(VAlign_Center)
 				[
 					SNew(STextBlock)
-					.Text(FText::FromString(it->Key))
+					.Text(FText::FromString(Kvp.Key))
 				]
 				+ SHorizontalBox::Slot().AutoWidth()
 				[
 					SNew(SButton)
 					.Text(LOCTEXT("SelectLight", "Select Light"))
-					.OnClicked(this, &SOculusToolWidget::SelectLight, it->Key)
+					.OnClicked(this, &SOculusToolWidget::SelectLight, Kvp.Key)
 				]
 				+ SHorizontalBox::Slot().AutoWidth()
 				[
 					SNew(SButton)
 					.Text(LOCTEXT("IgnoreLight", "Ignore Light"))
-					.OnClicked(this, &SOculusToolWidget::IgnoreLight, it->Key)
+					.OnClicked(this, &SOculusToolWidget::IgnoreLight, Kvp.Key)
 				]
 			];
 			/* clang-format on */
@@ -354,7 +354,7 @@ void SOculusToolWidget::Construct(const FArguments& InArgs)
 		Platforms.Add(MakeShareable(new FString(PlatformEnum->GetDisplayNameTextByIndex((int64)i).ToString())));
 	}
 
-	PostProcessVolume = NULL;
+	PostProcessVolume = nullptr;
 	for (TActorIterator<APostProcessVolume> ActorItr(GEditor->GetEditorWorldContext().World()); ActorItr; ++ActorItr)
 	{
 		PostProcessVolume = *ActorItr;
@@ -555,9 +555,9 @@ void SOculusToolWidget::OnBrowserLinkClicked(const FSlateHyperlinkRun::FMetadata
 {
 	const FString* url = Metadata.Find(TEXT("href"));
 
-	if (url != NULL)
+	if (url != nullptr)
 	{
-		FPlatformProcess::LaunchURL(**url, NULL, NULL);
+		FPlatformProcess::LaunchURL(**url, nullptr, nullptr);
 	}
 }
 
@@ -858,7 +858,7 @@ EVisibility SOculusToolWidget::MobileShaderStaticAndCSMShadowReceiversVisibility
 	for (const auto& kvp : DynamicLights)
 	{
 		AActor* owner = kvp.Value->GetOwner();
-		if (owner != NULL && owner->IsRootComponentStationary())
+		if (owner != nullptr && owner->IsRootComponentStationary())
 		{
 			return EVisibility::Collapsed;
 		}
@@ -887,7 +887,7 @@ EVisibility SOculusToolWidget::MobileShaderAllowDistanceFieldShadowsVisibility(F
 	for (const auto& kvp : DynamicLights)
 	{
 		AActor* owner = kvp.Value->GetOwner();
-		if (owner != NULL && owner->IsRootComponentStationary())
+		if (owner != nullptr && owner->IsRootComponentStationary())
 		{
 			return EVisibility::Collapsed;
 		}
@@ -916,7 +916,7 @@ EVisibility SOculusToolWidget::MobileShaderAllowMovableDirectionalLightsVisibili
 	for (const auto& kvp : DynamicLights)
 	{
 		AActor* owner = kvp.Value->GetOwner();
-		if (owner != NULL && owner->IsRootComponentMovable())
+		if (owner != nullptr && owner->IsRootComponentMovable())
 		{
 			return EVisibility::Collapsed;
 		}
@@ -944,7 +944,7 @@ FReply SOculusToolWidget::LensFlareDisable(bool text)
 	Settings->bDefaultFeatureLensFlare = false;
 	Settings->UpdateSinglePropertyInConfigFile(Settings->GetClass()->FindPropertyByName(GET_MEMBER_NAME_CHECKED(URendererSettings, bDefaultFeatureLensFlare)), Settings->GetDefaultConfigFilename());
 
-	if (PostProcessVolume != NULL)
+	if (PostProcessVolume != nullptr)
 	{
 		PostProcessVolume->Settings.bOverride_LensFlareIntensity = 0;
 		Settings->SaveConfig();
@@ -958,7 +958,7 @@ EVisibility SOculusToolWidget::LensFlareVisibility(FName tag) const
 	URendererSettings* Settings = GetMutableDefault<URendererSettings>();
 	bool bLensFlare = Settings->bDefaultFeatureLensFlare != 0;
 
-	if (PostProcessVolume != NULL)
+	if (PostProcessVolume != nullptr)
 	{
 		if (PostProcessVolume->Settings.bOverride_LensFlareIntensity != 0)
 		{

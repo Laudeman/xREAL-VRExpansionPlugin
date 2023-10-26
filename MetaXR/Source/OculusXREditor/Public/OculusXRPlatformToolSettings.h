@@ -202,7 +202,7 @@ public:
 
 	TArray<FOculusXRAssetConfig>* GetAssetConfigs()
 	{
-		return (uint8)OculusTargetPlatform < OculusAssetConfigs.Num() ? &OculusAssetConfigs[(uint8)OculusTargetPlatform].ConfigArray : NULL;
+		return (uint8)OculusTargetPlatform < OculusAssetConfigs.Num() ? &OculusAssetConfigs[(uint8)OculusTargetPlatform].ConfigArray : nullptr;
 	}
 
 	UPROPERTY(config, EditAnywhere, Category = MetaXR)

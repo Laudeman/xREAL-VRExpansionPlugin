@@ -14,7 +14,7 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogOculusPassthrough, Log, All);
 
-UCLASS(meta = (DisplayName = "Passthrough Layer Base"))
+UCLASS(Abstract, meta = (DisplayName = "Passthrough Layer Base"))
 class OCULUSXRPASSTHROUGH_API UOculusXRPassthroughLayerBase : public UStereoLayerShape
 {
 	GENERATED_BODY()
@@ -28,7 +28,7 @@ public:
 	float TextureOpacityFactor = 1.0f;
 
 	/** Enable edge color */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Passthrough Properties")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Passthrough Properties", meta = (DisplayName = "Enable Edge Rendering"))
 	bool bEnableEdgeColor = false;
 
 	/** Color of the passthrough edge rendering effect. */
@@ -201,6 +201,8 @@ private:
 	TArray<FUserDefinedGeometryDesc> UserGeometryList;
 };
 
+class UProceduralMeshComponent;
+
 UCLASS(Blueprintable, meta = (BlueprintSpawnableComponent), ClassGroup = OculusXRHMD)
 class OCULUSXRPASSTHROUGH_API UOculusXRPassthroughLayerComponent : public UStereoLayerComponent
 {
@@ -213,27 +215,43 @@ public:
 
 	void UpdatePassthroughObjects();
 
-	UFUNCTION(BlueprintCallable, Category = "Passthrough")
+	UFUNCTION(BlueprintCallable, Category = "Passthrough", meta = (DeprecatedFunction, DeprecationMessage = "Please use AddStaticSurfaceGeometry instead"))
 	void AddSurfaceGeometry(AStaticMeshActor* StaticMeshActor, bool updateTransform);
-
 	UFUNCTION(BlueprintCallable, Category = "Passthrough")
+	void AddStaticSurfaceGeometry(UStaticMeshComponent* StaticMeshComponent, bool updateTransform);
+	UFUNCTION(BlueprintCallable, Category = "Passthrough")
+	void AddProceduralSurfaceGeometry(UProceduralMeshComponent* ProceduralMeshComponent, bool updateTransform);
+
+	UFUNCTION(BlueprintCallable, Category = "Passthrough", meta = (DeprecatedFunction, DeprecationMessage = "Please use RemoveStaticSurfaceGeometry instead"))
 	void RemoveSurfaceGeometry(AStaticMeshActor* StaticMeshActor);
-
 	UFUNCTION(BlueprintCallable, Category = "Passthrough")
+	void RemoveStaticSurfaceGeometry(UStaticMeshComponent* StaticMeshComponent);
+	UFUNCTION(BlueprintCallable, Category = "Passthrough")
+	void RemoveProceduralSurfaceGeometry(UProceduralMeshComponent* ProceduralMeshComponent);
+
+	UFUNCTION(BlueprintCallable, Category = "Passthrough", meta = (DeprecatedFunction, DeprecationMessage = "Please use IsSurfaceGeometryComponent instead"))
 	bool IsSurfaceGeometry(AStaticMeshActor* StaticMeshActor) const;
+	UFUNCTION(BlueprintPure, Category = "Passthrough")
+	bool IsSurfaceGeometryComponent(const UMeshComponent* MeshComponent) const;
 
 	// Manually mark the stereo layer passthrough effect for updating
 	UFUNCTION(BlueprintCallable, Category = "Components|Stereo Layer")
 	void MarkPassthroughStyleForUpdate();
 
+#if WITH_EDITOR
+	virtual bool CanEditChange(const FProperty* InProperty) const override;
+#endif // WITH_EDITOR
+
 protected:
 	virtual bool LayerRequiresTexture();
-
-private:
-	OculusXRHMD::FOculusPassthroughMeshRef CreatePassthroughMesh(UStaticMesh* StaticMesh);
+	virtual void RemoveSurfaceGeometryComponent(UMeshComponent* MeshComponent);
 
 	UPROPERTY(Transient)
-	TMap<FString, AStaticMeshActor*> PassthroughActorMap;
+	TMap<FString, const UMeshComponent*> PassthroughComponentMap;
+
+private:
+	OculusXRHMD::FOculusPassthroughMeshRef CreatePassthroughMesh(UProceduralMeshComponent* ProceduralMeshComponent);
+	OculusXRHMD::FOculusPassthroughMeshRef CreatePassthroughMesh(UStaticMeshComponent* StaticMeshComponent);
 
 	/** Passthrough style needs to be marked for update **/
 	bool bPassthroughStyleNeedsUpdate;

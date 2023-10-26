@@ -23,6 +23,11 @@ public:
 	TSharedPtr<FUICommandInfo> OpenPluginWindow;
 	TSharedPtr<FUICommandInfo> ToggleDeploySo;
 	TSharedPtr<FUICommandInfo> OpenPlatWindow;
+	TSharedPtr<FUICommandInfo> ToggleMetaXRSim;
+	TSharedPtr<FUICommandInfo> LaunchGameRoom;
+	TSharedPtr<FUICommandInfo> LaunchLivingRoom;
+	TSharedPtr<FUICommandInfo> LaunchBedroom;
+	TSharedPtr<FUICommandInfo> StopServer;
 
 private:
 	void ShowOculusTool();

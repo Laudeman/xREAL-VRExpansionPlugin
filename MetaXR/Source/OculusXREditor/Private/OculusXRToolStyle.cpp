@@ -6,7 +6,7 @@
 #include "Slate/SlateGameResources.h"
 #include "Interfaces/IPluginManager.h"
 
-TSharedPtr<FSlateStyleSet> FOculusToolStyle::StyleInstance = NULL;
+TSharedPtr<FSlateStyleSet> FOculusToolStyle::StyleInstance = nullptr;
 
 void FOculusToolStyle::Initialize()
 {

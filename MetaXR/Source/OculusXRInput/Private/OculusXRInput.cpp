@@ -46,6 +46,7 @@ namespace OculusXRInput
 	const FKey FOculusKey::OculusTouch_Left_Stylus_Force("OculusTouch_Left_Stylus_Force");
 	const FKey FOculusKey::OculusTouch_Left_IndexTrigger_Curl("OculusTouch_Left_IndexTrigger_Curl");
 	const FKey FOculusKey::OculusTouch_Left_IndexTrigger_Slide("OculusTouch_Left_IndexTrigger_Slide");
+	const FKey FOculusKey::OculusTouch_Left_IndexTrigger_Force("OculusTouch_Left_IndexTrigger_Force");
 
 	const FKey FOculusKey::OculusTouch_Right_Thumbstick("OculusTouch_Right_Thumbstick");
 	const FKey FOculusKey::OculusTouch_Right_Trigger("OculusTouch_Right_Trigger");
@@ -59,6 +60,7 @@ namespace OculusXRInput
 	const FKey FOculusKey::OculusTouch_Right_Stylus_Force("OculusTouch_Right_Stylus_Force");
 	const FKey FOculusKey::OculusTouch_Right_IndexTrigger_Curl("OculusTouch_Right_IndexTrigger_Curl");
 	const FKey FOculusKey::OculusTouch_Right_IndexTrigger_Slide("OculusTouch_Right_IndexTrigger_Slide");
+	const FKey FOculusKey::OculusTouch_Right_IndexTrigger_Force("OculusTouch_Right_IndexTrigger_Force");
 
 	const FKey FOculusKey::OculusRemote_DPad_Down("OculusRemote_DPad_Down");
 	const FKey FOculusKey::OculusRemote_DPad_Up("OculusRemote_DPad_Up");
@@ -204,6 +206,7 @@ namespace OculusXRInput
 		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Left_Stylus_Force, LOCTEXT("OculusTouch_Left_Stylus_Force", "Oculus Touch (L) Stylus Force"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey, "OculusTouch"));
 		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Left_IndexTrigger_Curl, LOCTEXT("OculusTouch_Left_IndexTrigger_Curl", "Oculus Touch (L) Trigger Curl CapTouch"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey, "OculusTouch"));
 		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Left_IndexTrigger_Slide, LOCTEXT("OculusTouch_Left_IndexTrigger_Slide", "Oculus Touch (L) Trigger Slide CapTouch"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey, "OculusTouch"));
+		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Left_IndexTrigger_Force, LOCTEXT("OculusTouch_Left_IndexTrigger_Force", "Oculus Touch (L) Trigger Force"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey, "OculusTouch"));
 
 		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Right_Thumbstick, LOCTEXT("OculusTouch_Right_Thumbstick", "Oculus Touch (R) Thumbstick CapTouch"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey));
 		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Right_FaceButton1, LOCTEXT("OculusTouch_Right_FaceButton1", "Oculus Touch (R) A Button CapTouch"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey));
@@ -216,6 +219,7 @@ namespace OculusXRInput
 		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Right_Stylus_Force, LOCTEXT("OculusTouch_Right_Stylus_Force", "Oculus Touch (R) Stylus Force"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey, "OculusTouch"));
 		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Right_IndexTrigger_Curl, LOCTEXT("OculusTouch_Right_IndexTrigger_Curl", "Oculus Touch (R) Trigger Curl CapTouch"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey, "OculusTouch"));
 		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Right_IndexTrigger_Slide, LOCTEXT("OculusTouch_Right_IndexTrigger_Slide", "Oculus Touch (R) Trigger Slide CapTouch"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey, "OculusTouch"));
+		EKeys::AddKey(FKeyDetails(FOculusKey::OculusTouch_Right_IndexTrigger_Force, LOCTEXT("OculusTouch_Right_IndexTrigger_Force", "Oculus Touch (R) Trigger Force"), FKeyDetails::GamepadKey | FKeyDetails::Axis1D | FKeyDetails::NotBlueprintBindableKey, "OculusTouch"));
 
 		EKeys::AddMenuCategoryDisplayInfo("OculusRemote", LOCTEXT("OculusRemoteSubCategory", "Oculus Remote"), TEXT("GraphEditor.PadEvent_16x"));
 
@@ -309,8 +313,8 @@ namespace OculusXRInput
 				OculusXRHMD::FOculusXRHMD* OculusXRHMD = static_cast<OculusXRHMD::FOculusXRHMD*>(GEngine->XRSystem->GetHMDDevice());
 				OculusXRHMD->StartGameFrame_GameThread();
 
-				ovrpControllerState5 OvrpControllerState;
-				if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetControllerState5(ovrpController_Remote, &OvrpControllerState)) && (OvrpControllerState.ConnectedControllerTypes & ovrpController_Remote))
+				ovrpControllerState6 OvrpControllerState;
+				if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetControllerState6(ovrpController_Remote, &OvrpControllerState)) && (OvrpControllerState.ConnectedControllerTypes & ovrpController_Remote))
 				{
 					for (int32 ButtonIndex = 0; ButtonIndex < (int32)EOculusRemoteControllerButton::TotalButtonCount; ++ButtonIndex)
 					{
@@ -396,7 +400,7 @@ namespace OculusXRInput
 					}
 				}
 
-				if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetControllerState5((ovrpController)(ovrpController_LTrackedRemote | ovrpController_RTrackedRemote | ovrpController_Touch), &OvrpControllerState)))
+				if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetControllerState6((ovrpController)(ovrpController_LTrackedRemote | ovrpController_RTrackedRemote | ovrpController_Touch), &OvrpControllerState)))
 				{
 					UE_CLOG(OVR_DEBUG_LOGGING, LogOcInput, Log, TEXT("SendControllerEvents: ButtonState = 0x%X"), OvrpControllerState.Buttons);
 					UE_CLOG(OVR_DEBUG_LOGGING, LogOcInput, Log, TEXT("SendControllerEvents: Touches = 0x%X"), OvrpControllerState.Touches);
@@ -445,6 +449,7 @@ namespace OculusXRInput
 								const float OvrStylusForce = OvrpControllerState.StylusForce[HandIndex];
 								const float OvrIndexTriggerCurl = OvrpControllerState.IndexTriggerCurl[HandIndex];
 								const float OvrIndexTriggerSlide = OvrpControllerState.IndexTriggerSlide[HandIndex];
+								const float OvrIndexTriggerForce = OvrpControllerState.IndexTriggerForce[HandIndex];
 
 								UE_CLOG(OVR_DEBUG_LOGGING, LogOcInput, Log, TEXT("SendControllerEvents: IndexTrigger[%d] = %f"), int(HandIndex), OvrTriggerAxis);
 								UE_CLOG(OVR_DEBUG_LOGGING, LogOcInput, Log, TEXT("SendControllerEvents: HandTrigger[%d] = %f"), int(HandIndex), OvrGripAxis);
@@ -453,6 +458,7 @@ namespace OculusXRInput
 								UE_CLOG(OVR_DEBUG_LOGGING, LogOcInput, Log, TEXT("SendControllerEvents: StylusForce[%d] = %f"), int(HandIndex), OvrStylusForce);
 								UE_CLOG(OVR_DEBUG_LOGGING, LogOcInput, Log, TEXT("SendControllerEvents: IndexTriggerCurl[%d] = %f"), int(HandIndex), OvrIndexTriggerCurl);
 								UE_CLOG(OVR_DEBUG_LOGGING, LogOcInput, Log, TEXT("SendControllerEvents: IndexTriggerSlide[%d] = %f"), int(HandIndex), OvrIndexTriggerSlide);
+								UE_CLOG(OVR_DEBUG_LOGGING, LogOcInput, Log, TEXT("SendControllerEvents: IndexTriggerForce[%d] = %f"), int(HandIndex), OvrIndexTriggerForce);
 								if (bIsMobileController)
 								{
 									if (OvrpControllerState.RecenterCount[HandIndex] != State.RecenterCount)
@@ -523,6 +529,11 @@ namespace OculusXRInput
 									MessageHandler->OnControllerAnalog(bIsLeft ? FOculusKey::OculusTouch_Left_IndexTrigger_Slide.GetFName() : FOculusKey::OculusTouch_Right_IndexTrigger_Slide.GetFName(), PlatformUser, ControllerPair.DeviceId, State.IndexTriggerSlide);
 								}
 
+								if (OvrIndexTriggerForce != State.IndexTriggerForce)
+								{
+									State.IndexTriggerForce = OvrIndexTriggerForce;
+									MessageHandler->OnControllerAnalog(bIsLeft ? FOculusKey::OculusTouch_Left_IndexTrigger_Force.GetFName() : FOculusKey::OculusTouch_Right_IndexTrigger_Force.GetFName(), PlatformUser, ControllerPair.DeviceId, State.IndexTriggerForce);
+								}
 								for (int32 ButtonIndex = 0; ButtonIndex < (int32)EOculusTouchControllerButton::TotalButtonCount; ++ButtonIndex)
 								{
 									FOculusButtonState& ButtonState = State.Buttons[ButtonIndex];
@@ -721,7 +732,7 @@ namespace OculusXRInput
 					}
 				}
 
-				if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetControllerState5((ovrpController)(ovrpController_LHand | ovrpController_RHand | ovrpController_Hands), &OvrpControllerState)))
+				if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetControllerState6((ovrpController)(ovrpController_LHand | ovrpController_RHand | ovrpController_Hands), &OvrpControllerState)))
 				{
 					for (FOculusControllerPair& ControllerPair : ControllerPairs)
 					{
@@ -988,8 +999,8 @@ namespace OculusXRInput
 		{
 			if (IOculusXRHMDModule::IsAvailable() && FOculusXRHMDModule::GetPluginWrapper().GetInitialized() && FApp::HasVRFocus())
 			{
-				ovrpControllerState5 OvrpControllerState;
-				if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetControllerState5((ovrpController)(ovrpController_Active | ovrpController_LTrackedRemote | ovrpController_RTrackedRemote), &OvrpControllerState)) && (OvrpControllerState.ConnectedControllerTypes & (ovrpController_Touch | ovrpController_LTrackedRemote | ovrpController_RTrackedRemote)))
+				ovrpControllerState6 OvrpControllerState;
+				if (OVRP_SUCCESS(FOculusXRHMDModule::GetPluginWrapper().GetControllerState6((ovrpController)(ovrpController_Active | ovrpController_LTrackedRemote | ovrpController_RTrackedRemote), &OvrpControllerState)) && (OvrpControllerState.ConnectedControllerTypes & (ovrpController_Touch | ovrpController_LTrackedRemote | ovrpController_RTrackedRemote)))
 				{
 					float FreqMin, FreqMax = 0.f;
 					GetHapticFrequencyRange(FreqMin, FreqMax);
@@ -1296,10 +1307,10 @@ namespace OculusXRInput
 #ifdef USE_ANDROID_INPUT
 						ControllerTypes = (ovrpController)(ControllerTypes | ovrpController_Touch);
 #endif
-						ovrpControllerState5 OvrpControllerState;
-						if (OVRP_FAILURE(FOculusXRHMDModule::GetPluginWrapper().GetControllerState5(ControllerTypes, &OvrpControllerState)))
+						ovrpControllerState6 OvrpControllerState;
+						if (OVRP_FAILURE(FOculusXRHMDModule::GetPluginWrapper().GetControllerState6(ControllerTypes, &OvrpControllerState)))
 						{
-							UE_LOG(LogOcInput, Error, TEXT("GetControllerState5 failed."));
+							UE_LOG(LogOcInput, Error, TEXT("GetControllerState6 failed."));
 							return;
 						}
 						if (OvrpControllerState.ConnectedControllerTypes & (ovrpController_Touch | ovrpController_LTrackedRemote | ovrpController_RTrackedRemote))
@@ -1328,7 +1339,7 @@ namespace OculusXRInput
 								if (OvrpHapticsState.SamplesQueued < OvrpHapticsDesc.MinimumSafeSamplesQueued + WantToSend) //trying to minimize latency
 								{
 									WantToSend = (OvrpHapticsDesc.MinimumSafeSamplesQueued + WantToSend - OvrpHapticsState.SamplesQueued);
-									void* BufferToFree = NULL;
+									void* BufferToFree = nullptr;
 									ovrpHapticsBuffer OvrpHapticsBuffer;
 									WantToSend = FMath::Min(WantToSend, HapticBuffer->BufferLength - HapticBuffer->SamplesSent);
 									WantToSend = FMath::Min(WantToSend, (int)(0.001f * CVarOculusPCMBatchDuration.GetValueOnAnyThread() * HapticBuffer->SamplingRate));

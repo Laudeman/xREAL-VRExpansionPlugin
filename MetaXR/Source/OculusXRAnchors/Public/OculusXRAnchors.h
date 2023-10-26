@@ -51,6 +51,8 @@ namespace OculusXRAnchors
 		static bool GetSpaceScenePlane(uint64 Space, FVector& OutPos, FVector& OutSize, EOculusXRAnchorResult::Type& OutResult);
 		static bool GetSpaceSceneVolume(uint64 Space, FVector& OutPos, FVector& OutSize, EOculusXRAnchorResult::Type& OutResult);
 		static bool GetSpaceSemanticClassification(uint64 Space, TArray<FString>& OutSemanticClassifications, EOculusXRAnchorResult::Type& OutResult);
+		static bool GetSpaceBoundary2D(uint64 Space, TArray<FVector2f>& OutVertices, EOculusXRAnchorResult::Type& OutResult);
+
 
 	private:
 		void HandleSpatialAnchorCreateComplete(FOculusXRUInt64 RequestId, int Result, FOculusXRUInt64 Space, FOculusXRUUID UUID);
@@ -66,6 +68,7 @@ namespace OculusXRAnchors
 		void HandleAnchorQueryComplete(FOculusXRUInt64 RequestId, int Result);
 
 		void HandleAnchorSharingComplete(FOculusXRUInt64 RequestId, int Result);
+
 
 		struct EraseAnchorBinding
 		{
@@ -127,6 +130,7 @@ namespace OculusXRAnchors
 			TArray<TWeakObjectPtr<UOculusXRAnchorComponent>> SharedAnchors;
 			TArray<uint64> OculusUserIds;
 		};
+
 
 		// Delegate bindings
 		TMap<uint64, CreateAnchorBinding> CreateSpatialAnchorBindings;

@@ -406,6 +406,12 @@ OVRP_EXPORT ovrpResult ovrp_GetHeadPoseModifier(ovrpQuatf* relativeRotation, ovr
 /// Gets the controller state for the given controllers.
 OVRP_EXPORT ovrpResult ovrp_GetControllerState4(ovrpController controllerMask, ovrpControllerState4* controllerState);
 
+/// Gets the controller state for the given controllers.
+OVRP_EXPORT ovrpResult ovrp_GetControllerState5(ovrpController controllerMask, ovrpControllerState5* controllerState);
+
+/// Gets the controller state for the given controllers.
+OVRP_EXPORT ovrpResult ovrp_GetControllerState6(ovrpController controllerMask, ovrpControllerState6* controllerState);
+
 /// Gets the currently active controller type.
 OVRP_EXPORT ovrpResult ovrp_GetActiveController2(ovrpController* activeController);
 
@@ -414,15 +420,6 @@ OVRP_EXPORT ovrpResult ovrp_GetConnectedControllers2(ovrpController* connectedCo
 
 /// Sets the vibration state for the given controllers.
 OVRP_EXPORT ovrpResult ovrp_SetControllerVibration2(ovrpController controllerMask, float frequency, float amplitude);
-
-/// Gets the controller state for the given controllers.
-OVRP_EXPORT ovrpResult ovrp_GetControllerState5(ovrpController controllerMask, ovrpControllerState5* controllerState);
-
-
-
-
-
-
 
 /// Sets the vibration state for the specified haptics locations on the given controllers.
 OVRP_EXPORT ovrpResult ovrp_SetControllerLocalizedVibration(
@@ -761,20 +758,21 @@ OVRP_EXPORT ovrpResult ovrp_IsRequestingASWData(ovrpBool* needASWData);
 
 OVRP_EXPORT ovrpResult ovrp_GetPredictedDisplayTime(int frameIndex, double* predictedDisplayTime);
 
+/// Set whether the system should be querying for hand poses powered by controller data
+OVRP_EXPORT ovrpResult ovrp_SetControllerDrivenHandPoses(ovrpBool controllerDrivenHandPoses);
+OVRP_EXPORT ovrpResult ovrp_SetControllerDrivenHandPosesAreNatural(ovrpBool controllerDrivenHandPosesAreNatural);
+OVRP_EXPORT ovrpResult ovrp_IsControllerDrivenHandPosesEnabled(ovrpBool* enabled);
+OVRP_EXPORT ovrpResult ovrp_AreControllerDrivenHandPosesNatural(ovrpBool* natural);
 
 
 
 
 
 
-
-
-
-
-
-
-
-
+OVRP_EXPORT ovrpResult ovrp_SetMultimodalHandsControllersSupported(ovrpBool supported);
+OVRP_EXPORT ovrpResult ovrp_IsMultimodalHandsControllersSupported(ovrpBool* supported);
+OVRP_EXPORT ovrpResult
+ovrp_GetCurrentDetachedInteractionProfile(ovrpHand hand, ovrpInteractionProfile* interactionProfile);
 
 OVRP_EXPORT ovrpResult ovrp_GetHandTrackingEnabled(ovrpBool* handTrackingEnabled);
 OVRP_EXPORT ovrpResult ovrp_GetHandState(ovrpStep step, ovrpHand hand, ovrpHandState* handState);
@@ -874,15 +872,12 @@ OVRP_EXPORT ovrpResult ovrp_GetNodePoseStateImmediate(ovrpNode nodeId, ovrpPoseS
 
 OVRP_EXPORT ovrpResult ovrp_GetNodePoseStateAtTime(double time, ovrpNode nodeId, ovrpPoseStatef* pose);
 
+OVRP_EXPORT ovrpResult
+ovrp_AreHandPosesGeneratedByControllerData(ovrpStep step, ovrpNode nodeId, ovrpBool* generatedByControllerData);
 
 
-
-
-
-
-
-
-
+OVRP_EXPORT ovrpResult ovrp_SetSimultaneousHandsAndControllersEnabled(ovrpBool enabled);
+OVRP_EXPORT ovrpResult ovrp_GetControllerIsInHand(ovrpStep step, ovrpNode nodeId, ovrpBool* isInHand);
 
 OVRP_EXPORT ovrpResult ovrp_GetRenderModelPaths(unsigned int index, char* path);
 OVRP_EXPORT ovrpResult ovrp_GetRenderModelProperties(const char* path, ovrpRenderModelProperties* properties);
@@ -980,9 +975,7 @@ OVRP_EXPORT ovrpResult ovrp_RequestSceneCapture(const ovrpSceneCaptureRequest* r
 
 
 
-
-
-
+OVRP_EXPORT ovrpResult ovrp_GetSpaceTriangleMesh(const ovrpSpace* space, ovrpTriangleMesh* triangleMeshOutput);
 
 
 
@@ -1063,20 +1056,6 @@ OVRP_EXPORT ovrpResult ovrp_FeatureFidelityGetFeatureState(
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 OVRP_EXPORT ovrpResult ovrp_GetLocalDimmingSupported(ovrpBool* localDimmingSupported);
 OVRP_EXPORT ovrpResult ovrp_SetLocalDimming(ovrpBool localDimmingMode);
 OVRP_EXPORT ovrpResult ovrp_GetLocalDimming(ovrpBool* localDimmingMode);
@@ -1114,16 +1093,14 @@ OVRP_EXPORT ovrpResult ovrp_GetEyeLayerRecommendedResolution(ovrpSizei* recommen
 
 OVRP_EXPORT ovrpResult ovrp_IsLayerShapeSupported(ovrpShape shape, ovrpBool* isLayerShapeSupported);
 
-
-
-
-
-
-
-
-
-
-
+OVRP_EXPORT ovrpResult ovrp_InitializeEnvironmentDepth(int createFlags);
+OVRP_EXPORT ovrpResult ovrp_DestroyEnvironmentDepth();
+OVRP_EXPORT ovrpResult ovrp_GetEnvironmentDepthTextureDesc(ovrpEnvironmentDepthTextureDesc* desc);
+OVRP_EXPORT ovrpResult ovrp_GetEnvironmentDepthTextureStageCount(int* stageCount);
+OVRP_EXPORT ovrpResult ovrp_GetEnvironmentDepthTexture(int stage, ovrpEye eyeId, ovrpTextureHandle* texture);
+OVRP_EXPORT ovrpResult ovrp_StartEnvironmentDepth();
+OVRP_EXPORT ovrpResult ovrp_StopEnvironmentDepth();
+OVRP_EXPORT ovrpResult ovrp_GetEnvironmentDepthFrameDesc(ovrpEye eyeId, ovrpEnvironmentDepthFrameDesc* frameDesc);
 
 #ifdef __cplusplus
 }

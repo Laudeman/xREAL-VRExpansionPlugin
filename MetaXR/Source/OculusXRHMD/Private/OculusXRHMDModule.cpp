@@ -13,6 +13,7 @@
 #endif
 #include "Interfaces/IPluginManager.h"
 #include "ShaderCore.h"
+#include "OculusXRTelemetry.h"
 
 #if !PLATFORM_ANDROID
 #if !UE_BUILD_SHIPPING
@@ -46,7 +47,14 @@ namespace
 // FOculusXRHMDModule
 //-------------------------------------------------------------------------------------------------
 
-OculusPluginWrapper FOculusXRHMDModule::PluginWrapper;
+OculusPluginWrapper FOculusXRHMDModule::PluginWrapper{};
+
+#if OCULUS_HMD_SUPPORTED_PLATFORMS
+OculusPluginWrapper& FOculusXRHMDModule::GetPluginWrapper()
+{
+	return PluginWrapper;
+}
+#endif // OCULUS_HMD_SUPPORTED_PLATFORMS
 
 FOculusXRHMDModule::FOculusXRHMDModule()
 {
@@ -70,6 +78,7 @@ void FOculusXRHMDModule::ShutdownModule()
 #if OCULUS_HMD_SUPPORTED_PLATFORMS
 	if (PluginWrapper.IsInitialized())
 	{
+		OculusXRTelemetry::FTelemetryBackend::OnEditorShutdown();
 		PluginWrapper.Shutdown2();
 		OculusPluginWrapper::DestroyOculusPluginWrapper(&PluginWrapper);
 	}
@@ -357,6 +366,8 @@ FString FOculusXRHMDModule::GetDeviceSystemName()
 			case ovrpSystemHeadset_Meta_Quest_Pro:
 				return FString("Meta Quest Pro");
 
+			case ovrpSystemHeadset_Meta_Quest_3:
+				return FString("Meta Quest 3");
 #endif // WITH_OCULUS_BRANCH
 		}
 	}

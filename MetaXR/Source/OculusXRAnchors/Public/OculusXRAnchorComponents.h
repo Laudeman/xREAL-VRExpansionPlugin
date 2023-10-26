@@ -143,3 +143,13 @@ public:
 	}
 };
 
+UCLASS(Blueprintable)
+class OCULUSXRANCHORS_API UOculusXRTriangleMeshAnchorComponent : public UOculusXRBaseAnchorComponent
+{
+	GENERATED_BODY()
+public:
+	UOculusXRTriangleMeshAnchorComponent()
+	{
+		Type = EOculusXRSpaceComponentType::TriangleMesh;
+	}
+};

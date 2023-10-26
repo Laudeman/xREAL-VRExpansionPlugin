@@ -13,6 +13,8 @@
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
 #include "GameFramework/WorldSettings.h"
+#include "ProceduralMeshComponent.h"
+#include "OculusXRSceneGlobalMeshComponent.h"
 
 #define LOCTEXT_NAMESPACE "OculusXRSceneActor"
 
@@ -37,6 +39,7 @@ AOculusXRSceneActor::AOculusXRSceneActor(const FObjectInitializer& ObjectInitial
 		TEXT("DOOR_FRAME"),
 		TEXT("WINDOW_FRAME"),
 		TEXT("WALL_ART"),
+		TEXT("INVISIBLE_WALL_FACE"),
 		TEXT("OTHER")
 	};
 
@@ -85,6 +88,7 @@ void AOculusXRSceneActor::BeginPlay()
 	rootSceneComponent->RegisterComponent();
 	SetRootComponent(rootSceneComponent);
 
+	SceneGlobalMeshComponent = FindComponentByClass<UOculusXRSceneGlobalMeshComponent>();
 
 	// Register delegates
 	RoomLayoutManagerComponent->OculusXRRoomLayoutSceneCaptureCompleteNative.AddUObject(this, &AOculusXRSceneActor::SceneCaptureComplete_Handler);
@@ -163,6 +167,13 @@ AActor* AOculusXRSceneActor::SpawnActorWithSceneComponent(const FOculusXRUInt64&
 
 	Anchor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 
+#if WITH_EDITOR
+	if (SemanticClassifications.Num() > 0)
+	{
+		Anchor->SetActorLabel(FString::Join(SemanticClassifications, TEXT("-")), false);
+	}
+#endif
+
 	UOculusXRSceneAnchorComponent* sceneAnchorComponent = NewObject<UOculusXRSceneAnchorComponent>(Anchor, sceneAnchorComponentInstanceClass);
 	sceneAnchorComponent->RegisterComponent();
 
@@ -176,23 +187,23 @@ AActor* AOculusXRSceneActor::SpawnActorWithSceneComponent(const FOculusXRUInt64&
 	return Anchor;
 }
 
-AActor* AOculusXRSceneActor::SpawnSceneAnchor(AActor* Anchor, const FOculusXRUInt64& Space, const FOculusXRUInt64& RoomSpaceID, const FVector& BoundedPos, const FVector& BoundedSize, const TArray<FString>& SemanticClassifications, const EOculusXRSpaceComponentType AnchorComponentType)
+AActor* AOculusXRSceneActor::SpawnOrUpdateSceneAnchor(AActor* Anchor, const FOculusXRUInt64& Space, const FOculusXRUInt64& RoomSpaceID, const FVector& BoundedPos, const FVector& BoundedSize, const TArray<FString>& SemanticClassifications, const EOculusXRSpaceComponentType AnchorComponentType)
 {
 	if (Space.Value == 0)
 	{
-		UE_LOG(LogOculusXRScene, Error, TEXT("AOculusXRSceneActor::SpawnSceneAnchor Invalid Space handle."));
+		UE_LOG(LogOculusXRScene, Error, TEXT("AOculusXRSceneActor::SpawnOrUpdateSceneAnchor Invalid Space handle."));
 		return Anchor;
 	}
 
 	if (!(AnchorComponentType == EOculusXRSpaceComponentType::ScenePlane || AnchorComponentType == EOculusXRSpaceComponentType::SceneVolume))
 	{
-		UE_LOG(LogOculusXRScene, Error, TEXT("AOculusXRSceneActor::SpawnSceneAnchor Anchor doesn't have ScenePlane or SceneVolume component active."));
+		UE_LOG(LogOculusXRScene, Error, TEXT("AOculusXRSceneActor::SpawnOrUpdateSceneAnchor Anchor doesn't have ScenePlane or SceneVolume component active."));
 		return Anchor;
 	}
 
 	if (0 == SemanticClassifications.Num())
 	{
-		UE_LOG(LogOculusXRScene, Error, TEXT("AOculusXRSceneActor::SpawnSceneAnchor No semantic classification found."));
+		UE_LOG(LogOculusXRScene, Error, TEXT("AOculusXRSceneActor::SpawnOrUpdateSceneAnchor No semantic classification found."));
 		return Anchor;
 	}
 
@@ -200,7 +211,7 @@ AActor* AOculusXRSceneActor::SpawnSceneAnchor(AActor* Anchor, const FOculusXRUIn
 
 	if (!foundProperties)
 	{
-		UE_LOG(LogOculusXRScene, Warning, TEXT("AOculusXRSceneActor::SpawnSceneAnchor Scene object has an unknown semantic label.  Will not be spawned."));
+		UE_LOG(LogOculusXRScene, Warning, TEXT("AOculusXRSceneActor::SpawnOrUpdateSceneAnchor Scene object has an unknown semantic label.  Will not be spawned."));
 		return Anchor;
 	}
 
@@ -210,7 +221,7 @@ AActor* AOculusXRSceneActor::SpawnSceneAnchor(AActor* Anchor, const FOculusXRUIn
 	UClass* sceneAnchorComponentInstanceClass = sceneAnchorComponentClassPtrRef->LoadSynchronous();
 	if (!sceneAnchorComponentInstanceClass)
 	{
-		UE_LOG(LogOculusXRScene, Error, TEXT("AOculusXRSceneActor::SpawnSceneAnchor Scene anchor component class is invalid!  Cannot spawn actor to populate the scene."));
+		UE_LOG(LogOculusXRScene, Error, TEXT("AOculusXRSceneActor::SpawnOrUpdateSceneAnchor Scene anchor component class is invalid!  Cannot spawn actor to populate the scene."));
 		return Anchor;
 	}
 
@@ -226,7 +237,7 @@ AActor* AOculusXRSceneActor::SpawnSceneAnchor(AActor* Anchor, const FOculusXRUIn
 	UStaticMesh* refStaticMesh = staticMeshObjPtrRef ? staticMeshObjPtrRef->Get() : nullptr;
 	if (refStaticMesh == nullptr)
 	{
-		UE_LOG(LogOculusXRScene, Warning, TEXT("AOculusXRSceneActor::SpawnSceneAnchor Spawn scene anchor mesh is invalid for %s!"), *SemanticClassifications[0]);
+		UE_LOG(LogOculusXRScene, Warning, TEXT("AOculusXRSceneActor::SpawnOrUpdateSceneAnchor Spawn scene anchor mesh is invalid for %s!"), *SemanticClassifications[0]);
 		return Anchor;
 	}
 
@@ -235,8 +246,8 @@ AActor* AOculusXRSceneActor::SpawnSceneAnchor(AActor* Anchor, const FOculusXRUIn
 	staticMeshComponent->SetStaticMesh(refStaticMesh);
 	staticMeshComponent->AttachToComponent(Anchor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
 	const float worldToMeters = GetWorld()->GetWorldSettings()->WorldToMeters;
-	FVector offset(BoundedPos.X, 2.0f * BoundedPos.Y, 2.0f * BoundedPos.Z);
-	staticMeshComponent->SetRelativeLocation(foundProperties->AddOffset - ((offset + BoundedSize) * worldToMeters), false, nullptr, ETeleportType::ResetPhysics);
+	FVector offset(0.0f, BoundedSize.Y / 2.0f, BoundedSize.Z / 2.0f);
+	staticMeshComponent->SetRelativeLocation(foundProperties->AddOffset + ((BoundedPos + offset) * worldToMeters), false, nullptr, ETeleportType::ResetPhysics);
 
 	// Setup scale based on bounded size and the actual size of the mesh
 	UStaticMesh* staticMesh = staticMeshComponent->GetStaticMesh();
@@ -457,6 +468,31 @@ void AOculusXRSceneActor::SceneRoomQueryComplete(EOculusXRAnchorResult::Type Anc
 
 	for (auto& AnchorQueryElement : QueryResults)
 	{
+		if (SceneGlobalMeshComponent)
+		{
+			TArray<FString> semanticClassifications;
+			GetSemanticClassifications(AnchorQueryElement.Space.Value, semanticClassifications);
+			UE_LOG(LogOculusXRScene, Log, TEXT("SpatialAnchor Scene label is %s"), semanticClassifications.Num() > 0 ? *semanticClassifications[0] : TEXT("unknown"));
+			if (semanticClassifications.Contains(UOculusXRSceneGlobalMeshComponent::GlobalMeshSemanticLabel))
+			{
+				bool bIsTriangleMesh = false;
+				EOculusXRAnchorResult::Type result = OculusXRAnchors::FOculusXRAnchorManager::GetSpaceComponentStatus(
+					AnchorQueryElement.Space.Value, EOculusXRSpaceComponentType::TriangleMesh, bIsTriangleMesh, bOutPending);
+
+				if (!UOculusXRAnchorBPFunctionLibrary::IsAnchorResultSuccess(result) || !bIsTriangleMesh)
+				{
+					UE_LOG(LogOculusXRScene, Error, TEXT("SpatialAnchorQueryResult_Handler Failed to load Triangle Mesh Component for a GLOBAL_MESH"));
+					continue;
+				}
+
+				UClass* sceneAnchorComponentInstanceClass = SceneGlobalMeshComponent->GetAnchorComponentClass();
+
+				AActor* globalMeshAnchor = SpawnActorWithSceneComponent(AnchorQueryElement.Space.Value, RoomSpaceID, semanticClassifications, sceneAnchorComponentInstanceClass);
+
+				SceneGlobalMeshComponent->CreateMeshComponent(AnchorQueryElement.Space, globalMeshAnchor, RoomLayoutManagerComponent);
+				continue;
+			}
+		}
 
 		bool bIsScenePlane = false;
 		bool bIsSceneVolume = false;
@@ -488,7 +524,7 @@ void AOculusXRSceneActor::SceneRoomQueryComplete(EOculusXRAnchorResult::Type Anc
 
 				UE_LOG(LogOculusXRScene, Log, TEXT("SpatialAnchor ScenePlane label is %s"), semanticClassifications.Num() > 0 ? *semanticClassifications[0] : TEXT("unknown"));
 
-				anchor = SpawnSceneAnchor(anchor, AnchorQueryElement.Space, RoomSpaceID, scenePlanePos, scenePlaneSize, semanticClassifications, EOculusXRSpaceComponentType::ScenePlane);
+				anchor = SpawnOrUpdateSceneAnchor(anchor, AnchorQueryElement.Space, RoomSpaceID, scenePlanePos, scenePlaneSize, semanticClassifications, EOculusXRSpaceComponentType::ScenePlane);
 				if (!anchor)
 				{
 					UE_LOG(LogOculusXRScene, Error, TEXT("SpatialAnchorQueryResult_Handler Failed to spawn scene anchor."));
@@ -517,7 +553,7 @@ void AOculusXRSceneActor::SceneRoomQueryComplete(EOculusXRAnchorResult::Type Anc
 
 				UE_LOG(LogOculusXRScene, Log, TEXT("SpatialAnchor SceneVolume label is %s"), semanticClassifications.Num() > 0 ? *semanticClassifications[0] : TEXT("unknown"));
 
-				anchor = SpawnSceneAnchor(anchor, AnchorQueryElement.Space, RoomSpaceID, sceneVolumePos, sceneVolumeSize, semanticClassifications, EOculusXRSpaceComponentType::SceneVolume);
+				anchor = SpawnOrUpdateSceneAnchor(anchor, AnchorQueryElement.Space, RoomSpaceID, sceneVolumePos, sceneVolumeSize, semanticClassifications, EOculusXRSpaceComponentType::SceneVolume);
 				if (!anchor)
 				{
 					UE_LOG(LogOculusXRScene, Error, TEXT("SpatialAnchorQueryResult_Handler Failed to spawn scene anchor."));

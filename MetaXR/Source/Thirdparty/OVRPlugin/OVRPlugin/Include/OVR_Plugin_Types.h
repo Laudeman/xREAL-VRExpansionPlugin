@@ -30,7 +30,7 @@
 // Note: OVRP_MINOR_VERSION == OCULUS_SDK_VERSION + 32
 
 #define OVRP_MAJOR_VERSION 1
-#define OVRP_MINOR_VERSION 87
+#define OVRP_MINOR_VERSION 89
 #define OVRP_PATCH_VERSION 0
 
 #define OVRP_VERSION OVRP_MAJOR_VERSION, OVRP_MINOR_VERSION, OVRP_PATCH_VERSION
@@ -359,11 +359,7 @@ typedef enum {
   ovrpSystemHeadset_Oculus_Quest, // Oculus Quest
   ovrpSystemHeadset_Oculus_Quest_2, // Oculus Quest 2
   ovrpSystemHeadset_Meta_Quest_Pro, // Meta Quest Pro
-
-
-
-  ovrpSystemHeadset_Placeholder_11,
-
+  ovrpSystemHeadset_Meta_Quest_3, // Meta Quest 3
   ovrpSystemHeadset_Placeholder_12,
   ovrpSystemHeadset_Placeholder_13,
   ovrpSystemHeadset_Placeholder_14,
@@ -377,11 +373,7 @@ typedef enum {
   ovrpSystemHeadset_Oculus_Link_Quest, // Quest connected through Oculus Link
   ovrpSystemHeadset_Oculus_Link_Quest_2,
   ovrpSystemHeadset_Meta_Link_Quest_Pro,
-
-
-
-  ovrpSystemHeadset_PC_Placeholder_4104,
-
+  ovrpSystemHeadset_Meta_Link_Quest_3,
   ovrpSystemHeadset_PC_Placeholder_4105,
   ovrpSystemHeadset_PC_Placeholder_4106,
   ovrpSystemHeadset_PC_Placeholder_4107,
@@ -862,26 +854,23 @@ typedef struct {
   float IndexTriggerSlide[2];
 } ovrpControllerState5;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+typedef struct {
+  unsigned int ConnectedControllerTypes;
+  unsigned int Buttons;
+  unsigned int Touches;
+  unsigned int NearTouches;
+  float IndexTrigger[2];
+  float HandTrigger[2];
+  ovrpVector2f Thumbstick[2];
+  ovrpVector2f Touchpad[2];
+  unsigned char BatteryPercentRemaining[2];
+  unsigned char RecenterCount[2];
+  float ThumbRestForce[2];
+  float StylusForce[2];
+  float IndexTriggerCurl[2];
+  float IndexTriggerSlide[2];
+  float IndexTriggerForce[2];
+} ovrpControllerState6;
 
 
 
@@ -1863,6 +1852,7 @@ typedef struct ovrpBodyState_ {
 
 
 
+
 typedef enum ovrpFaceExpression_ {
   ovrpFaceExpression_Invalid = -1,
   ovrpFaceExpression_Brow_Lowerer_L = 0,
@@ -2469,9 +2459,6 @@ typedef enum {
   ovrpInsightPassthroughColorMapType_MonoToMono = 2,
   ovrpInsightPassthroughColorMapType_HandsContrast = 3,
   ovrpInsightPassthroughColorMapType_BrightnessContrastSaturation = 4,
-
-
-
   ovrpInsightPassthroughColorMapType_ColorLut = 6,
   ovrpInsightPassthroughColorMapType_InterpolatedColorLut = 7,
   ovrpInsightPassthroughColorMapType_EnumSize = 0x7fffffff
@@ -2618,9 +2605,7 @@ typedef enum {
   ovrpSpaceComponentType_SemanticLabels = 5,
   ovrpSpaceComponentType_RoomLayout = 6,
   ovrpSpaceComponentType_SpaceContainer = 7,
-
-
-
+  ovrpSpaceComponentType_TriangleMesh = 1000269000,
 
   ovrpSpatialEntityComponentType_Max = 0x7ffffff, // Deprecated
   ovrpSpaceComponentType_Max = 0x7ffffff,
@@ -2907,22 +2892,20 @@ typedef struct ovrpSceneCaptureRequest_ {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+typedef struct ovrpTriangleMesh_ {
+  // Input, capacity of the vertex buffer.
+  int vertexCapacityInput;
+  // Output, size of the vertex buffer.
+  int vertexCountOutput;
+  // Vertices of the triangle mesh in the coordinate frame of the associated space.
+  ovrpVector3f* vertices;
+  // Input, capacity of the index buffer.
+  int indexCapacityInput;
+  // Output, size of the index buffer.
+  int indexCountOutput;
+  // Indices of the triangle mesh.
+  int* indices;
+} ovrpTriangleMesh;
 
 
 
@@ -2956,10 +2939,7 @@ typedef enum {
 
 
 
-
-
-
-
+  ovrpInteractionProfile_TouchPlus = 4,
   ovrpInteractionProfile_EnumSize = 0x7fffffff
 } ovrpInteractionProfile;
 
@@ -3366,25 +3346,31 @@ typedef struct ovrpPassthroughPreferences_ {
 
 
 
+typedef struct ovrpEnvironmentDepthTextureDesc_ {
+  ovrpSizei TextureSize;
+  int MipLevels;
+  int SampleCount;
+  ovrpLayout Layout;
+  ovrpTextureFormat Format;
+} ovrpEnvironmentDepthTextureDesc;
 
+typedef struct ovrpEnvironmentDepthFrameDesc_ {
+  ovrpBool IsValid;
+  double CreateTime;
+  double PredictedDisplayTime;
+  int SwapchainIndex;
+  ovrpPosef CreatePose;
+  ovrpFovf Fov;
+  float NearZ;
+  float FarZ;
+  float MinDepth;
+  float MaxDepth;
+} ovrpEnvironmentDepthFrameDesc;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+typedef enum {
+  ovrpEnvironmentDepthCreateFlag_None = 0,
+  ovrpEnvironmentDepthCreateFlag_RemoveHands = 1 << 0,
+} ovrpEnvironmentDepthCreateFlag;
 
 #ifdef __clang__
 #pragma clang diagnostic pop

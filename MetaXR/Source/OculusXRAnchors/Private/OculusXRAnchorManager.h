@@ -29,6 +29,7 @@ namespace OculusXRAnchors
 		static EOculusXRAnchorResult::Type GetSpaceSceneVolume(uint64 Space, FVector& OutPos, FVector& OutSize);
 		static EOculusXRAnchorResult::Type GetSpaceSemanticClassification(uint64 Space, TArray<FString>& OutSemanticClassification);
 		static EOculusXRAnchorResult::Type GetSpaceContainer(uint64 Space, TArray<FOculusXRUUID>& OutContainerUuids);
+		static EOculusXRAnchorResult::Type GetSpaceBoundary2D(uint64 Space, TArray<FVector2f>& OutVertices);
 
 		static void OnPollEvent(ovrpEventDataBuffer* EventDataBuffer, bool& EventPollResult);
 	};

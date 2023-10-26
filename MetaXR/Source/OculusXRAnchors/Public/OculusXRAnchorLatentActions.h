@@ -9,6 +9,7 @@ LICENSE file in the root directory of this source tree.
 #pragma once
 
 #include "Kismet/BlueprintAsyncActionBase.h"
+#include "Templates/SharedPointer.h"
 #include "OculusXRAnchorTypes.h"
 #include "OculusXRAnchorComponent.h"
 #include "OculusXRAnchorComponents.h"
@@ -37,6 +38,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOculusXR_LatentAction_SetAnchorComp
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOculusXR_LatentAction_ShareAnchors_Success, const TArray<UOculusXRAnchorComponent*>&, SharedAnchors, const TArray<FString>&, UserIds, EOculusXRAnchorResult::Type, Result);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOculusXR_LatentAction_ShareAnchors_Failure, EOculusXRAnchorResult::Type, Result);
+
 
 //
 // Create Anchor
@@ -126,17 +128,17 @@ private:
 };
 
 //
-// Save Anchors
+// Save Anchor List
 //
 UCLASS()
-class OCULUSXRANCHORS_API UOculusXRAsyncAction_SaveAnchors : public UBlueprintAsyncActionBase
+class OCULUSXRANCHORS_API UOculusXRAsyncAction_SaveAnchorList : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
 public:
 	virtual void Activate() override;
 
 	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"))
-	static UOculusXRAsyncAction_SaveAnchors* OculusXRAsyncSaveAnchors(const TArray<AActor*>& TargetActors, EOculusXRSpaceStorageLocation StorageLocation);
+	static UOculusXRAsyncAction_SaveAnchorList* OculusXRAsyncSaveAnchorList(const TArray<AActor*>& TargetActors, EOculusXRSpaceStorageLocation StorageLocation);
 
 	UPROPERTY(BlueprintAssignable)
 	FOculusXR_LatentAction_SaveAnchorList_Success Success;
@@ -150,7 +152,7 @@ public:
 	EOculusXRSpaceStorageLocation StorageLocation;
 
 private:
-	void HandleSaveAnchorsComplete(EOculusXRAnchorResult::Type SaveResult, const TArray<UOculusXRAnchorComponent*>& SavedSpaces);
+	void HandleSaveAnchorListComplete(EOculusXRAnchorResult::Type SaveResult, const TArray<UOculusXRAnchorComponent*>& SavedSpaces);
 };
 
 //
@@ -271,3 +273,4 @@ public:
 private:
 	void HandleShareAnchorsComplete(EOculusXRAnchorResult::Type ShareResult, const TArray<UOculusXRAnchorComponent*>& TargetAnchors, const TArray<uint64>& OculusUserIds);
 };
+

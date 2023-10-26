@@ -27,3 +27,4 @@ FOculusXRAnchorEventDelegates::FOculusXRSpaceEraseCompleteDelegate FOculusXRAnch
 FOculusXRAnchorEventDelegates::FOculusXRSpaceShareCompleteDelegate FOculusXRAnchorEventDelegates::OculusSpaceShareComplete;
 
 FOculusXRAnchorEventDelegates::FOculusXRSceneCaptureCompleteDelegate FOculusXRAnchorEventDelegates::OculusSceneCaptureComplete;
+

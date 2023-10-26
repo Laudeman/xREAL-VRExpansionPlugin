@@ -167,6 +167,8 @@ const UOculusXRBaseAnchorComponent* UOculusXRAnchorBPFunctionLibrary::GetAnchorC
 			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRSharableAnchorComponent>(QueryResult.Space.Value, Outer);
 		case EOculusXRSpaceComponentType::Storable:
 			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRStorableAnchorComponent>(QueryResult.Space.Value, Outer);
+		case EOculusXRSpaceComponentType::TriangleMesh:
+			return UOculusXRBaseAnchorComponent::FromSpace<UOculusXRTriangleMeshAnchorComponent>(QueryResult.Space.Value, Outer);
 		default:
 			return nullptr;
 	}

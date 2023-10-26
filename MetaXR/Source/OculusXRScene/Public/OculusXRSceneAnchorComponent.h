@@ -13,7 +13,7 @@ LICENSE file in the root directory of this source tree.
 #include "OculusXRSceneAnchorComponent.generated.h"
 
 UCLASS(meta = (DisplayName = "OculusXR Scene Anchor Component", BlueprintSpawnableComponent))
-class UOculusXRSceneAnchorComponent : public UOculusXRAnchorComponent
+class OCULUSXRSCENE_API UOculusXRSceneAnchorComponent : public UOculusXRAnchorComponent
 {
 	GENERATED_BODY()
 

@@ -11,7 +11,7 @@ FOculusBuildAnalytics* FOculusBuildAnalytics::GetInstance()
 {
 	if (IOculusXRHMDModule::IsAvailable())
 	{
-		if (instance == NULL)
+		if (instance == nullptr)
 		{
 			instance = new FOculusBuildAnalytics();
 		}

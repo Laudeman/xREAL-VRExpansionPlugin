@@ -9,7 +9,7 @@ LICENSE file in the root directory of this source tree.
 #include "OculusXRHMD.h"
 #include "OculusXRAnchorDelegates.h"
 #include "OculusXRAnchorsModule.h"
-#include <vector>
+
 namespace OculusXRAnchors
 {
 	void FOculusXRRoomLayoutManager::OnPollEvent(ovrpEventDataBuffer* EventDataBuffer, bool& EventPollResult)
@@ -57,7 +57,7 @@ namespace OculusXRAnchors
 		sceneCaptureRequest.requestByteCount = 0;
 
 		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().RequestSceneCapture(&sceneCaptureRequest, &OutRequestID);
-		if (!OVRP_SUCCESS(Result))
+		if (OVRP_FAILURE(Result))
 		{
 			return false;
 		}
@@ -85,7 +85,7 @@ namespace OculusXRAnchors
 		roomLayout.wallUuids = uuids.GetData();
 
 		const ovrpResult Result = FOculusXRHMDModule::GetPluginWrapper().GetSpaceRoomLayout(&Space, &roomLayout);
-		if (!OVRP_SUCCESS(Result))
+		if (OVRP_FAILURE(Result))
 		{
 			return false;
 		}
@@ -104,4 +104,39 @@ namespace OculusXRAnchors
 		return true;
 	}
 
+	bool FOculusXRRoomLayoutManager::GetSpaceTriangleMesh(uint64 Space, TArray<FVector>& Vertices, TArray<int32>& Triangles)
+	{
+		ovrpTriangleMesh OVRPMesh = { 0, 0, nullptr, 0, 0, nullptr };
+
+		ovrpResult CountResult = FOculusXRHMDModule::GetPluginWrapper().GetSpaceTriangleMesh(&Space, &OVRPMesh);
+		if (OVRP_FAILURE(CountResult))
+		{
+			UE_LOG(LogOculusXRAnchors, Warning, TEXT("Failed to load TriangleMesh info - Space: %llu - Result: %d"), Space, CountResult);
+			return false;
+		}
+		OVRPMesh.indexCapacityInput = OVRPMesh.indexCountOutput;
+		OVRPMesh.vertexCapacityInput = OVRPMesh.vertexCountOutput;
+
+		TArray<ovrpVector3f> OVRPVertices;
+		OVRPVertices.SetNum(OVRPMesh.vertexCapacityInput);
+		OVRPMesh.vertices = OVRPVertices.GetData();
+		Triangles.SetNum(OVRPMesh.indexCapacityInput);
+		check(sizeof(TRemoveReference<decltype(Triangles)>::Type::ElementType) == sizeof(TRemovePointer<decltype(OVRPMesh.indices)>::Type));
+		OVRPMesh.indices = Triangles.GetData();
+
+		const ovrpResult MeshResult = FOculusXRHMDModule::GetPluginWrapper().GetSpaceTriangleMesh(&Space, &OVRPMesh);
+		if (OVRP_FAILURE(MeshResult))
+		{
+			UE_LOG(LogOculusXRAnchors, Warning, TEXT("Failed to load TriangleMesh data - Space: %llu - Result: %d"), Space, MeshResult);
+			return false;
+		}
+
+		UE_LOG(LogOculusXRAnchors, Verbose, TEXT("Loaded TriangleMesh data - Space: %llu - Vertices: %d - Faces: %d"),
+			Space, OVRPMesh.vertexCapacityInput, OVRPMesh.indexCapacityInput);
+
+		Vertices.Empty(OVRPVertices.Num());
+		Algo::Transform(OVRPVertices, Vertices, [](const auto& Vertex) { return OculusXRHMD::ToFVector(Vertex); });
+		return true;
+		return false;
+	}
 } // namespace OculusXRAnchors

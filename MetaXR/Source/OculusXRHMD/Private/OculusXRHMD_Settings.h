@@ -74,6 +74,9 @@ namespace OculusXRHMD
 				/** Whether Anchors can be used with the app */
 				uint64 bAnchorSupportEnabled : 1;
 
+				/** Whether Anchor Sharing can be used with the app */
+				uint64 bAnchorSharingEnabled : 1;
+
 				/** Whether Scene can be used with the app */
 				uint64 bSceneSupportEnabled : 1;
 
@@ -134,6 +137,8 @@ namespace OculusXRHMD
 
 		bool bLateLatching;
 		bool bSupportExperimentalFeatures;
+
+		EProcessorFavor ProcessorFavor;
 
 	public:
 		FSettings();

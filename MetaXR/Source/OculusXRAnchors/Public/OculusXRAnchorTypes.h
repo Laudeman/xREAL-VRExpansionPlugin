@@ -7,6 +7,7 @@ LICENSE file in the root directory of this source tree.
 */
 
 #pragma once
+#include <memory>
 
 #include "OculusXRAnchorTypes.generated.h"
 
@@ -128,7 +129,7 @@ enum class EOculusXRSpaceQueryFilterType : uint8
 {
 	None = 0 UMETA(DisplayName = "No Filter"),
 	FilterByIds = 1 UMETA(DisplayName = "Filter queries by UUIDs"),
-	FilterByComponentType = 2 UMETA(DisplayName = "Filter queries by component type")
+	FilterByComponentType = 2 UMETA(DisplayName = "Filter queries by component type"),
 };
 
 // This is used as a bit-mask
@@ -159,6 +160,7 @@ enum class EOculusXRSpaceComponentType : uint8
 	RoomLayout = 6 UMETA(DisplayName = "RoomLayout"),
 	SpaceContainer = 7 UMETA(DisplayName = "SpaceContainer"),
 	Undefined = 8 UMETA(DisplayName = "Not defined"),
+	TriangleMesh = 9 UMETA(DisplayName = "TriangleMesh"),
 };
 
 USTRUCT(BlueprintType)
@@ -218,3 +220,4 @@ public:
 	TArray<FOculusXRUUID> Uuids;						// used if filtering by UUIDs
 	TArray<EOculusXRSpaceComponentType> ComponentTypes; // used if filtering by component types
 };
+

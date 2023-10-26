@@ -95,3 +95,24 @@ bool UOculusXRRoomLayoutManagerComponent::GetRoomLayout(FOculusXRUInt64 Space, F
 	return bSuccess;
 }
 
+bool UOculusXRRoomLayoutManagerComponent::LoadTriangleMesh(FOculusXRUInt64 Space, UProceduralMeshComponent* Mesh, bool CreateCollision) const
+{
+	ensure(Mesh);
+	TArray<FVector> Vertices;
+	TArray<int32> Triangles;
+
+	bool Success = OculusXRAnchors::FOculusXRRoomLayoutManager::GetSpaceTriangleMesh(Space, Vertices, Triangles);
+	if (!Success)
+	{
+		return false;
+	}
+
+	// Mesh->bUseAsyncCooking = true;
+	TArray<FVector> EmptyNormals;
+	TArray<FVector2D> EmptyUV;
+	TArray<FColor> EmptyVertexColors;
+	TArray<FProcMeshTangent> EmptyTangents;
+	Mesh->CreateMeshSection(0, Vertices, Triangles, EmptyNormals, EmptyUV, EmptyVertexColors, EmptyTangents, CreateCollision);
+
+	return true;
+}

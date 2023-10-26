@@ -18,12 +18,24 @@ enum EOculusAsset
 {
 	LeftTouchRiftS,
 	RightTouchRiftS,
+	LeftTouchQuest2,
+	RightTouchQuest2,
+	LeftTouchQuestPro,
+	RightTouchQuestPro,
+	LeftTouchQuest3,
+	RightTouchQuest3,
 	OculusAssetTotal
 };
 
 FSoftObjectPath FOculusAssetDirectory::AssetListing[OculusAssetTotal] = {
 	FString(TEXT("/OculusXR/Meshes/LeftTouchForQuestRiftSController.LeftTouchForQuestRiftSController")),
-	FString(TEXT("/OculusXR/Meshes/RightTouchForQuestRiftSController.RightTouchForQuestRiftSController"))
+	FString(TEXT("/OculusXR/Meshes/RightTouchForQuestRiftSController.RightTouchForQuestRiftSController")),
+	FString(TEXT("/OculusXR/Meshes/LeftTouchForQuest2.LeftTouchForQuest2")),
+	FString(TEXT("/OculusXR/Meshes/RightTouchForQuest2.RightTouchForQuest2")),
+	FString(TEXT("/OculusXR/Meshes/LeftMetaQuestTouchPro.LeftMetaQuestTouchPro")),
+	FString(TEXT("/OculusXR/Meshes/RightMetaQuestTouchPro.RightMetaQuestTouchPro")),
+	FString(TEXT("/OculusXR/Meshes/LeftMetaQuestTouchPlus.LeftMetaQuestTouchPlus")),
+	FString(TEXT("/OculusXR/Meshes/RightMetaQuestTouchPlus.RightMetaQuestTouchPlus")),
 };
 
 #if WITH_EDITORONLY_DATA
@@ -90,11 +102,33 @@ namespace OculusAssetManager_Impl
 
 	static FRenderableDevice RenderableDevices[] = {
 #if PLATFORM_ANDROID
-		{ ovrpNode_HandLeft, ovrpSystemHeadset_Oculus_Quest, ovrpSystemHeadset_Oculus_Quest_2, FOculusAssetDirectory::AssetListing[LeftTouchRiftS] },
-		{ ovrpNode_HandRight, ovrpSystemHeadset_Oculus_Quest, ovrpSystemHeadset_Oculus_Quest_2, FOculusAssetDirectory::AssetListing[RightTouchRiftS] },
+		//Quest 1 & 2
+		{ ovrpNode_HandLeft, ovrpSystemHeadset_Oculus_Quest, ovrpSystemHeadset_Oculus_Quest_2, FOculusAssetDirectory::AssetListing[LeftTouchQuest2] },
+		{ ovrpNode_HandRight, ovrpSystemHeadset_Oculus_Quest, ovrpSystemHeadset_Oculus_Quest_2, FOculusAssetDirectory::AssetListing[RightTouchQuest2] },
+
+		//Quest Pro
+		{ ovrpNode_HandLeft, ovrpSystemHeadset_Meta_Quest_Pro, ovrpSystemHeadset_Meta_Quest_Pro, FOculusAssetDirectory::AssetListing[LeftTouchQuestPro] },
+		{ ovrpNode_HandRight, ovrpSystemHeadset_Meta_Quest_Pro, ovrpSystemHeadset_Meta_Quest_Pro, FOculusAssetDirectory::AssetListing[RightTouchQuestPro] },
+
+		//Quest 3
+		{ ovrpNode_HandLeft, ovrpSystemHeadset_Meta_Quest_3, ovrpSystemHeadset_Meta_Quest_3, FOculusAssetDirectory::AssetListing[LeftTouchQuest3] },
+		{ ovrpNode_HandRight, ovrpSystemHeadset_Meta_Quest_3, ovrpSystemHeadset_Meta_Quest_3, FOculusAssetDirectory::AssetListing[RightTouchQuest3] },
 #else
-		{ ovrpNode_HandLeft, ovrpSystemHeadset_Rift_S, ovrpSystemHeadset_Oculus_Link_Quest_2, FOculusAssetDirectory::AssetListing[LeftTouchRiftS] },
-		{ ovrpNode_HandRight, ovrpSystemHeadset_Rift_S, ovrpSystemHeadset_Oculus_Link_Quest_2, FOculusAssetDirectory::AssetListing[RightTouchRiftS] },
+		//PC - Rift S
+		{ ovrpNode_HandLeft, ovrpSystemHeadset_Rift_S, ovrpSystemHeadset_Rift_S, FOculusAssetDirectory::AssetListing[LeftTouchRiftS] },
+		{ ovrpNode_HandRight, ovrpSystemHeadset_Rift_S, ovrpSystemHeadset_Rift_S, FOculusAssetDirectory::AssetListing[RightTouchRiftS] },
+
+		//PC - Quest 1 & 2
+		{ ovrpNode_HandLeft, ovrpSystemHeadset_Oculus_Link_Quest, ovrpSystemHeadset_Oculus_Link_Quest_2, FOculusAssetDirectory::AssetListing[LeftTouchQuest2] },
+		{ ovrpNode_HandRight, ovrpSystemHeadset_Oculus_Link_Quest, ovrpSystemHeadset_Oculus_Link_Quest_2, FOculusAssetDirectory::AssetListing[RightTouchQuest2] },
+
+		//PC - Quest Pro
+		{ ovrpNode_HandLeft, ovrpSystemHeadset_Meta_Link_Quest_Pro, ovrpSystemHeadset_Meta_Link_Quest_Pro, FOculusAssetDirectory::AssetListing[LeftTouchQuestPro] },
+		{ ovrpNode_HandRight, ovrpSystemHeadset_Meta_Link_Quest_Pro, ovrpSystemHeadset_Meta_Link_Quest_Pro, FOculusAssetDirectory::AssetListing[RightTouchQuestPro] },
+
+		//Quest 3
+		{ ovrpNode_HandLeft, ovrpSystemHeadset_Meta_Link_Quest_3, ovrpSystemHeadset_Meta_Link_Quest_3, FOculusAssetDirectory::AssetListing[LeftTouchQuest3] },
+		{ ovrpNode_HandRight, ovrpSystemHeadset_Meta_Link_Quest_3, ovrpSystemHeadset_Meta_Link_Quest_3, FOculusAssetDirectory::AssetListing[RightTouchQuest3] },
 #endif
 	};
 
@@ -161,7 +195,7 @@ FOculusAssetManager::~FOculusAssetManager()
 	if (ResourceHolder)
 	{
 		ResourceHolder->ConditionalBeginDestroy();
-		ResourceHolder = NULL;
+		ResourceHolder = nullptr;
 	}
 
 	IModularFeatures::Get().UnregisterModularFeature(IXRSystemAssets::GetModularFeatureName(), this);
