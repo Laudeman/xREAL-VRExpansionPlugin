@@ -6,6 +6,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "VRExpansionFunctionLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "Components/StaticMeshComponent.h"
 #include "xREAL_VRCharacter.h"
 #include "NavigationSystem.h"
 
@@ -15,6 +16,93 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
     PrimaryActorTick.bStartWithTickEnabled = false;
     PrimaryActorTick.bCanEverTick = true;
     bNetLoadOnClient = false;
+
+    TeleportLaunchVelocity = 1200.0f;
+    LaserBeamMaxDistance = 5000.0f;
+    RotOffset = FRotator(0.0f, -60.0f, 0.0f);
+
+    Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
+    RootComponent = Scene;
+
+    // Setting up ArcSpline and LaserSpline
+    ArcSpline = CreateDefaultSubobject<USplineComponent>(TEXT("ArcSpline"));
+    ArcSpline->SetupAttachment(Scene);
+    LaserSpline = CreateDefaultSubobject<USplineComponent>(TEXT("LaserSpline"));
+    LaserSpline->SetupAttachment(Scene);
+
+    // Setting up ArcEndPoint
+    ArcEndPoint = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ArcEndPoint"));
+    ArcEndPoint->SetupAttachment(Scene);
+    ArcEndPoint->SetRelativeScale3D(FVector(.15f, .15f, .15f));
+    ArcEndPoint->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"))));
+    ArcEndPoint->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/M_ArcEndpoint.M_ArcEndpoint'"))));
+    ArcEndPoint->SetVisibility(false);
+    ArcEndPoint->SetGenerateOverlapEvents(false);
+    ArcEndPoint->SetCollisionProfileName(FName("NoCollision"));
+
+    // Setting up LaserBeamEndPoint
+    LaserBeamEndPoint = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LaserBeamEndPoint"));
+    LaserBeamEndPoint->SetupAttachment(Scene);
+    LaserBeamEndPoint->SetRelativeScale3D(FVector(.02f, .02f, .02f));
+    LaserBeamEndPoint->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"))));
+    LaserBeamEndPoint->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/LaserBeamSplineMat.LaserBeamSplineMat'"))));
+    LaserBeamEndPoint->SetGenerateOverlapEvents(false);
+    LaserBeamEndPoint->SetCollisionProfileName(FName("NoCollision"));
+    LaserBeamEndPoint->SetHiddenInGame(true);
+
+    // Setting up TeleportCylinder
+    TeleportCylinder = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TeleportCylinder"));
+    TeleportCylinder->SetupAttachment(Scene);
+    TeleportCylinder->SetRelativeScale3D(FVector(.75f, .75f, 1.0f));
+    TeleportCylinder->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'")))); 
+    TeleportCylinder->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/MI_TeleportCylinderPreview.MI_TeleportCylinderPreview'"))));
+    TeleportCylinder->SetGenerateOverlapEvents(false);
+    TeleportCylinder->SetCanEverAffectNavigation(false);
+    TeleportCylinder->SetCollisionProfileName(FName("NoCollision"));
+
+    Ring = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Ring"));
+    Ring->SetupAttachment(TeleportCylinder);
+    Ring->SetRelativeScale3D(FVector(.5f, .5f, .15f));
+    Ring->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/SM_FatCylinder.SM_FatCylinder'"))));
+    Ring->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/M_ArcEndPoint.M_ArcEndPoint'"))));
+    Ring->SetGenerateOverlapEvents(false);
+    Ring->SetCollisionProfileName(FName("NoCollision"));
+
+    Arrow = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Arrow"));
+    Arrow->SetupAttachment(TeleportCylinder);
+    Arrow->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeaconDirection.BeaconDirection'"))));
+    Arrow->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/M_ArcEndPoint.M_ArcEndPoint'"))));
+    Arrow->SetGenerateOverlapEvents(false);
+    Arrow->SetCollisionProfileName(FName("NoCollision"));
+
+    FinalFacingArrow = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FinalFacingArrow"));
+    FinalFacingArrow->SetupAttachment(Arrow);
+    FinalFacingArrow->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeaconDirection.BeaconDirection'"))));
+    FinalFacingArrow->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/LaserBeamSplineMat.LaserBeamSplineMat'"))));
+    FinalFacingArrow->SetGenerateOverlapEvents(false);
+    FinalFacingArrow->SetCollisionProfileName(FName("NoCollision"));
+    FinalFacingArrow->SetHiddenInGame(true);
+
+    // Setting up LaserBeam
+    LaserBeam = CreateDefaultSubobject<USplineMeshComponent>(TEXT("LaserBeam"));
+    LaserBeam->SetupAttachment(Scene);
+    LaserBeam->SetMobility(EComponentMobility::Movable);
+    LaserBeam->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"))));
+    LaserBeam->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/LaserBeamSplineMat.LaserBeamSplineMat'"))));
+    // Set Start pos tangent end pos and end tangent of the spline mesh
+    LaserBeam->SetStartAndEnd(FVector(0.0f, 0.0f, 0.0f), FVector(1.0f, 0.0f, 0.0f), FVector(1.0f, 0.0f, 0.0f), FVector(1.0f, 0.0f, 0.0f), true);
+    LaserBeam->SetGenerateOverlapEvents(false);
+    LaserBeam->SetCollisionProfileName(FName("NoCollision"));
+    LaserBeam->SetHiddenInGame(true);
+
+    // Setting up WidgetInteraction
+    WidgetInteraction = CreateDefaultSubobject<UWidgetInteractionComponent>(TEXT("WidgetInteraction"));
+    WidgetInteraction->SetupAttachment(LaserBeam);
+    WidgetInteraction->InteractionSource = EWidgetInteractionSource::Custom;
+    WidgetInteraction->SetAutoActivate(false);
+
+    // Setting up PhysicsTossManager
+    PhysicsTossManager = CreateDefaultSubobject<UPhysicsTossManager>(TEXT("PhysicsTossManager"));
 }
 
 void ATeleportController::BeginPlay()

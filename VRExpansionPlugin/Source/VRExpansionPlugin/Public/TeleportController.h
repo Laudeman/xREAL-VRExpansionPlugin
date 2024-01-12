@@ -121,47 +121,47 @@ public:
 	TObjectPtr<UHapticFeedbackEffect_Base> TeleportHapticEffect;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<USplineComponent> LaserSpline;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> LaserBeamEndPoint;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> FinalFacingArrow;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UWidgetInteractionComponent> WidgetInteraction;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<USplineMeshComponent> LaserBeam;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> Arrow;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<USplineComponent> ArcSpline;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> Ring;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> TeleportCylinder;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> ArcEndPoint;
 
 	/** Please add a variable description */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<USceneComponent> Scene;
 
 	/** Please add a variable description */
