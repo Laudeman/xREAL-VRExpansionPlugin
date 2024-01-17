@@ -27,21 +27,25 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	// Serverside Toss Custom Event
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Default")
+	void ServersideToss(UPrimitiveComponent* TargetObject);
+
 	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Laser")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Laser")
 	void SetLaserBeamActive(bool LaserBeamActive);
 
 	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Teleportation")
 	void ActivateTeleporter();
 
 	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Teleportation")
 	void DisableTeleporter();
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
-	void TraceTeleportDestination(bool& Success, TArray<FVector>& TracePoints, FVector& NavMeshLocation, FVector& TraceLocation, FVector CurrentTraceStart, bool HitSurface, int32 NrOfSegments, TArray<FVector>& UsedTracePoints, double ProjectNavExtends);
+	void TraceTeleportDestination(bool& Success, TArray<FVector>& TracePoints, FVector& NavMeshLocation, FVector& TraceLocation);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
@@ -64,11 +68,11 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 	void GetTeleWorldLocAndForwardVector(FVector& WorldLoc, FVector& ForwardVector);
 
 	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void IfOverWidget_Use(bool bPressed, bool& WasOverWidget);
 
 	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void InitController();
 
 	/** Please add a function description */
@@ -105,12 +109,15 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void CancelTracking();
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void CreateTeleportationArc();
+
 
 protected:
 	/** TODO: Change this back to a private function, had to switch it to protected in order to use it as BlueprintNativeEvent.*/
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Laser")
-	void UpdateLaserBeam(double Deltatime, FVector SmoothedLoc, EDrawDebugTrace::Type DrawType);
+	void UpdateLaserBeam(float Deltatime);
 public:
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")

@@ -147,6 +147,12 @@ void ATeleportController::BeginPlay()
 void ATeleportController::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    UpdateLaserBeam(DeltaTime);
+    if (IsTeleporterActive) 
+    {
+        CreateTeleportationArc();
+    }
 }
 
 void ATeleportController::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -155,6 +161,12 @@ void ATeleportController::EndPlay(const EEndPlayReason::Type EndPlayReason)
     ClearArc();
     ClearLaserBeam();
     DisableWidgetActivation();
+}
+
+void ATeleportController::ServersideToss_Implementation(UPrimitiveComponent* TargetObject)
+{
+    PhysicsTossManager->ServersideToss(TargetObject, OwningMotionController);
+
 }
 
 void ATeleportController::SetLaserBeamActive_Implementation(bool LaserBeamActive)
@@ -218,7 +230,7 @@ void ATeleportController::DisableTeleporter_Implementation()
     }
 }
 
-void ATeleportController::TraceTeleportDestination_Implementation(bool &Success, TArray<FVector> &TracePoints, FVector &NavMeshLocation, FVector &TraceLocation, FVector CurrentTraceStart, bool HitSurface, int32 NrOfSegments, TArray<FVector>& UsedTracePoints, double ProjectNavExtends)
+void ATeleportController::TraceTeleportDestination_Implementation(bool &Success, TArray<FVector> &TracePoints, FVector &NavMeshLocation, FVector &TraceLocation)
 {
     FVector worldLocation;
     FVector forwardVector;
@@ -233,6 +245,7 @@ void ATeleportController::TraceTeleportDestination_Implementation(bool &Success,
     FVector projectedLocation;
     //ANavigationData* navData;
     //UNavigationQueryFilter navQueryFilter;
+    float ProjectNavExtends = 500.0f;
     bool isSuccessfulProjection = UNavigationSystemV1::K2_ProjectPointToNavigation(this, hitLocation, projectedLocation,  nullptr, nullptr, FVector(ProjectNavExtends));
     NavMeshLocation = projectedLocation;
     TraceLocation = hitLocation;
@@ -435,7 +448,7 @@ void ATeleportController::FilterGrabspline_Implementation(UPARAM(ref) TArray<FVe
     }
 }
 
-void ATeleportController::UpdateLaserBeam_Implementation(double Deltatime, FVector SmoothedLoc, EDrawDebugTrace::Type DrawType)
+void ATeleportController::UpdateLaserBeam_Implementation(float Deltatime)
 {
     if (IsLaserBeamActive)
     {
@@ -565,4 +578,25 @@ void ATeleportController::TossToHand_Implementation()
 void ATeleportController::CancelTracking_Implementation()
 {
     PhysicsTossManager->CancelToss();
+}
+
+void ATeleportController::CreateTeleportationArc_Implementation()
+{
+    TArray<FVector> tracePoints;
+    FVector navMeshLocation;
+    FVector traceLocation;
+
+    TraceTeleportDestination(IsValidTeleportDestination, tracePoints, navMeshLocation, traceLocation);
+
+    TeleportCylinder->SetVisibility(IsValidTeleportDestination, true);
+
+    if (IsValidTeleportDestination)
+    {
+        //Line Trace for Objects
+        FHitResult hitResult;
+        FVector worldLocation;
+        FVector forwardVector;
+        GetTeleWorldLocAndForwardVector(worldLocation, forwardVector);
+    }
+
 }
