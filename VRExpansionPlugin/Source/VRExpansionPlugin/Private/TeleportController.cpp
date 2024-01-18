@@ -263,15 +263,16 @@ void ATeleportController::ClearArc_Implementation()
     ArcSpline->ClearSplinePoints();
 }
 
-void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation, UPARAM(ref) TArray<FVector> &SplinePoints, FVector WorldLocation, FVector ForwardVector, int32 PointDiffNum)
+void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation, UPARAM(ref) TArray<FVector> &SplinePoints)
 {
+    FVector worldLocation;
+    FVector forwardVector;
+    int pointDiffNum = 0;
     ArcSpline->ClearSplinePoints(true);
     if (!FoundValidLocation)
     {
         // Create Small Stub line when we failed to find a teleport location
         SplinePoints.Empty();
-        FVector worldLocation;
-        FVector forwardVector;
         GetTeleWorldLocAndForwardVector(worldLocation, forwardVector);
         SplinePoints.Add(worldLocation);
         SplinePoints.Add(worldLocation + (forwardVector * 20.0f));
@@ -285,8 +286,8 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
     int splinePointsLastIndex = ArcSpline->GetNumberOfSplinePoints() - 1;
     if (SplineMeshes.Num() < ArcSpline->GetNumberOfSplinePoints())
     {
-        PointDiffNum = splinePointsLastIndex - SplineMeshes.Num();
-        for (int i = 0; i <= PointDiffNum; i++)
+        pointDiffNum = splinePointsLastIndex - SplineMeshes.Num();
+        for (int i = 0; i <= pointDiffNum; i++)
         {
             // Add new cylinder mesh
            USplineMeshComponent* smc = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass()); 
@@ -593,10 +594,40 @@ void ATeleportController::CreateTeleportationArc_Implementation()
     if (IsValidTeleportDestination)
     {
         //Line Trace for Objects
-        FHitResult hitResult;
-        FVector worldLocation;
-        FVector forwardVector;
-        GetTeleWorldLocAndForwardVector(worldLocation, forwardVector);
+        FHitResult outHitResult;
+        FCollisionQueryParams collisionParams;
+        collisionParams.AddIgnoredActor(this);
+        FVector downwardVector = navMeshLocation + FVector(0.0f, 0.0f, -200.0f);
+
+        bool bHit = GetWorld()->LineTraceSingleByObjectType( outHitResult, navMeshLocation, downwardVector, FCollisionObjectQueryParams::AllStaticObjects, collisionParams);
+
+        if (bHit)
+        {
+            FVector newCylinderLocation = navMeshLocation;
+
+            if (outHitResult.bBlockingHit)
+            {
+                newCylinderLocation = outHitResult.ImpactPoint;
+            }
+
+            TeleportCylinder->SetWorldLocation(newCylinderLocation, false, nullptr, ETeleportType::TeleportPhysics);
+            LastValidTeleportLocation = newCylinderLocation;
+            
+        }
+
+
     }
+
+    // Rumble Controller when a valid teleport location is found
+    if ( (IsValidTeleportDestination && !bLastFrameValidDestination) || (!IsValidTeleportDestination && bLastFrameValidDestination))
+    {
+        RumbleController(0.3f);
+    }
+
+    bLastFrameValidDestination = IsValidTeleportDestination;
+
+    UpdateArcSpline(IsValidTeleportDestination, tracePoints);
+
+    UpdateArcEndpoint(traceLocation, IsValidTeleportDestination);
 
 }

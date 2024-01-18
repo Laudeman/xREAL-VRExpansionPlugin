@@ -53,7 +53,7 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
-	void UpdateArcSpline(bool FoundValidLocation, UPARAM(ref) TArray<FVector>& SplinePoints, FVector WorldLocation, FVector ForwardVector, int32 PointDiffNum);
+	void UpdateArcSpline(bool FoundValidLocation, UPARAM(ref) TArray<FVector>& SplinePoints);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
