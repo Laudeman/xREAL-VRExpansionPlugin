@@ -118,7 +118,7 @@ void ATeleportController::BeginPlay()
         LaserSpline->AttachToComponent(OwningMotionController, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
         LaserBeam->AttachToComponent(OwningMotionController, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
         LaserBeamEndPoint->AttachToComponent(OwningMotionController, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
-        LaserBeamEndPoint->SetRelativeScale3D(FVector(.2f, .2f, .2f));
+        LaserBeamEndPoint->SetRelativeScale3D(FVector(.02f, .02f, .02f));
 
         if (OwningMotionController->IsLocallyControlled())
         {
@@ -291,8 +291,13 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
         {
             // Add new cylinder mesh
            USplineMeshComponent* smc = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass()); 
+           smc->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"))));
+           //smc->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'"))));
+           smc->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/M_SplineArcMat.M_SplineArcMat'"))));
            // Make sure that scene is the right attachment object
-           smc->AttachToComponent(Scene, FAttachmentTransformRules::KeepRelativeTransform);
+           smc->SetMobility(EComponentMobility::Movable);
+           smc->AttachToComponent(Scene, FAttachmentTransformRules::KeepWorldTransform);
+           smc->SetRelativeTransform(FTransform::Identity);
            smc->SetGenerateOverlapEvents(false);
            smc->SetCollisionEnabled(ECollisionEnabled::NoCollision);
            SplineMeshes.Add(smc);
@@ -307,6 +312,17 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
             startTangent = ArcSpline->GetTangentAtSplinePoint(i, ESplineCoordinateSpace::Local);
             endTangent = ArcSpline->GetTangentAtSplinePoint(i+1, ESplineCoordinateSpace::Local);
             SplineMeshes[i]->SetStartAndEnd(SplinePoints[i], startTangent, SplinePoints[i+1], endTangent, true);
+            // Draw a debug line for the spline mesh
+            DrawDebugLine(
+                GetWorld(), 
+                SplinePoints[i], 
+                SplinePoints[i+1], 
+                FColor::Red,  // Color of the line
+                false, // Persistent lines
+                -1,    // Time (negative means infinite)
+                0,     // DepthPriority
+                2      // Thickness
+            );
         }
         else
         {
