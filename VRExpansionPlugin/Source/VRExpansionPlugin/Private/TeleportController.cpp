@@ -235,22 +235,40 @@ void ATeleportController::TraceTeleportDestination_Implementation(bool &Success,
     FVector worldLocation;
     FVector forwardVector;
     GetTeleWorldLocAndForwardVector(worldLocation, forwardVector);
-    FHitResult hitResult;
-    FVector lastTraceDestination;
-    TArray<TEnumAsByte<EObjectTypeQuery>> objectTypes = { EObjectTypeQuery::ObjectTypeQuery1 };
 
-    UGameplayStatics::Blueprint_PredictProjectilePath_ByObjectType(this, hitResult, TracePoints, lastTraceDestination, worldLocation, forwardVector * TeleportLaunchVelocity, true, 0.0f, objectTypes, false, TArray<AActor*>(), EDrawDebugTrace::None, 0.0f, 30.0f, 2.0f, 0.0f);
+    // Setup Projectile Path Parameters
+    FPredictProjectilePathParams Params;
+    Params.StartLocation = worldLocation;
+    Params.LaunchVelocity = forwardVector * TeleportLaunchVelocity;
+    Params.bTraceWithCollision = true;
+    Params.ProjectileRadius = 0.0f; // Set this based on your needs
+    Params.ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic)); // Adjust this based on your collision settings
+    Params.SimFrequency = 30.0f; // Simulation frequency
+    Params.MaxSimTime = 2.0f; // Adjust simulation time as needed
 
-    FVector hitLocation = hitResult.Location;
+    // Perform the projectile path prediction
+    FPredictProjectilePathResult Result;
+    bool isPathColliding = UGameplayStatics::PredictProjectilePath(this, Params, Result);
+
+    // Extract Trace Points and Last Hit Location
+    TracePoints.Empty();
+    for (const FPredictProjectilePathPointData& PointData : Result.PathData)
+    {
+        TracePoints.Add(PointData.Location);
+    }
+    FVector HitLocation = Result.HitResult.Location;
+
+    // Project Point to Navigation
     FVector projectedLocation;
-    //ANavigationData* navData;
-    //UNavigationQueryFilter navQueryFilter;
-    float ProjectNavExtends = 500.0f;
-    bool isSuccessfulProjection = UNavigationSystemV1::K2_ProjectPointToNavigation(this, hitLocation, projectedLocation,  nullptr, nullptr, FVector(ProjectNavExtends));
+    float projectNavExtends = 500.0f;
+    UNavigationSystemV1::K2_ProjectPointToNavigation(this, HitLocation, projectedLocation, nullptr, nullptr, FVector(projectNavExtends));
+
+    // Set Output Parameters
     NavMeshLocation = projectedLocation;
-    TraceLocation = hitLocation;
-    Success = (hitLocation != projectedLocation && projectedLocation != FVector::ZeroVector && isSuccessfulProjection);
-    
+    TraceLocation = HitLocation;
+    Success = ((HitLocation != projectedLocation) && (projectedLocation != FVector::ZeroVector) && isPathColliding);
+    //Print Success value to screen
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Success: %s"), Success ? TEXT("True") : TEXT("False")));
 }
 
 void ATeleportController::ClearArc_Implementation()
@@ -276,28 +294,28 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
         GetTeleWorldLocAndForwardVector(worldLocation, forwardVector);
         SplinePoints.Add(worldLocation);
         SplinePoints.Add(worldLocation + (forwardVector * 20.0f));
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Valid Teleport Location Found"));
 
     }
+
     for (FVector splinePoint : SplinePoints)
     {
         ArcSpline->AddSplinePoint(splinePoint, ESplineCoordinateSpace::Local, true);
     }
     ArcSpline->SetSplinePointType(SplinePoints.Num() - 1, ESplinePointType::CurveClamped, true);
+
     int splinePointsLastIndex = ArcSpline->GetNumberOfSplinePoints() - 1;
     if (SplineMeshes.Num() < ArcSpline->GetNumberOfSplinePoints())
     {
         pointDiffNum = splinePointsLastIndex - SplineMeshes.Num();
         for (int i = 0; i <= pointDiffNum; i++)
         {
-            // Add new cylinder mesh
            USplineMeshComponent* smc = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass()); 
            smc->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"))));
-           //smc->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/Engine/BasicShapes/Cylinder.Cylinder'"))));
            smc->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/M_SplineArcMat.M_SplineArcMat'"))));
-           // Make sure that scene is the right attachment object
+           smc->RegisterComponent();
            smc->SetMobility(EComponentMobility::Movable);
-           smc->AttachToComponent(Scene, FAttachmentTransformRules::KeepWorldTransform);
-           smc->SetRelativeTransform(FTransform::Identity);
+           smc->SetWorldTransform(FTransform::Identity);
            smc->SetGenerateOverlapEvents(false);
            smc->SetCollisionEnabled(ECollisionEnabled::NoCollision);
            SplineMeshes.Add(smc);
@@ -312,17 +330,6 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
             startTangent = ArcSpline->GetTangentAtSplinePoint(i, ESplineCoordinateSpace::Local);
             endTangent = ArcSpline->GetTangentAtSplinePoint(i+1, ESplineCoordinateSpace::Local);
             SplineMeshes[i]->SetStartAndEnd(SplinePoints[i], startTangent, SplinePoints[i+1], endTangent, true);
-            // Draw a debug line for the spline mesh
-            DrawDebugLine(
-                GetWorld(), 
-                SplinePoints[i], 
-                SplinePoints[i+1], 
-                FColor::Red,  // Color of the line
-                false, // Persistent lines
-                -1,    // Time (negative means infinite)
-                0,     // DepthPriority
-                2      // Thickness
-            );
         }
         else
         {
@@ -359,7 +366,7 @@ void ATeleportController::GetTeleportDestination_Implementation(bool RelativeToH
 void ATeleportController::GetTeleWorldLocAndForwardVector_Implementation(FVector &WorldLoc, FVector &ForwardVector)
 {
     WorldLoc = OwningMotionController->GetComponentLocation();
-    ForwardVector = UKismetMathLibrary::GetForwardVector(RotOffset + OwningMotionController->GetComponentRotation());
+    ForwardVector = UKismetMathLibrary::GetForwardVector(UKismetMathLibrary::ComposeRotators(RotOffset, OwningMotionController->GetComponentRotation()));
 }
 
 void ATeleportController::IfOverWidget_Use_Implementation(bool bPressed, bool &WasOverWidget)
