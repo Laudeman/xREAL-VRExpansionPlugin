@@ -297,5 +297,9 @@ public:
 	UPROPERTY(BlueprintAssignable, EditDefaultsOnly, Category="Default")
 	FNotUseHeldObjectDispatch NotUseHeldObjectDispatch;
 
+private:
+	UStaticMesh* TeleportSplineMesh;
+	UMaterialInterface* TeleportSplineMaterial;
+
 
 };

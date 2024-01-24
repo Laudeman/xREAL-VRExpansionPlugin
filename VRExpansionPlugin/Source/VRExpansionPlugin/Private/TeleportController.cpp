@@ -9,6 +9,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "xREAL_VRCharacter.h"
 #include "NavigationSystem.h"
+#include "UObject/ConstructorHelpers.h"
+
 
 ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
@@ -103,6 +105,20 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
 
     // Setting up PhysicsTossManager
     PhysicsTossManager = CreateDefaultSubobject<UPhysicsTossManager>(TEXT("PhysicsTossManager"));
+
+    //Load Teleport Spline Assets
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> MaterialAsset(TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/M_SplineArcMat.M_SplineArcMat'"));
+    if (MeshAsset.Succeeded() && MaterialAsset.Succeeded())
+    {
+        TeleportSplineMesh = MeshAsset.Object;
+        TeleportSplineMaterial = MaterialAsset.Object;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to load Teleport Spline Assets"));
+    }
+
 }
 
 void ATeleportController::BeginPlay()
@@ -142,6 +158,8 @@ void ATeleportController::BeginPlay()
         playerController->InputComponent->BindAction("UseHeldObjectRight", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectRight);
 
     }
+
+    
 }
 
 void ATeleportController::Tick(float DeltaTime)
@@ -243,32 +261,29 @@ void ATeleportController::TraceTeleportDestination_Implementation(bool &Success,
     Params.bTraceWithCollision = true;
     Params.ProjectileRadius = 0.0f; // Set this based on your needs
     Params.ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic)); // Adjust this based on your collision settings
-    Params.SimFrequency = 30.0f; // Simulation frequency
+    Params.SimFrequency = 60.0f; // Simulation frequency
     Params.MaxSimTime = 2.0f; // Adjust simulation time as needed
 
     // Perform the projectile path prediction
-    FPredictProjectilePathResult Result;
-    bool isPathColliding = UGameplayStatics::PredictProjectilePath(this, Params, Result);
+    FPredictProjectilePathResult result;
+    bool isPathColliding = UGameplayStatics::PredictProjectilePath(this, Params, result);
 
     // Extract Trace Points and Last Hit Location
-    TracePoints.Empty();
-    for (const FPredictProjectilePathPointData& PointData : Result.PathData)
+    for (const FPredictProjectilePathPointData& PointData : result.PathData)
     {
         TracePoints.Add(PointData.Location);
     }
-    FVector HitLocation = Result.HitResult.Location;
+    FVector hitLocation = result.HitResult.Location;
 
     // Project Point to Navigation
     FVector projectedLocation;
     float projectNavExtends = 500.0f;
-    UNavigationSystemV1::K2_ProjectPointToNavigation(this, HitLocation, projectedLocation, nullptr, nullptr, FVector(projectNavExtends));
+    UNavigationSystemV1::K2_ProjectPointToNavigation(this, hitLocation, projectedLocation, nullptr, nullptr, FVector(projectNavExtends));
 
     // Set Output Parameters
     NavMeshLocation = projectedLocation;
-    TraceLocation = HitLocation;
-    Success = ((HitLocation != projectedLocation) && (projectedLocation != FVector::ZeroVector) && isPathColliding);
-    //Print Success value to screen
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Success: %s"), Success ? TEXT("True") : TEXT("False")));
+    TraceLocation = hitLocation;
+    Success = ((hitLocation != projectedLocation) && (projectedLocation != FVector::ZeroVector) && isPathColliding);
 }
 
 void ATeleportController::ClearArc_Implementation()
@@ -294,8 +309,6 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
         GetTeleWorldLocAndForwardVector(worldLocation, forwardVector);
         SplinePoints.Add(worldLocation);
         SplinePoints.Add(worldLocation + (forwardVector * 20.0f));
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Valid Teleport Location Found"));
-
     }
 
     for (FVector splinePoint : SplinePoints)
@@ -311,13 +324,18 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
         for (int i = 0; i <= pointDiffNum; i++)
         {
            USplineMeshComponent* smc = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass()); 
-           smc->SetStaticMesh(Cast<UStaticMesh>(StaticLoadObject(UStaticMesh::StaticClass(), NULL, TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"))));
-           smc->SetMaterial(0, Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), NULL, TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/M_SplineArcMat.M_SplineArcMat'"))));
-           smc->RegisterComponent();
+           
+           if (TeleportSplineMesh && TeleportSplineMaterial)
+           {
+                smc->SetStaticMesh(TeleportSplineMesh);
+                smc->SetMaterial(0, TeleportSplineMaterial);
+           }
+           smc->SetStartScale(FVector2D(4.0f, 4.0f));
+           smc->SetEndScale(FVector2D(4.0f, 4.0f));
+           smc->SplineBoundaryMax = 1.0f;
            smc->SetMobility(EComponentMobility::Movable);
-           smc->SetWorldTransform(FTransform::Identity);
-           smc->SetGenerateOverlapEvents(false);
            smc->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+           smc->RegisterComponent();
            SplineMeshes.Add(smc);
         }
     }
@@ -333,7 +351,7 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
         }
         else
         {
-            SplineMeshes[i]->SetVisibility(false);
+            SplineMeshes[i]->SetVisibility(true);
         }
     }
 }
