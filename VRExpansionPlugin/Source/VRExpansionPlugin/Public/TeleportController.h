@@ -109,7 +109,6 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void CancelTracking();
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void CreateTeleportationArc();
 
 

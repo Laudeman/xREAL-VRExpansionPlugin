@@ -150,10 +150,10 @@ void ATeleportController::BeginPlay()
 
     if (playerController->IsValidLowLevel())
     {
-        playerController->InputComponent->BindAction("TeleportLeft", IE_Pressed, this, &ATeleportController::ActivateTeleporter);
-        playerController->InputComponent->BindAction("TeleportLeft", IE_Released, this, &ATeleportController::DisableTeleporter);
-        playerController->InputComponent->BindAction("TeleportRight", IE_Pressed, this, &ATeleportController::ActivateTeleporter);
-        playerController->InputComponent->BindAction("TeleportRight", IE_Released, this, &ATeleportController::DisableTeleporter);
+        //playerController->InputComponent->BindAction("TeleportLeft", IE_Pressed, this, &ATeleportController::ActivateTeleporter);
+        //playerController->InputComponent->BindAction("TeleportLeft", IE_Released, this, &ATeleportController::DisableTeleporter);
+        //playerController->InputComponent->BindAction("TeleportRight", IE_Pressed, this, &ATeleportController::ActivateTeleporter);
+        //playerController->InputComponent->BindAction("TeleportRight", IE_Released, this, &ATeleportController::DisableTeleporter);
         playerController->InputComponent->BindAction("UseHeldObjectLeft", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectLeft);
         playerController->InputComponent->BindAction("UseHeldObjectRight", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectRight);
 
@@ -223,6 +223,7 @@ void ATeleportController::SetLaserBeamActive_Implementation(bool LaserBeamActive
 
 void ATeleportController::ActivateTeleporter_Implementation()
 {
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ActivateTeleporter"));
     // Set the flag, rest of the teleportation is handled in the tick function
     IsTeleporterActive = true;
 
@@ -260,8 +261,8 @@ void ATeleportController::TraceTeleportDestination_Implementation(bool &Success,
     Params.LaunchVelocity = forwardVector * TeleportLaunchVelocity;
     Params.bTraceWithCollision = true;
     Params.ProjectileRadius = 0.0f; // Set this based on your needs
-    Params.ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic)); // Adjust this based on your collision settings
-    Params.SimFrequency = 60.0f; // Simulation frequency
+    Params.ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery1); // Adjust this based on your collision settings
+    Params.SimFrequency = 30.0f; // Simulation frequency
     Params.MaxSimTime = 2.0f; // Adjust simulation time as needed
 
     // Perform the projectile path prediction
@@ -351,7 +352,7 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
         }
         else
         {
-            SplineMeshes[i]->SetVisibility(true);
+            SplineMeshes[i]->SetVisibility(false);
         }
     }
 }
@@ -384,7 +385,8 @@ void ATeleportController::GetTeleportDestination_Implementation(bool RelativeToH
 void ATeleportController::GetTeleWorldLocAndForwardVector_Implementation(FVector &WorldLoc, FVector &ForwardVector)
 {
     WorldLoc = OwningMotionController->GetComponentLocation();
-    ForwardVector = UKismetMathLibrary::GetForwardVector(UKismetMathLibrary::ComposeRotators(RotOffset, OwningMotionController->GetComponentRotation()));
+    FRotator controllerRotation = OwningMotionController->GetComponentRotation();
+    ForwardVector = UKismetMathLibrary::GetForwardVector(UKismetMathLibrary::ComposeRotators(RotOffset, controllerRotation));
 }
 
 void ATeleportController::IfOverWidget_Use_Implementation(bool bPressed, bool &WasOverWidget)
@@ -622,18 +624,18 @@ void ATeleportController::CancelTracking_Implementation()
     PhysicsTossManager->CancelToss();
 }
 
-void ATeleportController::CreateTeleportationArc_Implementation()
+void ATeleportController::CreateTeleportationArc()
 {
     TArray<FVector> tracePoints;
     FVector navMeshLocation;
     FVector traceLocation;
 
     TraceTeleportDestination(IsValidTeleportDestination, tracePoints, navMeshLocation, traceLocation);
-
     TeleportCylinder->SetVisibility(IsValidTeleportDestination, true);
 
     if (IsValidTeleportDestination)
     {
+
         //Line Trace for Objects
         FHitResult outHitResult;
         FCollisionQueryParams collisionParams;
