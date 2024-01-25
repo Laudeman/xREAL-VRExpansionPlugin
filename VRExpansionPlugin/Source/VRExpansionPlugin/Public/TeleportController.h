@@ -297,8 +297,12 @@ public:
 	FNotUseHeldObjectDispatch NotUseHeldObjectDispatch;
 
 private:
+
 	UStaticMesh* TeleportSplineMesh;
 	UMaterialInterface* TeleportSplineMaterial;
+
+	UStaticMesh* LaserSplineMesh;
+	UMaterialInterface* LaserSplineMaterial;
 
 
 };

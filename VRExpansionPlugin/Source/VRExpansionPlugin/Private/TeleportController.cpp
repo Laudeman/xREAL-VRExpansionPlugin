@@ -18,6 +18,7 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
     PrimaryActorTick.bStartWithTickEnabled = false;
     PrimaryActorTick.bCanEverTick = true;
     bNetLoadOnClient = false;
+    SetTickGroup(ETickingGroup::TG_PostPhysics); //Temporary fix for the lagging of the teleport arc
 
     TeleportLaunchVelocity = 1200.0f;
     LaserBeamMaxDistance = 5000.0f;
@@ -119,6 +120,19 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
         UE_LOG(LogTemp, Warning, TEXT("Failed to load Teleport Spline Assets"));
     }
 
+    //Load Laser Spline Assets
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> MaterialAsset(TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/LaserBeamSplineMat.LaserBeamSplineMat'"));
+    if (MeshAsset.Succeeded() && MaterialAsset.Succeeded())
+    {
+        TeleportSplineMesh = MeshAsset.Object;
+        TeleportSplineMaterial = MaterialAsset.Object;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to load Laser Spline Assets"));
+    }
+
 }
 
 void ATeleportController::BeginPlay()
@@ -150,13 +164,8 @@ void ATeleportController::BeginPlay()
 
     if (playerController->IsValidLowLevel())
     {
-        //playerController->InputComponent->BindAction("TeleportLeft", IE_Pressed, this, &ATeleportController::ActivateTeleporter);
-        //playerController->InputComponent->BindAction("TeleportLeft", IE_Released, this, &ATeleportController::DisableTeleporter);
-        //playerController->InputComponent->BindAction("TeleportRight", IE_Pressed, this, &ATeleportController::ActivateTeleporter);
-        //playerController->InputComponent->BindAction("TeleportRight", IE_Released, this, &ATeleportController::DisableTeleporter);
         playerController->InputComponent->BindAction("UseHeldObjectLeft", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectLeft);
         playerController->InputComponent->BindAction("UseHeldObjectRight", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectRight);
-
     }
 
     
@@ -223,7 +232,6 @@ void ATeleportController::SetLaserBeamActive_Implementation(bool LaserBeamActive
 
 void ATeleportController::ActivateTeleporter_Implementation()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ActivateTeleporter"));
     // Set the flag, rest of the teleportation is handled in the tick function
     IsTeleporterActive = true;
 
@@ -455,11 +463,15 @@ void ATeleportController::CreateLaserSpline_Implementation()
     {
         for (int i = 0; i < NumberOfLaserSplinePoints; i++)
         {
-           // TODO: specify the actual spline mesh to use, maybe a variable that is set in the blueprint?
            USplineMeshComponent* smc = NewObject<USplineMeshComponent>(this, USplineMeshComponent::StaticClass()); 
-           smc->AttachToComponent(Scene, FAttachmentTransformRules::KeepRelativeTransform);
+           if (LaserSplineMesh && LaserSplineMaterial)
+           {
+                smc->SetStaticMesh(LaserSplineMesh);
+                smc->SetMaterial(0, LaserSplineMaterial);
+           }
            smc->SetCollisionEnabled(ECollisionEnabled::NoCollision);
            smc->SetGenerateOverlapEvents(false);
+           smc->AttachToComponent(LaserSpline, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
            LaserSplineMeshes.Add(smc);
         }
     }
@@ -560,7 +572,7 @@ void ATeleportController::UpdateLaserBeam_Implementation(float Deltatime)
 void ATeleportController::DisableWidgetActivation_Implementation()
 {
     WidgetInteraction->SetCustomHitResult(FHitResult());
-    // There was a delay here in the blueprint, could cause problems?
+    // Fix: There was a delay here in the blueprint, could cause problems?
     WidgetInteraction->Deactivate();
 }
 
