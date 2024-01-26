@@ -108,12 +108,12 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
     PhysicsTossManager = CreateDefaultSubobject<UPhysicsTossManager>(TEXT("PhysicsTossManager"));
 
     //Load Teleport Spline Assets
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"));
-    static ConstructorHelpers::FObjectFinder<UMaterialInterface> MaterialAsset(TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/M_SplineArcMat.M_SplineArcMat'"));
-    if (MeshAsset.Succeeded() && MaterialAsset.Succeeded())
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> TeleportMeshAsset(TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> TeleportMaterialAsset(TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/Materials/M_SplineArcMat.M_SplineArcMat'"));
+    if (TeleportMeshAsset.Succeeded() && TeleportMaterialAsset.Succeeded())
     {
-        TeleportSplineMesh = MeshAsset.Object;
-        TeleportSplineMaterial = MaterialAsset.Object;
+        TeleportSplineMesh = TeleportMeshAsset.Object;
+        TeleportSplineMaterial = TeleportMaterialAsset.Object;
     }
     else
     {
@@ -121,12 +121,12 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
     }
 
     //Load Laser Spline Assets
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshAsset(TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"));
-    static ConstructorHelpers::FObjectFinder<UMaterialInterface> MaterialAsset(TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/LaserBeamSplineMat.LaserBeamSplineMat'"));
-    if (MeshAsset.Succeeded() && MaterialAsset.Succeeded())
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> LaserMeshAsset(TEXT("StaticMesh'/VRExpansionPlugin/VRE/Core/Character/Meshes/BeamMesh.BeamMesh'"));
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> LaserMaterialAsset(TEXT("Material'/VRExpansionPlugin/VRE/Core/Character/LaserBeamSplineMat.LaserBeamSplineMat'"));
+    if (LaserMeshAsset.Succeeded() && LaserMaterialAsset.Succeeded())
     {
-        TeleportSplineMesh = MeshAsset.Object;
-        TeleportSplineMaterial = MaterialAsset.Object;
+        LaserSplineMesh = LaserMeshAsset.Object;
+        LaserSplineMaterial = LaserMaterialAsset.Object;
     }
     else
     {

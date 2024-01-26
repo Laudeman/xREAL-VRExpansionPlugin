@@ -31,7 +31,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Gripping")
-	void IsALocalGrip(EGripMovementReplicationSettings GripRepType, bool& IsLocal);
+	bool IsALocalGrip(EGripMovementReplicationSettings GripRepType);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Utility")
@@ -39,7 +39,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
-	void TryToGrabObject(UObject* ObjectToTryToGrab, FTransform WorldTransform, UGripMotionControllerComponent* Hand, UGripMotionControllerComponent* OtherHand, bool IsSlotGrip, FGameplayTag GripSecondaryTag, FName GripBoneName, FName SlotName, bool IsSecondaryGrip, bool& Gripped, bool ImplementsInterface);
+	void TryToGrabObject(UObject* ObjectToTryToGrab, FTransform WorldTransform, UGripMotionControllerComponent* Hand, UGripMotionControllerComponent* OtherHand, bool IsSlotGrip, FGameplayTag GripSecondaryTag, FName GripBoneName, FName SlotName, bool IsSecondaryGrip, bool& Gripped);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")

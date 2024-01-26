@@ -2,6 +2,7 @@
 
 
 #include "xREAL_VRCharacter.h"
+#include "Components/TextRenderComponent.h"
 
 AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super() {
@@ -9,16 +10,46 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
     bReplicates = true;
 }
 
-void AxREAL_VRCharacter::IsALocalGrip_Implementation(EGripMovementReplicationSettings GripRepType, bool &IsLocal)
+bool AxREAL_VRCharacter::IsALocalGrip_Implementation(EGripMovementReplicationSettings GripRepType)
 {
+    if (GripRepType == EGripMovementReplicationSettings::ClientSide_Authoritive || GripRepType == EGripMovementReplicationSettings::ClientSide_Authoritive_NoRep)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void AxREAL_VRCharacter::WriteToLog_Implementation(bool Left, FString &Text)
 {
+    if (Left)
+    {
+        TextL->SetText(FText::FromString(Text));
+    }
+    else
+    {
+        TextR->SetText(FText::FromString(Text));
+    }
 }
 
-void AxREAL_VRCharacter::TryToGrabObject_Implementation(UObject *ObjectToTryToGrab, FTransform WorldTransform, UGripMotionControllerComponent *Hand, UGripMotionControllerComponent *OtherHand, bool IsSlotGrip, FGameplayTag GripSecondaryTag, FName GripBoneName, FName SlotName, bool IsSecondaryGrip, bool &Gripped, bool ImplementsInterface)
+void AxREAL_VRCharacter::TryToGrabObject_Implementation(UObject *ObjectToTryToGrab, FTransform WorldTransform, UGripMotionControllerComponent *Hand, UGripMotionControllerComponent *OtherHand, bool IsSlotGrip, FGameplayTag GripSecondaryTag, FName GripBoneName, FName SlotName, bool IsSecondaryGrip, bool &Gripped)
 {
+    bool implementsInterface = ObjectToTryToGrab->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass());
+
+    if (Hand->GetIsObjectHeld(ObjectToTryToGrab))
+    {
+        Gripped = false;
+        return;
+    }
+    else
+    {
+        if (OtherHand->GetIsObjectHeld(ObjectToTryToGrab))
+        {
+            //Cast object to grip interface
+        }
+    }
 }
 
 void AxREAL_VRCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const {
