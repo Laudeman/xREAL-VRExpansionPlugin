@@ -49,6 +49,26 @@ void AxREAL_VRCharacter::TryToGrabObject_Implementation(UObject *ObjectToTryToGr
         if (OtherHand->GetIsObjectHeld(ObjectToTryToGrab))
         {
             //Cast object to grip interface
+            IVRGripInterface *objectToTryToGrab = Cast<IVRGripInterface>(ObjectToTryToGrab);
+            if (objectToTryToGrab && objectToTryToGrab->AllowsMultipleGrips())
+            {
+                
+            }
+            else
+            {
+                if (IsSecondaryGrip || !IsSlotGrip)
+                {
+                    bool isSecondaryGripped;
+                    TryToSecondaryGripObject(Hand, OtherHand, ObjectToTryToGrab, GripSecondaryTag, implementsInterface, WorldTransform, SlotName, IsSlotGrip, isSecondaryGripped);
+                    if (isSecondaryGripped)
+                    {
+                        Gripped = true;
+                        return;
+                    }
+                }
+                OtherHand->DropObject(ObjectToTryToGrab, 0);
+            }
+
         }
     }
 }
@@ -200,7 +220,7 @@ void AxREAL_VRCharacter::ShouldGripComponent_Implementation(UPrimitiveComponent 
 {
 }
 
-void AxREAL_VRCharacter::TryToSecondaryGripObject_Implementation(UGripMotionControllerComponent *Hand, UGripMotionControllerComponent *OtherHand, UObject *ObjectToTryToGrab, FGameplayTag GripSecondaryTag, bool ObjectImplementsInterface, FTransform RelativeSecondaryTransform, FName SlotName, bool bHadSlot, bool &SecondaryGripped, ESecondaryGripType SecondaryGripType)
+void AxREAL_VRCharacter::TryToSecondaryGripObject_Implementation(UGripMotionControllerComponent *Hand, UGripMotionControllerComponent *OtherHand, UObject *ObjectToTryToGrab, FGameplayTag GripSecondaryTag, bool ObjectImplementsInterface, FTransform RelativeSecondaryTransform, FName SlotName, bool bHadSlot, bool &SecondaryGripped)
 {
 }
 
