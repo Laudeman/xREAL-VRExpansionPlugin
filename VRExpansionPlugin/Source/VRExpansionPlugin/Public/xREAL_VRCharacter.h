@@ -295,7 +295,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Locomotion")
-	void MapThumbToWorld(FRotator PadRotation, UGripMotionControllerComponent* CallingHand, FVector& Direction);
+	FVector MapThumbToWorld(FRotator PadRotation, UGripMotionControllerComponent* CallingHand);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent)

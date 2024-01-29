@@ -3,6 +3,7 @@
 
 #include "xREAL_VRCharacter.h"
 #include "Components/TextRenderComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super() {
@@ -305,20 +306,52 @@ void AxREAL_VRCharacter::HandleCurrentMovementInput_Implementation(double Moveme
 
 void AxREAL_VRCharacter::HandleTurnInput_Implementation(double InputAxis, double InputValue)
 {
+    if (InputAxis > 0.0f)
+    {
+        InputValue = bRightHandMovement ? 
+    }
+    else
+    {
+        if (CurrentControllerTypeXR == EBPOpenXRControllerDeviceType::DT_ViveController || CurrentControllerTypeXR == EBPOpenXRControllerDeviceType::DT_ViveProController)
+        {
+            bTurningFlag = false;
+        }
+    }
 }
 
 void AxREAL_VRCharacter::SetMovementHands_Implementation(bool RightHandForMovement)
 {
+    bRightHandMovement = RightHandForMovement;
+    const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EVRMovementMode"), true);
+    if (EnumPtr)
+    {
+        //TODO: Check to make sure this works
+        WriteToLog(!bRightHandMovement, EnumPtr->GetNameStringByValue((int64)CurrentMovementMode.GetValue()));
+    }
+    FString text = bTurnModeIsSnap ? "Snap Turn" : "Smooth Turn";
+    WriteToLog(bRightHandMovement, text);
 }
 
-void AxREAL_VRCharacter::MapThumbToWorld_Implementation(FRotator PadRotation, UGripMotionControllerComponent *CallingHand, FVector &Direction)
+FVector AxREAL_VRCharacter::MapThumbToWorld_Implementation(FRotator PadRotation, UGripMotionControllerComponent *CallingHand)
 {
+    FRotator combinedRotators = UKismetMathLibrary::ComposeRotators(PadRotation, CallingHand->GetComponentRotation());
+    FVector projectedVector = UKismetMathLibrary::ProjectVectorOnToPlane(combinedRotators.Vector(), GetVRUpVector());
+    projectedVector.Normalize();
+    return projectedVector;
 }
 
 void AxREAL_VRCharacter::OnRep_RightControllerOffset_Implementation()
 {
+    if (!IsLocallyControlled())
+    {
+        RepositionHandElements(true, RightControllerOffset);
+    }
 }
 
 void AxREAL_VRCharacter::OnRep_LeftControllerOffset_Implementation()
 {
+    if (!IsLocallyControlled())
+    {
+        RepositionHandElements(false, LeftControllerOffset);
+    }
 }
