@@ -183,7 +183,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
-	void TryToSecondaryGripObject(UGripMotionControllerComponent* Hand, UGripMotionControllerComponent* OtherHand, UObject* ObjectToTryToGrab, FGameplayTag GripSecondaryTag, bool ObjectImplementsInterface, FTransform RelativeSecondaryTransform, FName SlotName, bool bHadSlot, bool& SecondaryGripped, ESecondaryGripType SecondaryGripType);
+	void TryToSecondaryGripObject(UGripMotionControllerComponent* Hand, UGripMotionControllerComponent* OtherHand, UObject* ObjectToTryToGrab, FGameplayTag GripSecondaryTag, bool ObjectImplementsInterface, FTransform RelativeSecondaryTransform, FName SlotName, bool bHadSlot, bool& SecondaryGripped);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Movement|Vel")
