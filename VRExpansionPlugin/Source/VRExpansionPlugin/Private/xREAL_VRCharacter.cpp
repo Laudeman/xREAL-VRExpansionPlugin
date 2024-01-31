@@ -3,12 +3,42 @@
 
 #include "xREAL_VRCharacter.h"
 #include "Components/TextRenderComponent.h"
+#include "EnhancedInputComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super() {
+AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer): Super() 
+{
 	//: Super(ObjectInitializer.SetDefaultSubobjectClass<UVRRootComponent>(ACharacter::CapsuleComponentName).SetDefaultSubobjectClass<UVRCharacterMovementComponent>(ACharacter::CharacterMovementComponentName)) {
     bReplicates = true;
+}
+
+void AxREAL_VRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) 
+{
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+    if (UEnhancedInputComponent* PlayerEnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+    {
+        MotionControllerThumbLeft_X = FindObject<UInputAction>(ANY_PACKAGE, TEXT("MotionControllerThumbLeft_X"));
+        if (MotionControllerThumbLeft_X)
+        {
+            PlayerEnhancedInputComponent->BindAction(MotionControllerThumbLeft_X, ETriggerEvent::Triggered, this, &AxREAL_VRCharacter::MotionControllerThumbLeft_X_Handler);
+        }
+        MotionControllerThumbLeft_Y = FindObject<UInputAction>(ANY_PACKAGE, TEXT("MotionControllerThumbLeft_Y"));
+        if (MotionControllerThumbLeft_Y)
+        {
+            PlayerEnhancedInputComponent->BindAction(MotionControllerThumbLeft_Y, ETriggerEvent::Triggered, this, &AxREAL_VRCharacter::MotionControllerThumbLeft_Y_Handler);
+        }
+        MotionControllerThumbRight_X = FindObject<UInputAction>(ANY_PACKAGE, TEXT("MotionControllerThumbRight_X"));
+        if (MotionControllerThumbRight_X)
+        {
+            PlayerEnhancedInputComponent->BindAction(MotionControllerThumbRight_X, ETriggerEvent::Triggered, this, &AxREAL_VRCharacter::MotionControllerThumbRight_X_Handler);
+        }
+        MotionControllerThumbRight_Y = FindObject<UInputAction>(ANY_PACKAGE, TEXT("MotionControllerThumbRight_Y"));
+        if (MotionControllerThumbRight_Y)
+        {
+            PlayerEnhancedInputComponent->BindAction(MotionControllerThumbRight_Y, ETriggerEvent::Triggered, this, &AxREAL_VRCharacter::MotionControllerThumbRight_Y_Handler);
+        }
+    }
 }
 
 bool AxREAL_VRCharacter::IsALocalGrip_Implementation(EGripMovementReplicationSettings GripRepType)
@@ -164,12 +194,34 @@ void AxREAL_VRCharacter::SetTeleporterActive_Implementation(EControllerHand Hand
     }
 }
 
-void AxREAL_VRCharacter::HandleSlidingMovement_Implementation(EVRMovementMode MovementMode, UGripMotionControllerComponent *CallingHand, bool bThumbPadInfluencesDirection, double ThumbY, double ThumbX, FVector Direction)
+void AxREAL_VRCharacter::HandleSlidingMovement_Implementation(EVRMovementMode MovementMode, UGripMotionControllerComponent *CallingHand, bool bThumbPadInfluencesDirection)
 {
+    EControllerHand handType;
+    CallingHand->GetHandType(handType);
+
+    float thumbY = 0.0f;
+    float thumbX = 0.0f;
+
+    switch (handType)
+    {
+        case EControllerHand::Left:
+            thumbY = MotionControllerThumbLeft_Y_Value; 
+            thumbX = MotionControllerThumbLeft_X_Value;
+            break;
+        case EControllerHand::Right:
+            thumbY = MotionControllerThumbRight_Y_Value;
+            thumbX = MotionControllerThumbRight_X_Value;
+            break;
+    }
+    //TODO FINISH THIS NOW
+    //bool  
+    //CalcPadRotationAndMagnitude(thumbY, thumbX, DPadVelocityScaler, SlidingMovementDeadZone, );
+    //if ()
 }
 
-void AxREAL_VRCharacter::CalcPadRotationAndMagnitude_Implementation(double YAxis, double XAxis, double OptMagnitudeScaler, double OptionalDeadzone, FRotator &Rotation, double &Magnitude, bool &WasValid)
+void AxREAL_VRCharacter::CalcPadRotationAndMagnitude_Implementation(float YAxis, float XAxis, float OptMagnitudeScaler, float OptionalDeadzone, FRotator &Rotation, float &Magnitude, bool &WasValid)
 {
+
 }
 
 void AxREAL_VRCharacter::UpdateTeleportRotations_Implementation()
@@ -320,15 +372,58 @@ void AxREAL_VRCharacter::CheckUseSecondaryAttachment_Implementation(UGripMotionC
 {
 }
 
-void AxREAL_VRCharacter::HandleCurrentMovementInput_Implementation(double MovementInput, UGripMotionControllerComponent *MovingHand, UGripMotionControllerComponent *OtherHand)
+void AxREAL_VRCharacter::HandleCurrentMovementInput_Implementation(float MovementInput, UGripMotionControllerComponent *MovingHand, UGripMotionControllerComponent *OtherHand)
 {
+    bool isNotSeatedOrClimbing = VRMovementReference->GetReplicatedMovementMode() != EVRConjoinedMovementModes::C_VRMOVE_Seated && VRMovementReference->GetReplicatedMovementMode() != EVRConjoinedMovementModes::C_VRMOVE_Climbing;
+    if (MovementInput > 0.0f && isNotSeatedOrClimbing && !DisableMovement)
+    {
+        switch (CurrentMovementMode)
+        {
+            case EVRMovementMode::DPadPress_ControllerOrient:
+            case EVRMovementMode::DPadPress_HMDOrient:
+            
+                HandleSlidingMovement(CurrentMovementMode, MovingHand, bThumbPadEffectsSlidingDirection); //TODO
+
+        }
+    }
 }
 
-void AxREAL_VRCharacter::HandleTurnInput_Implementation(double InputAxis, double InputValue)
+void AxREAL_VRCharacter::HandleTurnInput_Implementation(float InputAxis, float InputValue)
 {
     if (InputAxis > 0.0f)
     {
-        InputValue = bRightHandMovement ? 
+        InputValue = bRightHandMovement ? MotionControllerThumbLeft_X_Value : MotionControllerThumbRight_X_Value;
+
+        bool isTurningInputGreaterThanThreshold = FMath::Abs(InputValue) > TurningActivationThreshold;
+        
+        //Snap Turn
+        if (bTurnModeIsSnap)
+        {
+            if (bTurningFlag)
+            {
+                if (!isTurningInputGreaterThanThreshold)
+                {
+                    bTurningFlag = false;
+                }
+            }
+            else
+            {
+                if (isTurningInputGreaterThanThreshold)
+                {
+                    bTurningFlag = true;
+                    VRMovementReference->PerformMoveAction_SnapTurn(FMath::Sign(InputValue) * SnapTurnAngle, EVRMoveActionVelocityRetention::VRMOVEACTION_Velocity_Turn, true, true, true);
+                }
+            }
+        }
+
+        //Smooth Turn
+        else
+        {
+            if (isTurningInputGreaterThanThreshold)
+            {
+                VRMovementReference->PerformMoveAction_SnapTurn(FMath::Sign(InputValue) * SmoothTurnSpeed * GetWorld()->GetDeltaSeconds(), EVRMoveActionVelocityRetention::VRMOVEACTION_Velocity_Turn, false, false, true);
+            }
+        }
     }
     else
     {
@@ -342,11 +437,12 @@ void AxREAL_VRCharacter::HandleTurnInput_Implementation(double InputAxis, double
 void AxREAL_VRCharacter::SetMovementHands_Implementation(bool RightHandForMovement)
 {
     bRightHandMovement = RightHandForMovement;
-    const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EVRMovementMode"), true);
+    const UEnum* EnumPtr = StaticEnum<EMovementMode>();
     if (EnumPtr)
     {
+        FString enumValueName = EnumPtr->GetNameStringByValue(static_cast<int32>(CurrentMovementMode));
         //TODO: Check to make sure this works
-        WriteToLog(!bRightHandMovement, EnumPtr->GetNameStringByValue((int64)CurrentMovementMode.GetValue()));
+        WriteToLog(!bRightHandMovement, enumValueName);
     }
     FString text = bTurnModeIsSnap ? "Snap Turn" : "Smooth Turn";
     WriteToLog(bRightHandMovement, text);
@@ -374,4 +470,26 @@ void AxREAL_VRCharacter::OnRep_LeftControllerOffset_Implementation()
     {
         RepositionHandElements(false, LeftControllerOffset);
     }
+}
+
+//Input Handlers
+
+void AxREAL_VRCharacter::ControllerMovementRight_Handler(const FInputActionValue& Value)
+{
+
+}
+
+void AxREAL_VRCharacter::ControllerMovementLeft_Handler(const FInputActionValue& Value)
+{
+
+}
+
+void AxREAL_VRCharacter::MotionControllerThumbLeft_X_Handler(const FInputActionValue& Value)
+{
+    MotionControllerThumbLeft_X_Value = Value.Get<float>();
+}
+
+void AxREAL_VRCharacter::MotionControllerThumbRight_X_Handler(const FInputActionValue& Value)
+{
+    MotionControllerThumbRight_X_Value = Value.Get<float>();
 }

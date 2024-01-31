@@ -17,6 +17,7 @@ class USphereComponent;
 class UNoRepSphereComponent;
 class UTextRenderComponent;
 class UVOIPTalker;
+class UInputAction;
 
 /**
  * 
@@ -28,6 +29,8 @@ class VREXPANSIONPLUGIN_API AxREAL_VRCharacter : public AVRCharacter
 public:
 
 	AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Gripping")
@@ -115,7 +118,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Locomotion")
-	void HandleSlidingMovement(EVRMovementMode MovementMode, UGripMotionControllerComponent* CallingHand, bool bThumbPadInfluencesDirection, double ThumbY, double ThumbX, FVector Direction);
+	void HandleSlidingMovement(EVRMovementMode MovementMode, UGripMotionControllerComponent* CallingHand, bool bThumbPadInfluencesDirection);
 
 	/**
 	 * Calulates yaw rotation and magnitude from 0-1 of a -1 to 1 pad axis pair
@@ -123,7 +126,7 @@ public:
 	 * YAxis is automatically inverted
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Locomotion")
-	void CalcPadRotationAndMagnitude(double YAxis, double XAxis, double OptMagnitudeScaler, double OptionalDeadzone, FRotator& Rotation, double& Magnitude, bool& WasValid);
+	void CalcPadRotationAndMagnitude(float YAxis, float XAxis, float OptMagnitudeScaler, float OptionalDeadzone, FRotator& Rotation, float& Magnitude, bool& WasValid);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Teleport")
@@ -283,11 +286,11 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Movement")
-	void HandleCurrentMovementInput(double MovementInput, UGripMotionControllerComponent* MovingHand, UGripMotionControllerComponent* OtherHand);
+	void HandleCurrentMovementInput(float MovementInput, UGripMotionControllerComponent* MovingHand, UGripMotionControllerComponent* OtherHand);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Movement")
-	void HandleTurnInput(double InputAxis, double InputValue);
+	void HandleTurnInput(float InputAxis, float InputValue);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Movement")
@@ -304,7 +307,30 @@ public:
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent)
 	void OnRep_LeftControllerOffset();
+
+private:
+
+	// Input Handler Functions
+	UFUNCTION()
+	void ControllerMovementRight_Handler(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void ControllerMovementLeft_Handler(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void MotionControllerThumbLeft_X_Handler(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void MotionControllerThumbLeft_Y_Handler(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void MotionControllerThumbRight_X_Handler(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void MotionControllerThumbRight_Y_Handler(const FInputActionValue& Value);
+
 public:
+
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Movement")
 	double MinimumLowEndRipVelocity;
@@ -391,11 +417,11 @@ public:
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Movement")
-	TEnumAsByte<EVRMovementMode> CurrentMovementMode;
+	EVRMovementMode CurrentMovementMode;
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Movement")
-	TEnumAsByte<EVRMovementMode> MovementModeRight;
+	EVRMovementMode MovementModeRight;
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Movement")
@@ -431,11 +457,11 @@ public:
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Gripping")
-	TEnumAsByte<EGripState> HandStateLeft;
+	EGripState HandStateLeft;
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Gripping")
-	TEnumAsByte<EGripState> HandStateRight;
+	EGripState HandStateRight;
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Movement")
@@ -563,7 +589,7 @@ public:
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Gripping")
-	TArray<TEnumAsByte<EObjectTypeQuery> > CollisionToCheckDuringGrip;
+	TArray<TEnumAsByte<EObjectTypeQuery>> CollisionToCheckDuringGrip;
 
 	/** If true, will skip trace step of checking for components to grip */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Gripping")
@@ -685,7 +711,7 @@ public:
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Movement|Turning", meta=(MultiLine="true", UIMin="0", UIMax="1", ClampMin="0", ClampMax="1"))
-	double TurningActivationThreshold;
+	float TurningActivationThreshold;
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Movement|Turning", meta=(MultiLine="true"))
@@ -703,5 +729,31 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Movement")
 	bool bTwoHandMovement;
 
+private:
+
+	UPROPERTY()
+	float MotionControllerThumbLeft_X_Value;
+
+	UPROPERTY()
+	float MotionControllerThumbLeft_Y_Value;
+
+	UPROPERTY()
+	float MotionControllerThumbRight_X_Value;
+
+	UPROPERTY()
+	float MotionControllerThumbRight_Y_Value;
+
+	//Blueprint Input Actions
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* MotionControllerThumbLeft_X;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* MotionControllerThumbLeft_Y;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* MotionControllerThumbRight_X;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	UInputAction* MotionControllerThumbRight_Y;
 	
 };
