@@ -112,6 +112,23 @@ void AxREAL_VRCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & 
 
 void AxREAL_VRCharacter::GetNearestOverlappingObject_Implementation(UPrimitiveComponent *OverlapComponent, UGripMotionControllerComponent *Hand, FGameplayTagContainer RelevantGameplayTags, UObject *&NearestObject, bool &ImplementsInterface, FTransform &ObjectTransform, bool &CanBeClimbed, FName &BoneName, FVector &ImpactLoc, double NearestOverlap, UObject *NearestOverlappingObject, bool ImplementsVRGrip, FTransform WorldTransform, UPrimitiveComponent *HitComponent, uint8 LastGripPrio, FName NearestBoneName, FVector ImpactPoint)
 {
+    if (OverlapComponent->IsValidLowLevel())
+    {
+        if (bForceOverlapOnlyGripChecks)
+        {
+            FTransform overlapTransform = OverlapComponent->GetComponentTransform();
+            TArray<AActor*> actorsToIgnore = {this};
+            TArray<UPrimitiveComponent*> overlappingComponents;
+
+            bool bHasOverlaps = UKismetSystemLibrary::ComponentOverlapComponents(OverlapComponent, overlapTransform, CollisionToCheckDuringGrip, nullptr, actorsToIgnore, overlappingComponents);
+            
+        }
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("GripComponent is not valid"));
+        NearestObject = nullptr;
+    }
 }
 
 void AxREAL_VRCharacter::GetDPadMovementFacing_Implementation(EVRMovementMode MovementMode, UGripMotionControllerComponent *Hand, UGripMotionControllerComponent *OtherHand, FVector &ForwardVector, FVector &RightVector)
@@ -492,4 +509,14 @@ void AxREAL_VRCharacter::MotionControllerThumbLeft_X_Handler(const FInputActionV
 void AxREAL_VRCharacter::MotionControllerThumbRight_X_Handler(const FInputActionValue& Value)
 {
     MotionControllerThumbRight_X_Value = Value.Get<float>();
+}
+
+void AxREAL_VRCharacter::MotionControllerThumbLeft_Y_Handler(const FInputActionValue& Value)
+{
+    MotionControllerThumbLeft_Y_Value = Value.Get<float>();
+}
+
+void AxREAL_VRCharacter::MotionControllerThumbRight_Y_Handler(const FInputActionValue& Value)
+{
+    MotionControllerThumbRight_Y_Value = Value.Get<float>();
 }
