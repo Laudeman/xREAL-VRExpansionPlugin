@@ -174,7 +174,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Gripping")
-	void HasValidGripCollision(UPrimitiveComponent* Component, bool& IsValid);
+	bool HasValidGripCollision(UPrimitiveComponent* Component);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Vehicle")
@@ -182,7 +182,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
-	void ShouldGripComponent(UPrimitiveComponent* ComponentToCheck, uint8 GripPrioToCheckAgainst, bool bCheckAgainstPrior, FName BoneName, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent* CallingController, bool& ShouldGrip, UObject*& ObjectToGrip, bool& ObjectImplementsInterface, FTransform& ObjectsWorldTransform, uint8& GripPrio, AActor* OwningActor, bool ImplementsInterface);
+	bool ShouldGripComponent(UPrimitiveComponent* ComponentToCheck, uint8 GripPrioToCheckAgainst, bool bCheckAgainstPrior, FName BoneName, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent* CallingController, UObject*& ObjectToGrip, bool& ObjectImplementsInterface, FTransform& ObjectsWorldTransform, uint8& GripPrio, AActor* OwningActor, bool ImplementsInterface);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")

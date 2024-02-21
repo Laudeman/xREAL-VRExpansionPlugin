@@ -121,6 +121,23 @@ void AxREAL_VRCharacter::GetNearestOverlappingObject_Implementation(UPrimitiveCo
             TArray<UPrimitiveComponent*> overlappingComponents;
 
             bool bHasOverlaps = UKismetSystemLibrary::ComponentOverlapComponents(OverlapComponent, overlapTransform, CollisionToCheckDuringGrip, nullptr, actorsToIgnore, overlappingComponents);
+            if (bHasOverlaps)
+            {
+                for (int i = 0; i < overlappingComponents.Num(); i++)
+                {
+                    if (i == 0)
+                    {
+                        HitComponent = overlappingComponents[i];
+                    }
+                    if (HasValidGripCollision(overlappingComponents[i]))
+                    {
+                        if (ShouldGripComponent(overlappingComponents[i], LastGripPrio, i > 0, "None", RelevantGameplayTags, Hand, NearestOverlappingObject, ImplementsVRGrip, WorldTransform, LastGripPrio, this, ))
+                        {
+
+                        }
+                    }
+                }
+            }
             
         }
     }
@@ -277,7 +294,7 @@ void AxREAL_VRCharacter::CanObjectBeClimbed_Implementation(UPrimitiveComponent *
 {
 }
 
-void AxREAL_VRCharacter::HasValidGripCollision_Implementation(UPrimitiveComponent *Component, bool &IsValid)
+bool AxREAL_VRCharacter::HasValidGripCollision_Implementation(UPrimitiveComponent *Component)
 {
 }
 
@@ -285,7 +302,7 @@ void AxREAL_VRCharacter::SetVehicleMode_Implementation(bool IsInVehicleMode, boo
 {
 }
 
-void AxREAL_VRCharacter::ShouldGripComponent_Implementation(UPrimitiveComponent *ComponentToCheck, uint8 GripPrioToCheckAgainst, bool bCheckAgainstPrior, FName BoneName, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent *CallingController, bool &ShouldGrip, UObject *&ObjectToGrip, bool &ObjectImplementsInterface, FTransform &ObjectsWorldTransform, uint8 &GripPrio, AActor *OwningActor, bool ImplementsInterface)
+bool AxREAL_VRCharacter::ShouldGripComponent_Implementation(UPrimitiveComponent *ComponentToCheck, uint8 GripPrioToCheckAgainst, bool bCheckAgainstPrior, FName BoneName, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent *CallingController, UObject *&ObjectToGrip, bool &ObjectImplementsInterface, FTransform &ObjectsWorldTransform, uint8 &GripPrio, AActor *OwningActor, bool ImplementsInterface)
 {
 }
 
