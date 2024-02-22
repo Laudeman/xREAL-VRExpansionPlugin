@@ -182,7 +182,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
-	bool ShouldGripComponent(UPrimitiveComponent* ComponentToCheck, uint8 GripPrioToCheckAgainst, bool bCheckAgainstPrior, FName BoneName, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent* CallingController, UObject*& ObjectToGrip, bool& ObjectImplementsInterface, FTransform& ObjectsWorldTransform, uint8& GripPrio, AActor* OwningActor, bool ImplementsInterface);
+	bool ShouldGripComponent(UPrimitiveComponent* ComponentToCheck, uint8 GripPrioToCheckAgainst, bool bCheckAgainstPrior, FName BoneName, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent* CallingController, UObject*& ObjectToGrip, bool& ObjectImplementsInterface, FTransform& ObjectsWorldTransform, uint8& GripPrio);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
