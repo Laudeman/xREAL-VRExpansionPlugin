@@ -153,6 +153,8 @@ void ATeleportController::BeginPlay()
         if (OwningMotionController->IsLocallyControlled())
         {
             EnableInput(playerController);
+            playerController->InputComponent->BindAction("UseHeldObjectLeft", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectLeft);
+            playerController->InputComponent->BindAction("UseHeldObjectRight", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectRight);
             AVRCharacter* vrCharacter = Cast<AVRCharacter>(OwningMotionController->GetOwner());
             if (vrCharacter)
             {
@@ -162,13 +164,6 @@ void ATeleportController::BeginPlay()
         }
     }
 
-    if (playerController->IsValidLowLevel())
-    {
-        playerController->InputComponent->BindAction("UseHeldObjectLeft", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectLeft);
-        playerController->InputComponent->BindAction("UseHeldObjectRight", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectRight);
-    }
-
-    
 }
 
 void ATeleportController::Tick(float DeltaTime)
@@ -588,6 +583,9 @@ void ATeleportController::RumbleController_Implementation(float Intensity)
 
  void ATeleportController::StartedUseHeldObjectLeft_Implementation()
  {
+    //Debug Message
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("StartedUseHeldObjectLeft_Implementation"));
+
     EControllerHand hand;
     OwningMotionController->GetHandType(hand);
     if (hand == EControllerHand::Left)

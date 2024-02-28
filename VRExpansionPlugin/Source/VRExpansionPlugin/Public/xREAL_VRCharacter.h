@@ -48,6 +48,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
 	void GetNearestOverlappingObject(UPrimitiveComponent* OverlapComponent, UGripMotionControllerComponent* Hand, FGameplayTagContainer RelevantGameplayTags, UObject*& NearestObject, bool& ImplementsInterface, FTransform& ObjectTransform, bool& CanBeClimbed, FName& BoneName, FVector& ImpactLoc, double NearestOverlap, UObject* NearestOverlappingObject, bool ImplementsVRGrip, FTransform WorldTransform, UPrimitiveComponent* HitComponent, uint8 LastGripPrio, FName NearestBoneName, FVector ImpactPoint);
 
+	void PerformTraceForObjects(UPrimitiveComponent* OverlapComponent, UGripMotionControllerComponent* Hand, const FGameplayTagContainer& RelevantGameplayTags, UObject*& NearestObject, bool& ImplementsVRGrip, FTransform& WorldTransform, bool& CanBeClimbed, FName& NearestBoneName, FVector& ImpactPoint);
+
+	bool IsClimbingModeEnabled(UGripMotionControllerComponent *Hand);
+
+	void FallBackOnOverlap(UPrimitiveComponent *&OverlapComponent, UPrimitiveComponent *&HitComponent, UGripMotionControllerComponent *&Hand, FGameplayTagContainer RelevantGameplayTags, UObject *&NearestObject, UObject *&NearestOverlappingObject, bool &ImplementsVRGrip, FTransform &WorldTransform, bool &CanBeClimbed, FName &NearestBoneName, FVector &ImpactPoint, uint8 &LastGripPrio);
+
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Locomotion")
 	void GetDPadMovementFacing(EVRMovementMode MovementMode, UGripMotionControllerComponent* Hand, UGripMotionControllerComponent* OtherHand, FVector& ForwardVector, FVector& RightVector);
@@ -170,7 +176,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Climbing")
-	void CanObjectBeClimbed(UPrimitiveComponent* ObjectToCheck, bool& CanClimb);
+	bool CanObjectBeClimbed(UPrimitiveComponent* ObjectToCheck);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Gripping")
@@ -206,7 +212,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
-	void SelectObjectFromHitArray(UPARAM(ref) TArray<FHitResult>& Hits, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent* Hand, bool& bShouldGrip, bool& ObjectImplementsInterface, UObject*& ObjectToGrip, FTransform& WorldTransform, UPrimitiveComponent*& FirstPrimitiveHit, FName& BoneName, FVector& ImpactPoint, uint8 BestGripPrio, UObject* lOutObject, FTransform lOutTransform, bool lObjectImplementsInterface, bool lShouldGrip, UPrimitiveComponent* FirstHitPrimitive, FName LOutBoneName, FVector LImpactPoint);
+	void SelectObjectFromHitArray(UPARAM(ref) TArray<FHitResult>& Hits, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent* Hand, bool& bShouldGrip, bool& ObjectImplementsInterface, UObject*& ObjectToGrip, FTransform& WorldTransform, UPrimitiveComponent*& FirstPrimitiveHit, FName& BoneName, FVector& ImpactPoint);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")

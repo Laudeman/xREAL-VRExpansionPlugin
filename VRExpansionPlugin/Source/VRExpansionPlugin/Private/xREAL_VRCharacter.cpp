@@ -4,6 +4,7 @@
 #include "xREAL_VRCharacter.h"
 #include "Components/TextRenderComponent.h"
 #include "EnhancedInputComponent.h"
+#include "GameplayTagAssetInterface.h"
 #include "Kismet/KismetMathLibrary.h"
 
 AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer): Super() 
@@ -116,60 +117,11 @@ void AxREAL_VRCharacter::GetNearestOverlappingObject_Implementation(UPrimitiveCo
     {
         if (bForceOverlapOnlyGripChecks)
         {
-            FTransform overlapTransform = OverlapComponent->GetComponentTransform();
-            TArray<AActor*> actorsToIgnore = {this};
-            TArray<UPrimitiveComponent*> overlappingComponents;
-            // Fall back on overlap, being inside of an object can cause this.
-            bool bHasOverlaps = UKismetSystemLibrary::ComponentOverlapComponents(OverlapComponent, overlapTransform, CollisionToCheckDuringGrip, nullptr, actorsToIgnore, overlappingComponents);
-            if (bHasOverlaps)
-            {
-                for (int i = 0; i < overlappingComponents.Num(); i++)
-                {
-                    if (i == 0)
-                    {
-                        HitComponent = overlappingComponents[i];
-                    }
-                    if (HasValidGripCollision(overlappingComponents[i]))
-                    {
-                        UObject* nearestOverlappingObject;
-                        bool implementsVRGrip;
-                        FTransform worldTransform;
-                        uint8 lastGripPrio;
-                        if (ShouldGripComponent(overlappingComponents[i], LastGripPrio, i > 0, "None", RelevantGameplayTags, Hand, nearestOverlappingObject, implementsVRGrip, worldTransform, lastGripPrio))
-                        {
-                            NearestOverlappingObject = nearestOverlappingObject;
-                            ImplementsVRGrip = implementsVRGrip;
-                            WorldTransform = worldTransform;
-                            ImpactPoint = OverlapComponent->GetComponentLocation();
-                            LastGripPrio = lastGripPrio;
-                        }
-                    }
-                }
-            }
-            
+            FallBackOnOverlap(OverlapComponent, HitComponent, Hand, RelevantGameplayTags, NearestObject, NearestOverlappingObject, ImplementsVRGrip, WorldTransform, CanBeClimbed, NearestBoneName, ImpactPoint, LastGripPrio);
         }
         else
         {
-            FBoxSphereBounds overlapComponentBounds = OverlapComponent->Bounds;
-            FVector overlapComponentRotationVector = OverlapComponent->GetComponentRotation().Vector();
-            FVector gripVector = overlapComponentRotationVector * GripTraceLength;
-            FVector startTracePoint = overlapComponentBounds.Origin - gripVector;
-            FVector endTracePoint = overlapComponentBounds.Origin + gripVector;
-
-            float radius = overlapComponentBounds.SphereRadius;
-            TArray<AActor*> actorsToIgnore;
-            Hand->GetGrippedActors(actorsToIgnore);
-
-            FCollisionQueryParams queryParams = FCollisionQueryParams(FName(TEXT("GripOverlap")), true, this);
-            TArray<FHitResult> outHits;
-            ECollisionChannel vrTraceChannel = ECollisionChannel::ECC_GameTraceChannel1; //VR Trace Channel
-            bool bHasHits = GetWorld()->SweepMultiByChannel(outHits, startTracePoint, endTracePoint, FQuat::Identity, vrTraceChannel, \
-            FCollisionShape::MakeSphere(radius), queryParams);
-
-            if (bHasHits)
-            {
-                SelectObjectFromHitArray(outHits, RelevantGameplayTags, Hand, NearestObject, ImplementsInterface, NearestObject, ObjectTransform, HitComponent, BoneName, ImpactLoc, LastGripPrio, NearestObject, ObjectTransform, ImplementsInterface, CanBeClimbed, HitComponent, BoneName, ImpactLoc);
-            }
+            
         }
         // Return results
         NearestObject = NearestOverlappingObject;
@@ -186,7 +138,127 @@ void AxREAL_VRCharacter::GetNearestOverlappingObject_Implementation(UPrimitiveCo
         NearestObject = nullptr;
     }
 }
+bool AxREAL_VRCharacter::IsClimbingModeEnabled(UGripMotionControllerComponent *Hand)
+{
+    EControllerHand handType;
+    Hand->GetHandType(handType);
+    return ((handType == EControllerHand::Left && (CurrentMovementMode == EVRMovementMode::ClimbingMode || AlwaysAllowClimbing)) ||
+            (handType == EControllerHand::Right && (MovementModeRight == EVRMovementMode::ClimbingMode || AlwaysAllowClimbing)));
+}
+void AxREAL_VRCharacter::PerformTraceForObjects(UPrimitiveComponent* OverlapComponent, UGripMotionControllerComponent* Hand, const FGameplayTagContainer& RelevantGameplayTags, UObject*& NearestObject, bool& ImplementsVRGrip, FTransform& WorldTransform, bool& CanBeClimbed, FName& NearestBoneName, FVector& ImpactPoint)
+{
+    // Try to Trace for the object first - Preferred
+    FBoxSphereBounds overlapComponentBounds = OverlapComponent->Bounds;
+    FVector overlapComponentRotationVector = OverlapComponent->GetComponentRotation().Vector();
+    FVector gripVector = overlapComponentRotationVector * GripTraceLength;
+    FVector startTracePoint = overlapComponentBounds.Origin - gripVector;
+    FVector endTracePoint = overlapComponentBounds.Origin + gripVector;
 
+    float radius = overlapComponentBounds.SphereRadius;
+    TArray<AActor*> actorsToIgnore;
+    Hand->GetGrippedActors(actorsToIgnore);
+
+    FCollisionQueryParams queryParams = FCollisionQueryParams(FName(TEXT("GripOverlap")), true);
+    queryParams.AddIgnoredActors(actorsToIgnore);
+    TArray<FHitResult> outHits;
+    ECollisionChannel vrTraceChannel = ECollisionChannel::ECC_GameTraceChannel1; //VR Trace Channel
+    bool bHasHits = GetWorld()->SweepMultiByChannel(outHits, startTracePoint, endTracePoint, FQuat::Identity, vrTraceChannel, \
+    FCollisionShape::MakeSphere(radius), queryParams);
+
+    if (bHasHits)
+    {
+        // Can we grip one of the components, and filter by priority
+        bool shouldGrip, objectImplementsInterface;
+        UObject* objectToGrip;
+        FTransform worldTransform;
+        UPrimitiveComponent* firstPrimitiveHit;
+        FName boneName;
+        FVector impactPoint;
+        SelectObjectFromHitArray(outHits, RelevantGameplayTags, Hand, shouldGrip, objectImplementsInterface, objectToGrip, worldTransform, firstPrimitiveHit, boneName, impactPoint);
+        if (shouldGrip)
+        {
+            NearestOverlappingObject = objectToGrip;
+            ImplementsVRGrip = objectImplementsInterface;
+            WorldTransform = worldTransform;
+            ImpactPoint = impactPoint;
+            //TODO: Check if this works
+            if (IGameplayTagAssetInterface* GameplayTagAsset = Cast<IGameplayTagAssetInterface>(objectToGrip))
+            {
+                bool hasTag = GameplayTagAsset->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("Interactible.PerBoneGripping")));
+                if (hasTag)
+                {
+                    NearestBoneName = BoneName;
+                }
+                else
+                {
+                    NearestBoneName = "None";
+                }
+            }
+        }
+        else
+        {
+            HitComponent = firstPrimitiveHit;
+            if (!NearestOverlappingObject->IsValidLowLevel())
+            {
+            // Return climbable if not simulating and not grippable
+            
+                if (IsClimbingModeEnabled(Hand) && CanObjectBeClimbed(HitComponent))
+                {
+                    CanBeClimbed = true;
+                    NearestObject = HitComponent;
+                }
+            }
+        }
+    }
+    else
+    {
+        FallBackOnOverlap(OverlapComponent, HitComponent, Hand, RelevantGameplayTags, NearestObject, NearestOverlappingObject, ImplementsVRGrip, WorldTransform, CanBeClimbed, NearestBoneName, ImpactPoint, LastGripPrio);
+    }
+}
+
+void AxREAL_VRCharacter::FallBackOnOverlap(UPrimitiveComponent *&OverlapComponent, UPrimitiveComponent *&HitComponent, UGripMotionControllerComponent *&Hand, FGameplayTagContainer RelevantGameplayTags, UObject *&NearestObject, UObject *&NearestOverlappingObject, bool &ImplementsVRGrip, FTransform &WorldTransform, bool &CanBeClimbed, FName &NearestBoneName, FVector &ImpactPoint, uint8 &LastGripPrio)
+{
+    FTransform overlapTransform = OverlapComponent->GetComponentTransform();
+    TArray<AActor*> actorsToIgnore = {this};
+    TArray<UPrimitiveComponent*> overlappingComponents;
+    // Fall back on overlap, being inside of an object can cause this.
+    bool bHasOverlaps = UKismetSystemLibrary::ComponentOverlapComponents(OverlapComponent, overlapTransform, CollisionToCheckDuringGrip, nullptr, actorsToIgnore, overlappingComponents);
+    if (bHasOverlaps)
+    {
+        for (int i = 0; i < overlappingComponents.Num(); i++)
+        {
+            if (i == 0)
+            {
+                HitComponent = overlappingComponents[i];
+            }
+            if (HasValidGripCollision(overlappingComponents[i]))
+            {
+                UObject* nearestOverlappingObject;
+                bool implementsVRGrip;
+                FTransform worldTransform;
+                uint8 lastGripPrio;
+                if (ShouldGripComponent(overlappingComponents[i], LastGripPrio, i > 0, "None", RelevantGameplayTags, Hand, nearestOverlappingObject, implementsVRGrip, worldTransform, lastGripPrio))
+                {
+                    NearestOverlappingObject = nearestOverlappingObject;
+                    ImplementsVRGrip = implementsVRGrip;
+                    WorldTransform = worldTransform;
+                    ImpactPoint = OverlapComponent->GetComponentLocation();
+                    LastGripPrio = lastGripPrio;
+                }
+            }
+        }
+        if (!NearestOverlappingObject->IsValidLowLevel())
+        {
+            // Return climbable if not simulating and not grippable
+            
+            if (IsClimbingModeEnabled(Hand) && CanObjectBeClimbed(HitComponent))
+            {
+                CanBeClimbed = true;
+                NearestObject = HitComponent;
+            }
+        }
+    }
+}
 void AxREAL_VRCharacter::GetDPadMovementFacing_Implementation(EVRMovementMode MovementMode, UGripMotionControllerComponent *Hand, UGripMotionControllerComponent *OtherHand, FVector &ForwardVector, FVector &RightVector)
 {
 }
@@ -329,8 +401,9 @@ void AxREAL_VRCharacter::GetCorrectPrimarySlotPrefix_Implementation(UObject *Obj
 {
 }
 
-void AxREAL_VRCharacter::CanObjectBeClimbed_Implementation(UPrimitiveComponent *ObjectToCheck, bool &CanClimb)
+bool AxREAL_VRCharacter::CanObjectBeClimbed_Implementation(UPrimitiveComponent *ObjectToCheck)
 {
+    return false;
 }
 
 bool AxREAL_VRCharacter::HasValidGripCollision_Implementation(UPrimitiveComponent *Component)
@@ -369,8 +442,15 @@ void AxREAL_VRCharacter::DropSecondaryAttachment_Implementation(UGripMotionContr
 {
 }
 
-void AxREAL_VRCharacter::SelectObjectFromHitArray_Implementation(UPARAM(ref) TArray<FHitResult> &Hits, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent *Hand, bool &bShouldGrip, bool &ObjectImplementsInterface, UObject *&ObjectToGrip, FTransform &WorldTransform, UPrimitiveComponent *&FirstPrimitiveHit, FName &BoneName, FVector &ImpactPoint, uint8 BestGripPrio, UObject *lOutObject, FTransform lOutTransform, bool lObjectImplementsInterface, bool lShouldGrip, UPrimitiveComponent *FirstHitPrimitive, FName LOutBoneName, FVector LImpactPoint)
+void AxREAL_VRCharacter::SelectObjectFromHitArray_Implementation(UPARAM(ref) TArray<FHitResult> &Hits, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent *Hand, bool &bShouldGrip, bool &ObjectImplementsInterface, UObject *&ObjectToGrip, FTransform &WorldTransform, UPrimitiveComponent *&FirstPrimitiveHit, FName &BoneName, FVector &ImpactPoint)
 {
+    //uint8 bestGripPrio;
+    //UObject* lOutObject;
+    //FTransform lOutTransform;
+    //bool lObjectImplementsInterface, lShouldGrip;
+    //UPrimitiveComponent* firstHitPrimitive;
+    //FName lOutBoneName;
+    //FVector lImpactPoint;
 }
 
 void AxREAL_VRCharacter::CheckGripPriority_Implementation(UObject *ObjectToCheck, uint8 PrioToCheckAgainst, bool CheckAgainstPrior, bool &HadHigherPriority, uint8 &NewGripPrio)
