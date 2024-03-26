@@ -583,9 +583,6 @@ void ATeleportController::RumbleController_Implementation(float Intensity)
 
  void ATeleportController::StartedUseHeldObjectLeft_Implementation()
  {
-    //Debug Message
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("StartedUseHeldObjectLeft_Implementation"));
-
     EControllerHand hand;
     OwningMotionController->GetHandType(hand);
     if (hand == EControllerHand::Left)

@@ -48,7 +48,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
 	void GetNearestOverlappingObject(UPrimitiveComponent* OverlapComponent, UGripMotionControllerComponent* Hand, FGameplayTagContainer RelevantGameplayTags, UObject*& NearestObject, bool& ImplementsInterface, FTransform& ObjectTransform, bool& CanBeClimbed, FName& BoneName, FVector& ImpactLoc, double NearestOverlap, UObject* NearestOverlappingObject, bool ImplementsVRGrip, FTransform WorldTransform, UPrimitiveComponent* HitComponent, uint8 LastGripPrio, FName NearestBoneName, FVector ImpactPoint);
 
-	void PerformTraceForObjects(UPrimitiveComponent* OverlapComponent, UGripMotionControllerComponent* Hand, const FGameplayTagContainer& RelevantGameplayTags, UObject*& NearestObject, bool& ImplementsVRGrip, FTransform& WorldTransform, bool& CanBeClimbed, FName& NearestBoneName, FVector& ImpactPoint);
+	bool PerformTraceForObjects(UPrimitiveComponent* OverlapComponent, UGripMotionControllerComponent* Hand, TArray<FHitResult>& OutHits);
 
 	bool IsClimbingModeEnabled(UGripMotionControllerComponent *Hand);
 
@@ -60,7 +60,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
-	void GripOrDropObject(UGripMotionControllerComponent* CallingMotionController, UGripMotionControllerComponent* OtherController, bool CanCheckClimb, UPrimitiveComponent* GrabSphere, FGameplayTag GripTag, FGameplayTag DropTag, FGameplayTag UseTag, FGameplayTag EndUseTag, FGameplayTag GripSecondaryTag, FGameplayTag DropSecondaryTag, bool& PerformedAction, bool bHadInterface, UObject* NearestObject);
+	void GripOrDropObject(UGripMotionControllerComponent* CallingMotionController, UGripMotionControllerComponent* OtherController, bool CanCheckClimb, UPrimitiveComponent* GrabSphere, FGameplayTag GripTag, FGameplayTag DropTag, FGameplayTag UseTag, FGameplayTag EndUseTag, FGameplayTag GripSecondaryTag, FGameplayTag DropSecondaryTag, bool& PerformedAction);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Climbing")
@@ -80,7 +80,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
-	void GetNearestOverlapOfHand(UGripMotionControllerComponent* Hand, UPrimitiveComponent* OverlapSphere, UObject*& NearestMesh, double NearestOverlap, UObject* NearestOverlapObject, TArray<UPrimitiveComponent*>& OverlappingComponents);
+	UObject* GetNearestOverlapOfHand(UGripMotionControllerComponent *Hand, UPrimitiveComponent *OverlapSphere);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Locomotion")
@@ -200,7 +200,7 @@ public:
 
 	/** Relevant GameplayTags are tags to search for and trigger operations depending on the key using this function */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
-	void GripOrDropObjectClean(UGripMotionControllerComponent* CallingMotionController, UGripMotionControllerComponent* OtherController, bool CanCheckClimb, UPrimitiveComponent* GrabSphere, FGameplayTagContainer RelevantGameplayTags, bool& PerformedAction, bool bHadInterface, UObject* NearestObject, FName NearestBoneName, FTransform ObjectTransform, bool HadSlot, ESecondaryGripType SecondaryType, FVector ImpactPoint, FName SlotName);
+	void GripOrDropObjectClean(UGripMotionControllerComponent* CallingMotionController, UGripMotionControllerComponent* OtherController, bool CanCheckClimb, UPrimitiveComponent* GrabSphere, FGameplayTagContainer RelevantGameplayTags, bool& PerformedAction);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Gripping")
@@ -276,7 +276,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Movement")
-	void GetCorrectAimComp(UGripMotionControllerComponent* Hand, USceneComponent*& AimComp);
+	USceneComponent* GetCorrectAimComp(UGripMotionControllerComponent* Hand);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Input")
