@@ -28,6 +28,9 @@ class VREXPANSIONPLUGIN_API AxREAL_VRCharacter : public AVRCharacter
 	GENERATED_BODY()
 public:
 
+	// Function for replicating variables
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -92,15 +95,21 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Locomotion")
-	void GetSmoothedVelocityOfObject(FVector CurRelLocation, UPARAM(ref) FVector& LastRelLocation, UPARAM(ref) FVector& RelativeVelocityOut, UPARAM(ref) FVector& LowEndRelativeVelocityOut, bool bRollingAverage, FVector TempVel, FVector ABSVec);
+	void GetSmoothedVelocityOfObject(FVector CurRelLocation, UPARAM(ref) FVector& LastRelLocation, UPARAM(ref) FVector& RelativeVelocityOut, UPARAM(ref) FVector& LowEndRelativeVelocityOut, bool bRollingAverage);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Locomotion")
-	void GetRelativeVelocityForLocomotion(bool IsHMD, bool IsMotionZVelBased, FVector VeloctyVector, double& Velocity);
+	float GetRelativeVelocityForLocomotion(bool IsHMD, bool IsMotionZVelBased, FVector VeloctyVector);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
 	void CallCorrectGrabEvent(UObject* ObjectToGrip, EControllerHand Hand, bool IsSlotGrip, FTransform GripTransform, FGameplayTag GripSecondaryTag, FName OptionalBoneName, FName SlotName, bool IsSecondaryGrip);
+
+	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
+	void TryGrabClient(UObject* ObjectToGrab, bool IsSlotGrip, FTransform_NetQuantize GripTransform, EControllerHand Hand, FGameplayTag GripSecondaryTag, FName GripBoneName, FName SlotName, bool IsSecondaryGrip);
+	
+	UFUNCTION(Server, Reliable, Category="Gripping")
+	void TryGrabServer(UObject* ObjectToGrab, bool IsSlotGrip, FTransform_NetQuantize GripTransform, EControllerHand Hand, FGameplayTag GripSecondaryTag, FName GripBoneName, FName SlotName, bool IsSecondaryGrip);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")

@@ -5,6 +5,7 @@
 #include "Components/TextRenderComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameplayTagAssetInterface.h"
+#include "VRExpansionFunctionLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 
 AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer): Super() 
@@ -482,26 +483,137 @@ UObject* AxREAL_VRCharacter::GetNearestOverlapOfHand_Implementation(UGripMotionC
 
 void AxREAL_VRCharacter::CalculateRelativeVelocities_Implementation(FVector TempVelVector)
 {
+    if (CurrentMovementMode >= EVRMovementMode::RunInPlace)
+    {
+        //Smooths over VelCalculationsSmoothingSteps
+        GetSmoothedVelocityOfObject(LeftMotionController->GetRelativeLocation(), LastLContPos, LeftControllerRelativeVel, LowEndLContRelativeVel, true);
+        GetSmoothedVelocityOfObject(RightMotionController->GetRelativeLocation(), LastRContPos, RightControllerRelativeVel, LowEndRcontRelativeVel, true);
+        GetSmoothedVelocityOfObject(VRReplicatedCamera->GetRelativeLocation(), LastHMDPos, HeadRelativeVel, LowEndHeadRelativeVel, true);
+    }
 }
 
 void AxREAL_VRCharacter::HandleRunInPlace_Implementation(FVector ForwardVector, bool IncludeHands)
 {
+    float headRelativeVelocity = GetRelativeVelocityForLocomotion(true, bIsArmSwingZBased, HeadRelativeVel);
+    float leftControllerRelativeVelocity = GetRelativeVelocityForLocomotion(true, bIsArmSwingZBased, LeftControllerRelativeVel);
+    float rightControllerRelativeVelocity = GetRelativeVelocityForLocomotion(true, bIsArmSwingZBased, RightControllerRelativeVel);
+    float averageVelocity = (headRelativeVelocity + leftControllerRelativeVelocity + rightControllerRelativeVelocity) / 3.0f;
+    // Used to set a min scaler to cutoff earlier on stop
+    float lowEndHeadRelativeVelocity = GetRelativeVelocityForLocomotion(true, bIsArmSwingZBased, LowEndHeadRelativeVel);
+    if (IncludeHands)
+    {
+        if (averageVelocity >= MinimumRIPVelocity && lowEndHeadRelativeVelocity >= MinimumLowEndRipVelocity)
+        {
+            AddMovementInput(ForwardVector, UKismetMathLibrary::Clamp(RunningInPlaceScaler * averageVelocity, 0.0f, 1.0f), false);
+        }
+    }
+    else
+    {
+        // Not including hands
+        if (headRelativeVelocity >= MinimumRIPVelocity && lowEndHeadRelativeVelocity >= MinimumLowEndRipVelocity)
+        {
+            AddMovementInput(ForwardVector, UKismetMathLibrary::Clamp(RunningInPlaceScaler * headRelativeVelocity, 0.0f, 1.0f), false);
+        }
+    }
 }
 
-void AxREAL_VRCharacter::GetSmoothedVelocityOfObject_Implementation(FVector CurRelLocation, UPARAM(ref) FVector &LastRelLocation, UPARAM(ref) FVector &RelativeVelocityOut, UPARAM(ref) FVector &LowEndRelativeVelocityOut, bool bRollingAverage, FVector TempVel, FVector ABSVec)
+void AxREAL_VRCharacter::GetSmoothedVelocityOfObject_Implementation(FVector CurRelLocation, UPARAM(ref) FVector &LastRelLocation, UPARAM(ref) FVector &RelativeVelocityOut, UPARAM(ref) FVector &LowEndRelativeVelocityOut, bool bRollingAverage)
 {
+    FVector tempVel;
+    FVector relativeLocationDifference = CurRelLocation - LastRelLocation;
+    FVector ABSVector = FVector(FMath::Abs(relativeLocationDifference.X), FMath::Abs(relativeLocationDifference.Y), FMath::Abs(relativeLocationDifference.Z));
+    if (bRollingAverage)
+    {
+        // New rolling average low pass
+        UVRExpansionFunctionLibrary::LowPassFilter_RollingAverage(RelativeVelocityOut, ABSVector, RelativeVelocityOut, RIPMotionSmoothingSteps);
+        // Low end out
+        UVRExpansionFunctionLibrary::LowPassFilter_RollingAverage(RelativeVelocityOut, ABSVector, LowEndRelativeVelocityOut, RipMotionLowPassSmoothingSteps);
+    }
+    else
+    {
+        // New exponential low pass
+        UVRExpansionFunctionLibrary::LowPassFilter_Exponential(RelativeVelocityOut, ABSVector, RelativeVelocityOut, 0.3f);
+    }
+    // Set Last rel loc
+    LastRelLocation = CurRelLocation;
 }
 
-void AxREAL_VRCharacter::GetRelativeVelocityForLocomotion_Implementation(bool IsHMD, bool IsMotionZVelBased, FVector VeloctyVector, double &Velocity)
+float AxREAL_VRCharacter::GetRelativeVelocityForLocomotion_Implementation(bool IsHMD, bool IsMotionZVelBased, FVector VeloctyVector)
 {
+    // HMD is always Z based
+    if (IsHMD || IsMotionZVelBased)
+    {
+        return VeloctyVector.Z;
+    }
+    else
+    {
+        return VeloctyVector.Size();
+    }
 }
 
 void AxREAL_VRCharacter::CallCorrectGrabEvent_Implementation(UObject *ObjectToGrip, EControllerHand Hand, bool IsSlotGrip, FTransform GripTransform, FGameplayTag GripSecondaryTag, FName OptionalBoneName, FName SlotName, bool IsSecondaryGrip)
 {
+    if (ObjectToGrip->Implements<UVRGripInterface>())
+    {
+        if (IsALocalGrip(IVRGripInterface::Execute_GripMovementReplicationType(ObjectToGrip)))
+        {
+            TryGrabClient(ObjectToGrip, IsSlotGrip, GripTransform, Hand, GripSecondaryTag, OptionalBoneName, SlotName, IsSecondaryGrip);
+        }
+        else
+        {
+            TryGrabServer(ObjectToGrip, IsSlotGrip, GripTransform, Hand, GripSecondaryTag, OptionalBoneName, SlotName, IsSecondaryGrip);
+        }
+    }
+}
+
+void AxREAL_VRCharacter::TryGrabClient_Implementation(UObject* ObjectToGrab, bool IsSlotGrip, FTransform_NetQuantize GripTransform, EControllerHand Hand, FGameplayTag GripSecondaryTag, FName GripBoneName, FName SlotName, bool IsSecondaryGrip)
+{
+    bool isGrabbed;
+    switch (Hand)
+    {
+        case EControllerHand::Left:
+            TryToGrabObject(ObjectToGrab, GripTransform, LeftMotionController, RightMotionController, IsSlotGrip, GripSecondaryTag, GripBoneName, SlotName, IsSecondaryGrip, isGrabbed);
+            break;
+
+        case EControllerHand::Right:
+            TryToGrabObject(ObjectToGrab, GripTransform, RightMotionController, LeftMotionController, IsSlotGrip, GripSecondaryTag, GripBoneName, SlotName, IsSecondaryGrip, isGrabbed);
+            break;
+    }
+}
+
+void AxREAL_VRCharacter::TryGrabServer_Implementation(UObject *ObjectToGrab, bool IsSlotGrip, FTransform_NetQuantize GripTransform, EControllerHand Hand, FGameplayTag GripSecondaryTag, FName GripBoneName, FName SlotName, bool IsSecondaryGrip)
+{
+    bool isGrabbed;
+    switch (Hand)
+    {
+        case EControllerHand::Left:
+            TryToGrabObject(ObjectToGrab, GripTransform, LeftMotionController, RightMotionController, IsSlotGrip, GripSecondaryTag, GripBoneName, SlotName, IsSecondaryGrip, isGrabbed);
+            break;
+
+        case EControllerHand::Right:
+            TryToGrabObject(ObjectToGrab, GripTransform, RightMotionController, LeftMotionController, IsSlotGrip, GripSecondaryTag, GripBoneName, SlotName, IsSecondaryGrip, isGrabbed);
+            break;
+    }
 }
 
 void AxREAL_VRCharacter::CallCorrectDropSingleEvent_Implementation(UGripMotionControllerComponent *Hand, FBPActorGripInformation Grip)
 {
+    if (Grip.GrippedObject && Grip.GrippedObject->Implements<UVRGripInterface>()
+    {
+        if (IsALocalGrip(IVRGripInterface::Execute_GripMovementReplicationType(Grip.GrippedObject)))
+        {
+            // Try Drop Single Client
+        }
+        else
+        {
+            // Try Drop Single
+        }
+    }
+
+    else
+    {
+        // Try Drop Single
+    }
 }
 
 void AxREAL_VRCharacter::IfOverWidgetUse_Implementation(UGripMotionControllerComponent *CallingHand, bool Pressed, bool &WasOverWidget)
