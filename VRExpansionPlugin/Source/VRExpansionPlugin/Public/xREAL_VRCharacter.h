@@ -47,6 +47,14 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
 	void TryToGrabObject(UObject* ObjectToTryToGrab, FTransform WorldTransform, UGripMotionControllerComponent* Hand, UGripMotionControllerComponent* OtherHand, bool IsSlotGrip, FGameplayTag GripSecondaryTag, FName GripBoneName, FName SlotName, bool IsSecondaryGrip, bool& Gripped);
 
+	// Server drop function
+	UFUNCTION(Server, Reliable, Category="Gripping")
+	void TryDropSingle_Server(UGripMotionControllerComponent* Hand, FVector_NetQuantize100 AngleVel, FVector_NetQuantize100 LinearVel, uint8 GripHash);
+
+	// Client drop function
+	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
+	void TryDropSingle_Client(UGripMotionControllerComponent* Hand, FBPActorGripInformation& GripToDrop, FVector AngleVel, FVector LinearVel);
+
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
 	void GetNearestOverlappingObject(UPrimitiveComponent* OverlapComponent, UGripMotionControllerComponent* Hand, FGameplayTagContainer RelevantGameplayTags, UObject*& NearestObject, bool& ImplementsInterface, FTransform& ObjectTransform, bool& CanBeClimbed, FName& BoneName, FVector& ImpactLoc, double NearestOverlap, UObject* NearestOverlappingObject, bool ImplementsVRGrip, FTransform WorldTransform, UPrimitiveComponent* HitComponent, uint8 LastGripPrio, FName NearestBoneName, FVector ImpactPoint);
@@ -123,6 +131,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")
 	void TryRemoveSecondaryAttachment(UGripMotionControllerComponent* CallingMotionController, UGripMotionControllerComponent* OtherController, FGameplayTagContainer GameplayTags, bool& DroppedSecondary, bool& HadSecondary);
 
+	UFUNCTION(Server, Reliable, Category="Gripping")
+	void RemoveSecondaryGrip_Server(UGripMotionControllerComponent* Hand, UObject* GrippedActorToRemoveAttachment);
+
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Movement")
 	void SwitchOutOfBodyCamera(bool SwitchToOutOfBody);
@@ -130,6 +141,12 @@ public:
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Teleport")
 	void SetTeleporterActive(EControllerHand Hand, bool Active);
+
+	UFUNCTION(Server, Reliable, Category="Teleport")
+	void NotifyTeleportActive_Server(EControllerHand Hand, bool State);
+
+	UFUNCTION(Multicast, Reliable, Category="Teleport")
+	void TeleportActive_Multicast(EControllerHand Hand, bool State);
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, Category="Locomotion")

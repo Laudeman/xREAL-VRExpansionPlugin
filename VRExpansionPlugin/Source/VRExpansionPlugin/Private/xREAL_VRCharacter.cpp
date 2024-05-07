@@ -6,11 +6,12 @@
 #include "EnhancedInputComponent.h"
 #include "GameplayTagAssetInterface.h"
 #include "VRExpansionFunctionLibrary.h"
+#include "Camera/CameraActor.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer): Super() 
 {
-	//: Super(ObjectInitializer.SetDefaultSubobjectClass<UVRRootComponent>(ACharacter::CapsuleComponentName).SetDefaultSubobjectClass<UVRCharacterMovementComponent>(ACharacter::CharacterMovementComponentName)) {
     bReplicates = true;
 }
 
@@ -596,36 +597,156 @@ void AxREAL_VRCharacter::TryGrabServer_Implementation(UObject *ObjectToGrab, boo
     }
 }
 
+
+
 void AxREAL_VRCharacter::CallCorrectDropSingleEvent_Implementation(UGripMotionControllerComponent *Hand, FBPActorGripInformation Grip)
 {
-    if (Grip.GrippedObject && Grip.GrippedObject->Implements<UVRGripInterface>()
+    // Cast object to grip interface
+    IVRGripInterface *objectToDrop = Cast<IVRGripInterface>(Grip.GrippedObject);
+    if (objectToDrop && IsALocalGrip(objectToDrop->GripMovementReplicationType()))
     {
-        if (IsALocalGrip(IVRGripInterface::Execute_GripMovementReplicationType(Grip.GrippedObject)))
-        {
-            // Try Drop Single Client
-        }
-        else
-        {
-            // Try Drop Single
-        }
+        // Try Drop Single Client
     }
-
     else
     {
         // Try Drop Single
+        FVector angularVelocity, objectsLinearVelocity;
+        Hand->GetPhysicsVelocities(Grip, angularVelocity, objectsLinearVelocity);
+        FVector throwingAngularVelocity, throwingLinearVelocity;
+        //GetThrowingVelocity(Hand, Grip, angularVelocity, objectsLinearVelocity, throwingAngularVelocity, throwingLinearVelocity);
+        //TryDropSingle_Server(Hand, Grip, throwingAngularVelocity, throwingLinearVelocity);
+    }
+}
+
+void AxREAL_VRCharacter::TryDropSingle_Server_Implementation(UGripMotionControllerComponent* Hand, FVector_NetQuantize100 AngleVel, FVector_NetQuantize100 LinearVel, uint8 GripHash)
+{
+    FBPActorGripInformation gripInfo;
+    EBPVRResultSwitch gripResult;
+    Hand->GetGripByID(gripInfo, GripHash, gripResult);
+    if (gripResult == EBPVRResultSwitch::OnSucceeded)
+    {
+        TryDropSingle_Client(Hand, gripInfo, AngleVel, LinearVel);
+    }
+}
+
+void AxREAL_VRCharacter::TryDropSingle_Client_Implementation(UGripMotionControllerComponent* Hand, UPARAM(ref)FBPActorGripInformation& GripToDrop, FVector AngleVel, FVector LinearVel)
+{
+    bool shouldSocket;
+    USceneComponent* socketParent;
+    FTransform_NetQuantize relativeTransform;
+    FName optSocketName;
+    ShouldSocketGrip(GripToDrop, shouldSocket, socketParent, relativeTransform, optSocketName);
+    
+    if (shouldSocket)
+    {
+        Hand->DropAndSocketGrip(GripToDrop, socketParent, optSocketName, relativeTransform);
+    }
+    else
+    {
+        if (GripToDrop.GrippedObject && GripToDrop.GrippedObject->Implements<UVRGripInterface>())
+        {
+            Hand->DropObjectByInterface(nullptr, GripToDrop.GripID, AngleVel, LinearVel);
+        }
+        else
+        {
+            Hand->DropGrip(GripToDrop, true, AngleVel, LinearVel);
+        }
     }
 }
 
 void AxREAL_VRCharacter::IfOverWidgetUse_Implementation(UGripMotionControllerComponent *CallingHand, bool Pressed, bool &WasOverWidget)
 {
+    EControllerHand handType;
+    CallingHand->GetHandType(handType);
+    switch (handType)
+    {
+        case EControllerHand::Left:
+            WasOverWidget = false;
+            if (TeleportControllerLeft->IsValidLowLevel())
+            {
+                TeleportControllerLeft->IfOverWidget_Use(Pressed, WasOverWidget);
+            } 
+            break;
+
+        case EControllerHand::Right:
+            WasOverWidget = false;
+            if (TeleportControllerRight->IsValidLowLevel())
+            {
+                TeleportControllerRight->IfOverWidget_Use(Pressed, WasOverWidget);
+            }
+            break;
+    }
 }
 
 void AxREAL_VRCharacter::TryRemoveSecondaryAttachment_Implementation(UGripMotionControllerComponent *CallingMotionController, UGripMotionControllerComponent *OtherController, FGameplayTagContainer GameplayTags, bool &DroppedSecondary, bool &HadSecondary)
 {
+    FBPActorGripInformation gripInfo;
+    if (OtherController->GetIsSecondaryAttachment(CallingMotionController, gripInfo))
+    {
+        bool isMatchedOrDefault;
+        ValidateGameplayTagContainer(FGameplayTag::RequestGameplayTag(TEXT("DropType.SecondaryGrip")), gripInfo.GrippedObject, DefaultSecondaryDropTag, GameplayTags, isMatchedOrDefault);
+        if (isMatchedOrDefault)
+        {
+            if (IsALocalGrip(gripInfo.GripMovementReplicationSetting))
+            {
+                OtherController->RemoveSecondaryAttachmentPoint(gripInfo.GrippedObject, 0.25f);
+            }
+            else
+            {
+                RemoveSecondaryGrip_Server(OtherController, gripInfo.GrippedObject);
+            }
+            HadSecondary = true;
+            DroppedSecondary = true;
+        }
+        else
+        {
+            HadSecondary = true;
+            DroppedSecondary = false;
+        }
+    }
+    else
+    {
+        HadSecondary = false;
+        DroppedSecondary = false;
+    }
+}
+
+void AxREAL_VRCharacter::RemoveSecondaryGrip_Server_Implementation(UGripMotionControllerComponent* Hand, UObject* GrippedActorToRemoveAttachment)
+{
+    Hand->RemoveSecondaryAttachmentPoint(GrippedActorToRemoveAttachment, 0.25f);
 }
 
 void AxREAL_VRCharacter::SwitchOutOfBodyCamera_Implementation(bool SwitchToOutOfBody)
 {
+    if (SwitchToOutOfBody)
+    {
+        // Go out of body
+        if (!OutOfBodyCamera->IsValidLowLevel())
+        {
+            OutOfBodyCamera = GetWorld()->SpawnActor<ACameraActor>(ACameraActor::StaticClass());
+            OutOfBodyCamera->AttachToActor(this, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true));
+            OutOfBodyCamera->SetActorTickEnabled(false);
+            OutOfBodyCamera->GetCameraComponent()->SetComponentTickEnabled(false);
+        }
+        OutOfBodyCamera->GetCameraComponent()->SetActive(true);
+        bIsOutOfBody = true;
+        OutOfBodyCamera->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetViewTargetWithBlend(OutOfBodyCamera);
+        VRReplicatedCamera->bSetPositionDuringTick = true;
+    }
+
+    else
+    {
+        // Switch back into body
+        if (bIsOutOfBody && OutOfBodyCamera->IsValidLowLevel())
+        {
+            OutOfBodyCamera->GetCameraComponent()->SetActive(false);
+            bIsOutOfBody = false;
+            OutOfBodyCamera->AttachToActor(this, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true));
+            UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetViewTargetWithBlend(this);
+            VRReplicatedCamera->bSetPositionDuringTick = false;
+        }
+    }
 }
 
 void AxREAL_VRCharacter::SetTeleporterActive_Implementation(EControllerHand Hand, bool Active)
@@ -635,12 +756,39 @@ void AxREAL_VRCharacter::SetTeleporterActive_Implementation(EControllerHand Hand
     case EControllerHand::Left:
         if (TeleportControllerLeft->IsValidLowLevel()) 
         {
-            
+            Active?TeleportControllerLeft->ActivateTeleporter():TeleportControllerLeft->DisableTeleporter();
+            NotifyTeleportActive_Server(Hand, Active);
         }
         break;
     
-    default:
+    case EControllerHand::Right:
+        if (TeleportControllerRight->IsValidLowLevel())
+        {
+            Active?TeleportControllerRight->ActivateTeleporter():TeleportControllerRight->DisableTeleporter();
+            NotifyTeleportActive_Server(Hand, Active);
+        }
         break;
+    }
+}
+
+void AxREAL_VRCharacter::NotifyTeleportActive_Server(EControllerHand Hand, bool State)
+{
+    TeleportActive_Multicast(Hand, State);
+}
+
+void AxREAL_VRCharacter::TeleportActive_Multicast(EControllerHand Hand, bool State)
+{
+    if (!IsLocallyControlled())
+    {
+        switch (Hand)
+        {
+        case EControllerHand::Left:
+            State?TeleportControllerLeft->ActivateTeleporter():TeleportControllerLeft->DisableTeleporter();
+            break;
+        case EControllerHand::Right:
+            State?TeleportControllerRight->ActivateTeleporter():TeleportControllerRight->DisableTeleporter();
+            break;
+        }
     }
 }
 
