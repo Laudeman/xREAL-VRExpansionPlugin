@@ -262,7 +262,7 @@ public:
 
 	/** Please add a function description */
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Movement|Rotation")
-	void GetCorrectRotation(FRotator& NewParam);
+	FRotator GetCorrectRotation();
 
 	/** Sets which components are used for gripping collision */
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping")

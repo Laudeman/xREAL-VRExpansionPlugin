@@ -800,6 +800,8 @@ void AxREAL_VRCharacter::HandleSlidingMovement_Implementation(EVRMovementMode Mo
     float thumbY = 0.0f;
     float thumbX = 0.0f;
 
+    FVector direction;
+
     switch (handType)
     {
         case EControllerHand::Left:
@@ -810,24 +812,90 @@ void AxREAL_VRCharacter::HandleSlidingMovement_Implementation(EVRMovementMode Mo
             thumbY = MotionControllerThumbRight_Y_Value;
             thumbX = MotionControllerThumbRight_X_Value;
             break;
+        default:
+            return;
     }
-    //TODO FINISH THIS NOW
-    //bool  
-    //CalcPadRotationAndMagnitude(thumbY, thumbX, DPadVelocityScaler, SlidingMovementDeadZone, );
-    //if ()
+
+    bool  isPadCalcValid;
+    float padMagnitude;
+    FRotator padRotation;
+    CalcPadRotationAndMagnitude(thumbY, thumbX, DPadVelocityScaler, SlidingMovementDeadZone, padRotation, padMagnitude, isPadCalcValid);
+
+    FVector padForwardVector, padRightVector;
+    GetDPadMovementFacing(MovementMode, CallingHand, nullptr, padForwardVector, padRightVector);
+    if (isPadCalcValid && bThumbPadInfluencesDirection)
+    {
+        if (MovementMode == EVRMovementMode::DPadPress_ControllerOrient)
+        {
+            direction = MapThumbToWorld(padRotation, CallingHand);
+        }
+        else
+        {
+            direction = padForwardVector;
+        }
+    }
+    else
+    {
+        direction = padForwardVector;
+    }
+    AddMovementInput(direction, padMagnitude, false);
 }
 
 void AxREAL_VRCharacter::CalcPadRotationAndMagnitude_Implementation(float YAxis, float XAxis, float OptMagnitudeScaler, float OptionalDeadzone, FRotator &Rotation, float &Magnitude, bool &WasValid)
 {
-
+    WasValid = FMath::Abs(YAxis) + FMath::Abs(XAxis) > OptionalDeadzone;
+    Rotation = UKismetMathLibrary::MakeRotFromX(FVector(YAxis, XAxis, 0.0f));
+    Magnitude = FMath::Clamp(FMath::Max(FMath::Abs(YAxis*OptMagnitudeScaler), FMath::Abs(XAxis*OptMagnitudeScaler)), 0.0f, 1.0f);
 }
 
 void AxREAL_VRCharacter::UpdateTeleportRotations_Implementation()
 {
+    // Right Controller
+    if (TeleportControllerRight->IsValidLowLevel() && TeleportControllerRight->IsTeleporterActive)
+    {
+        if (bTeleportUsesThumbRotation)
+        {
+            FRotator teleportRotation;
+            float magnitude;
+            bool isValid;
+            CalcPadRotationAndMagnitude(MotionControllerThumbRight_Y_Value, MotionControllerThumbRight_X_Value, 1.0f, TeleportThumbDeadzone, teleportRotation, magnitude, isValid);
+            if (isValid)
+            {
+                TeleportControllerRight->TeleportRotation = teleportRotation;
+            }
+        }
+        else
+        {
+            TeleportControllerRight->TeleportRotation = FRotator(0.0f, 0.0f, 0.0f);
+        }
+        TeleportControllerRight->TeleportBaseRotation = GetVRRotation();
+    }
+
+    // Left Controller
+    if (TeleportControllerLeft->IsValidLowLevel() && TeleportControllerLeft->IsTeleporterActive)
+    {
+        if (bTeleportUsesThumbRotation)
+        {
+            FRotator teleportRotation;
+            float magnitude;
+            bool isValid;
+            CalcPadRotationAndMagnitude(MotionControllerThumbLeft_Y_Value, MotionControllerThumbLeft_X_Value, 1.0f, TeleportThumbDeadzone, teleportRotation, magnitude, isValid);
+            if (isValid)
+            {
+                TeleportControllerLeft->TeleportRotation = teleportRotation;
+            }
+        }
+        else
+        {
+            TeleportControllerLeft->TeleportRotation = FRotator(0.0f, 0.0f, 0.0f);
+        }
+        TeleportControllerLeft->TeleportBaseRotation = GetVRRotation();
+    }
 }
 
 void AxREAL_VRCharacter::GetCharacterRotatedPosition_Implementation(FVector OriginalLocation, FRotator DeltaRotation, FVector PivotPoint, FRotator &OutRotation, FVector &OutNewPosition, FRotator RotationToUse, FVector NewLocationOffset, FRotator NewRotation)
 {
+    UVRExpansionFunctionLibrary::RotateAroundPivot(DeltaRotation, OriginalLocation, GetCorrectRotation(), UKismetMathLibrary::InverseTransformLocation(GetActorTransform(), PivotPoint), OutNewPosition, OutRotation, true);
 }
 
 void AxREAL_VRCharacter::ValidateGameplayTag_Implementation(FGameplayTag BaseTag, FGameplayTag GameplayTag, UObject *Object, FGameplayTag DefaultTag, bool &MatchedOrDefault)
@@ -926,7 +994,7 @@ void AxREAL_VRCharacter::CanAttemptSecondaryGrabOnObject_Implementation(UObject 
 {
 }
 
-void AxREAL_VRCharacter::GetCorrectRotation_Implementation(FRotator &NewParam)
+FRotator AxREAL_VRCharacter::GetCorrectRotation_Implementation()
 {
 }
 
