@@ -22,7 +22,15 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
 
     TeleportLaunchVelocity = 1200.0f;
     LaserBeamMaxDistance = 5000.0f;
-    RotOffset = FRotator(0.0f, -60.0f, 0.0f);
+    RotOffset = FRotator(-60.0f, 0.0f, 0.0f);
+    
+    EuroLowPassFilter = FBPEuroLowPassFilter(1.2f, 0.001f, 0.001f);
+
+    LaserBeamRadius = 1.0f;
+    bUseSmoothLaser = true;
+    NumberOfLaserSplinePoints = 10;
+    //DrawSmoothLaserTrace = true;
+
 
     Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
     RootComponent = Scene;
@@ -132,18 +140,22 @@ ATeleportController::ATeleportController(const FObjectInitializer& ObjectInitial
     {
         UE_LOG(LogTemp, Warning, TEXT("Failed to load Laser Spline Assets"));
     }
-
+    
 }
 
 void ATeleportController::BeginPlay()
 {
     Super::BeginPlay();
 
-    APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-
     TeleportCylinder->SetVisibility(false, true);
 
-    if (OwningMotionController->IsValidLowLevel())
+    GetWorld()->GetTimerManager().SetTimer(ControllerBind_TimerHandle, this, &ATeleportController::BindController, 0.1f, false);
+}
+
+void ATeleportController::BindController()
+{
+    APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (IsValid(OwningMotionController))
     {
         LaserSpline->AttachToComponent(OwningMotionController, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
         LaserBeam->AttachToComponent(OwningMotionController, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
@@ -163,7 +175,6 @@ void ATeleportController::BeginPlay()
             }
         }
     }
-
 }
 
 void ATeleportController::Tick(float DeltaTime)
@@ -185,13 +196,13 @@ void ATeleportController::EndPlay(const EEndPlayReason::Type EndPlayReason)
     DisableWidgetActivation();
 }
 
-void ATeleportController::ServersideToss_Implementation(UPrimitiveComponent* TargetObject)
+void ATeleportController::ServersideToss(UPrimitiveComponent* TargetObject)
 {
     PhysicsTossManager->ServersideToss(TargetObject, OwningMotionController);
 
 }
 
-void ATeleportController::SetLaserBeamActive_Implementation(bool LaserBeamActive)
+void ATeleportController::SetLaserBeamActive(bool LaserBeamActive)
 {
     if (LaserBeamActive != IsLaserBeamActive)
     {
@@ -206,7 +217,6 @@ void ATeleportController::SetLaserBeamActive_Implementation(bool LaserBeamActive
             {
                 WidgetInteraction->Activate();
             }
-            ToggleTick();
         }
         else
         {
@@ -220,12 +230,13 @@ void ATeleportController::SetLaserBeamActive_Implementation(bool LaserBeamActive
             {
                 DisableWidgetActivation();
             }
-            ToggleTick();
         }
+
+        ToggleTick();
     }
 }
 
-void ATeleportController::ActivateTeleporter_Implementation()
+void ATeleportController::ActivateTeleporter()
 {
     // Set the flag, rest of the teleportation is handled in the tick function
     IsTeleporterActive = true;
@@ -240,7 +251,7 @@ void ATeleportController::ActivateTeleporter_Implementation()
     }
 }
 
-void ATeleportController::DisableTeleporter_Implementation()
+void ATeleportController::DisableTeleporter()
 {
     if (IsTeleporterActive)
     {
@@ -252,7 +263,7 @@ void ATeleportController::DisableTeleporter_Implementation()
     }
 }
 
-void ATeleportController::TraceTeleportDestination_Implementation(bool &Success, TArray<FVector> &TracePoints, FVector &NavMeshLocation, FVector &TraceLocation)
+void ATeleportController::TraceTeleportDestination(bool &Success, TArray<FVector> &TracePoints, FVector &NavMeshLocation, FVector &TraceLocation)
 {
     FVector worldLocation;
     FVector forwardVector;
@@ -290,7 +301,7 @@ void ATeleportController::TraceTeleportDestination_Implementation(bool &Success,
     Success = ((hitLocation != projectedLocation) && (projectedLocation != FVector::ZeroVector) && isPathColliding);
 }
 
-void ATeleportController::ClearArc_Implementation()
+void ATeleportController::ClearArc()
 {
     for (USplineMeshComponent* mesh : SplineMeshes)
     {
@@ -300,7 +311,7 @@ void ATeleportController::ClearArc_Implementation()
     ArcSpline->ClearSplinePoints();
 }
 
-void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation, UPARAM(ref) TArray<FVector> &SplinePoints)
+void ATeleportController::UpdateArcSpline(bool FoundValidLocation, UPARAM(ref) TArray<FVector> &SplinePoints)
 {
     FVector worldLocation;
     FVector forwardVector;
@@ -360,14 +371,14 @@ void ATeleportController::UpdateArcSpline_Implementation(bool FoundValidLocation
     }
 }
 
-void ATeleportController::UpdateArcEndpoint_Implementation(FVector NewLocation, bool ValidLocationFound)
+void ATeleportController::UpdateArcEndpoint(FVector NewLocation, bool ValidLocationFound)
 {
     ArcEndPoint->SetVisibility(ValidLocationFound && IsTeleporterActive);
     ArcEndPoint->SetWorldLocation(NewLocation, false, nullptr, ETeleportType::TeleportPhysics);
     Arrow->SetWorldRotation(TeleportRotation + TeleportBaseRotation);
 }
 
-void ATeleportController::GetTeleportDestination_Implementation(bool RelativeToHMD, FVector &Location, FRotator &Rotation)
+void ATeleportController::GetTeleportDestination(bool RelativeToHMD, FVector &Location, FRotator &Rotation)
 {
     FVector devicePosition;
     FQuat deviceRotation;
@@ -385,14 +396,14 @@ void ATeleportController::GetTeleportDestination_Implementation(bool RelativeToH
     }
 }
 
-void ATeleportController::GetTeleWorldLocAndForwardVector_Implementation(FVector &WorldLoc, FVector &ForwardVector)
+void ATeleportController::GetTeleWorldLocAndForwardVector(FVector &WorldLoc, FVector &ForwardVector)
 {
     WorldLoc = OwningMotionController->GetComponentLocation();
     FRotator controllerRotation = OwningMotionController->GetComponentRotation();
     ForwardVector = UKismetMathLibrary::GetForwardVector(UKismetMathLibrary::ComposeRotators(RotOffset, controllerRotation));
 }
 
-void ATeleportController::IfOverWidget_Use_Implementation(bool bPressed, bool &WasOverWidget)
+bool ATeleportController::IfOverWidget_Use(bool bPressed)
 {
     if (IsLaserBeamActive)
     {
@@ -406,14 +417,13 @@ void ATeleportController::IfOverWidget_Use_Implementation(bool bPressed, bool &W
             {
                 WidgetInteraction->ReleasePointerKey(EKeys::LeftMouseButton);
             }
-            WasOverWidget = true;
-            return;
+            return true;
         }
     }
-    WasOverWidget = false;
+    return false;
 }
 
-void ATeleportController::InitController_Implementation()
+void ATeleportController::InitController()
 {
     if (bIsLocal)
     {
@@ -437,12 +447,12 @@ void ATeleportController::InitController_Implementation()
     }
 }
 
-void ATeleportController::ToggleTick_Implementation()
+void ATeleportController::ToggleTick()
 {
     SetActorTickEnabled(IsTeleporterActive || IsLaserBeamActive || ActorBeingThrown->IsValidLowLevel());
 }
 
-void ATeleportController::ClearLaserBeam_Implementation()
+void ATeleportController::ClearLaserBeam()
 {
     for (USplineMeshComponent* mesh : LaserSplineMeshes)
     {
@@ -452,7 +462,7 @@ void ATeleportController::ClearLaserBeam_Implementation()
     LaserSpline->ClearSplinePoints(true);
 }
 
-void ATeleportController::CreateLaserSpline_Implementation()
+void ATeleportController::CreateLaserSpline()
 {
     if (bUseSmoothLaser)
     {
@@ -464,15 +474,20 @@ void ATeleportController::CreateLaserSpline_Implementation()
                 smc->SetStaticMesh(LaserSplineMesh);
                 smc->SetMaterial(0, LaserSplineMaterial);
            }
+           smc->SetStartScale(FVector2D(2.0f, 2.0f));
+           smc->SetEndScale(FVector2D(2.0f, 2.0f));
            smc->SetCollisionEnabled(ECollisionEnabled::NoCollision);
            smc->SetGenerateOverlapEvents(false);
+           smc->SetMobility(EComponentMobility::Movable);
            smc->AttachToComponent(LaserSpline, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true));
+           smc->RegisterComponent();
+           //AddInstanceComponent(smc);
            LaserSplineMeshes.Add(smc);
         }
     }
 }
 
-void ATeleportController::FilterGrabspline_Implementation(UPARAM(ref) TArray<FVector> &Locations, UPARAM(ref) FVector &Target, int32 ClosestIndex, double ClosestDist)
+void ATeleportController::FilterGrabspline(UPARAM(ref) TArray<FVector> &Locations, UPARAM(ref) FVector &Target, int32 ClosestIndex, double ClosestDist)
 {
     if (Locations.Num() > 1)
     {
@@ -499,7 +514,7 @@ void ATeleportController::FilterGrabspline_Implementation(UPARAM(ref) TArray<FVe
     }
 }
 
-void ATeleportController::UpdateLaserBeam_Implementation(float Deltatime)
+void ATeleportController::UpdateLaserBeam(float Deltatime)
 {
     if (IsLaserBeamActive)
     {
@@ -521,13 +536,13 @@ void ATeleportController::UpdateLaserBeam_Implementation(float Deltatime)
             FVector smoothedValue = EuroLowPassFilter.RunFilterSmoothing(teleWorldLoc + (LastLaserHitResult.Time * LaserBeamMaxDistance * teleForwardVector), Deltatime);
             UVRExpansionFunctionLibrary::SmoothUpdateLaserSpline(LaserSpline, LaserSplineMeshes, teleWorldLoc, smoothedValue, teleForwardVector, LaserBeamRadius);
             FHitResult hitResult;
-            FVector smoothLineTraceEnd = smoothedValue + ((smoothedValue - teleWorldLoc).Normalize() * 100.0f);
+            FVector smoothLineTraceEnd = smoothedValue + ((smoothedValue - teleWorldLoc).GetSafeNormal(.0001f) * 100.0f);
             FCollisionQueryParams smoothCollisionParams;
             smoothCollisionParams.AddIgnoredActors(TArray<AActor*>({this, OwningMotionController->GetOwner()}));
 
             if (DrawSmoothLaserTrace)
             {
-                DrawDebugLine(GetWorld(), teleWorldLoc, smoothLineTraceEnd, FColor::Red, false, .01f, 0, 1.0f);
+                DrawDebugLine(GetWorld(), teleWorldLoc, smoothLineTraceEnd, FColor::Green, false, .01f, 0, 1.0f);
             }
 
             if (GetWorld()->LineTraceSingleByChannel(hitResult, teleWorldLoc, smoothLineTraceEnd, ECollisionChannel::ECC_Visibility, smoothCollisionParams, FCollisionResponseParams::DefaultResponseParam))
@@ -564,14 +579,14 @@ void ATeleportController::UpdateLaserBeam_Implementation(float Deltatime)
     }
 }
 
-void ATeleportController::DisableWidgetActivation_Implementation()
+void ATeleportController::DisableWidgetActivation()
 {
     WidgetInteraction->SetCustomHitResult(FHitResult());
     // Fix: There was a delay here in the blueprint, could cause problems?
     WidgetInteraction->Deactivate();
 }
 
-void ATeleportController::RumbleController_Implementation(float Intensity)
+void ATeleportController::RumbleController(float Intensity)
 {
     if (OwningMotionController->IsValidLowLevel())
     {
@@ -581,52 +596,50 @@ void ATeleportController::RumbleController_Implementation(float Intensity)
     }
 }
 
- void ATeleportController::StartedUseHeldObjectLeft_Implementation()
+ void ATeleportController::StartedUseHeldObjectLeft()
  {
     EControllerHand hand;
     OwningMotionController->GetHandType(hand);
     if (hand == EControllerHand::Left)
     {
-        TossToHand();
+        TossToHand(hand);
     }
  }
 
- void ATeleportController::StartedUseHeldObjectRight_Implementation()
+ void ATeleportController::StartedUseHeldObjectRight()
  {
     EControllerHand hand;
     OwningMotionController->GetHandType(hand);
     if (!(hand == EControllerHand::Left))
     {
-        TossToHand();
+        TossToHand(hand);
     }
  }
 
 
-void ATeleportController::TossToHand_Implementation()
+void ATeleportController::TossToHand(EControllerHand Hand)
 {
     if (IsLaserBeamActive)
     {
-        //UseHeldObjectDispatch.Broadcast(LaserHighlightingObject, );
 
         bool isThrowing, isOverWidget;
         PhysicsTossManager->IsThrowing(isThrowing);
         isOverWidget = WidgetInteraction->IsOverInteractableWidget() || WidgetInteraction->IsOverFocusableWidget();
 
-        if (!isThrowing && !isOverWidget && LaserHighlightingObject->IsValidLowLevel())
+        if (!isThrowing && !isOverWidget && IsValid(LaserHighlightingObject))
         {
             AxREAL_VRCharacter* vrCharacter = Cast<AxREAL_VRCharacter>(OwningMotionController->GetOwner());
-            if (vrCharacter->IsValidLowLevel())
+            if (IsValid(vrCharacter))
             {
-                EControllerHand hand;
-                OwningMotionController->GetHandType(hand);
+                
                 //TODO: Implement the following function in the AxREAL_VRCharacter class
-                //vrCharacter->NotifyServerOfTossRequest(hand == EControllerHand::Left, LaserHighlightingObject);
+                vrCharacter->NotifyServerOfTossRequest(Hand == EControllerHand::Left, LaserHighlightingObject);
             }
         }
     }
 }
 
-void ATeleportController::CancelTracking_Implementation()
+void ATeleportController::CancelTracking()
 {
     PhysicsTossManager->CancelToss();
 }

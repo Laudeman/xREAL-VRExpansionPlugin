@@ -26,99 +26,83 @@ class VREXPANSIONPLUGIN_API ATeleportController : public AActor
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
+	void BindController();
 
 	// Serverside Toss Custom Event
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Default")
+	UFUNCTION(BlueprintCallable, Category="Default")
 	void ServersideToss(UPrimitiveComponent* TargetObject);
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Laser")
+	UFUNCTION(BlueprintCallable, Category="Laser")
 	void SetLaserBeamActive(bool LaserBeamActive);
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Teleportation")
+	UFUNCTION(BlueprintCallable, Category="Teleportation")
 	void ActivateTeleporter();
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Teleportation")
+	UFUNCTION(BlueprintCallable, Category="Teleportation")
 	void DisableTeleporter();
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
+	UFUNCTION(BlueprintCallable, Category="Teleportation")
 	void TraceTeleportDestination(bool& Success, TArray<FVector>& TracePoints, FVector& NavMeshLocation, FVector& TraceLocation);
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
+	UFUNCTION(BlueprintCallable, Category="Teleportation")
 	void ClearArc();
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
+	UFUNCTION(BlueprintCallable, Category="Teleportation")
 	void UpdateArcSpline(bool FoundValidLocation, UPARAM(ref) TArray<FVector>& SplinePoints);
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Teleportation")
+	UFUNCTION(BlueprintCallable, Category="Teleportation")
 	void UpdateArcEndpoint(FVector NewLocation, bool ValidLocationFound);
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Teleportation")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Teleportation")
 	void GetTeleportDestination(bool RelativeToHMD, FVector& Location, FRotator& Rotation);
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Teleportation")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Teleportation")
 	void GetTeleWorldLocAndForwardVector(FVector& WorldLoc, FVector& ForwardVector);
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void IfOverWidget_Use(bool bPressed, bool& WasOverWidget);
+	UFUNCTION(BlueprintCallable)
+	bool IfOverWidget_Use(bool bPressed);
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintCallable)
 	void InitController();
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable)
 	void ToggleTick();
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Default")
+	UFUNCTION(BlueprintCallable, Category="Default")
 	void ClearLaserBeam();
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Laser")
+	UFUNCTION(BlueprintCallable, Category="Laser")
 	void CreateLaserSpline();
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable)
 	void FilterGrabspline(UPARAM(ref) TArray<FVector>& Locations, UPARAM(ref) FVector& Target, int32 ClosestIndex, double ClosestDist);
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable)
 	void DisableWidgetActivation();
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable)
 	void RumbleController(float Intensity);
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable)
 	void StartedUseHeldObjectLeft();
 
-	UFUNCTION(BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable)
 	void StartedUseHeldObjectRight();
 
-	UFUNCTION(BlueprintNativeEvent)
-	void TossToHand();
+	UFUNCTION(BlueprintCallable)
+	void TossToHand(EControllerHand Hand);
 
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	UFUNCTION(BlueprintCallable)
 	void CancelTracking();
 
 	void CreateTeleportationArc();
 
+	UFUNCTION(BlueprintCallable, Category="Laser")
+	void UpdateLaserBeam(float Deltatime);
 
 protected:
-	/** TODO: Change this back to a private function, had to switch it to protected in order to use it as BlueprintNativeEvent.*/
-	/** Please add a function description */
-	UFUNCTION(BlueprintNativeEvent, Category="Laser")
-	void UpdateLaserBeam(float Deltatime);
 public:
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	double TeleportLaunchVelocity;
 
@@ -126,87 +110,66 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	TObjectPtr<UHapticFeedbackEffect_Base> TeleportHapticEffect;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<USplineComponent> LaserSpline;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> LaserBeamEndPoint;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> FinalFacingArrow;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UWidgetInteractionComponent> WidgetInteraction;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<USplineMeshComponent> LaserBeam;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> Arrow;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<USplineComponent> ArcSpline;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> Ring;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> TeleportCylinder;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<UStaticMeshComponent> ArcEndPoint;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category="Default")
 	TObjectPtr<USceneComponent> Scene;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	TObjectPtr<AActor> AttachedActor;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	bool IsTeleporterActive;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	TArray<USplineMeshComponent*> SplineMeshes;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	bool bLastFrameValidDestination;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	bool IsRoomScale;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	bool IsValidTeleportDestination;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	TEnumAsByte<EGripState> GripState;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	bool bWantsToGrip;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	FRotator TeleportRotation;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category="Default")
 	TObjectPtr<UPhysicsTossManager> PhysicsTossManager;
 
@@ -214,95 +177,84 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	FRotator InitialControllerRotation;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Default", meta=(ExposeOnSpawn="true"))
 	TObjectPtr<UGripMotionControllerComponent> OwningMotionController;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	bool IsLaserBeamActive;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Default")
 	double LaserBeamMaxDistance;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Default", meta=(ExposeOnSpawn="true"))
 	bool bIsLocal;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	bool bArcDirty;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	FRotator TeleportBaseRotation;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	FVector LastValidTeleportLocation;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Laser")
 	FBPEuroLowPassFilter EuroLowPassFilter;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Laser")
 	TArray<USplineMeshComponent*> LaserSplineMeshes;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Laser")
 	int32 NumberOfLaserSplinePoints;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Laser")
 	double LaserBeamRadius;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Laser", meta=(DisplayName="B Use Smooth Laser"))
 	bool bUseSmoothLaser;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Laser")
 	bool DrawSmoothLaserTrace;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Laser")
 	FHitResult LastLaserHitResult;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	bool bShowTrackingSensors;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default", meta=(MultiLine="true"))
 	TObjectPtr<UPrimitiveComponent> LaserHighlightingObject;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default", meta=(MultiLine="true"))
 	TObjectPtr<UPrimitiveComponent> ActorBeingThrown;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Default", meta=(MultiLine="true"))
 	FRotator RotOffset;
 
-	/** Please add a variable description */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FUseHeldObjectDispatch, UPrimitiveComponent*, HighlightedObject, bool, LeftHand);
 	UPROPERTY(BlueprintAssignable, EditDefaultsOnly, Category="Default")
 	FUseHeldObjectDispatch UseHeldObjectDispatch;
 
-	/** Please add a variable description */
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNotUseHeldObjectDispatch);
 	UPROPERTY(BlueprintAssignable, EditDefaultsOnly, Category="Default")
 	FNotUseHeldObjectDispatch NotUseHeldObjectDispatch;
 
-private:
-
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	UStaticMesh* TeleportSplineMesh;
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	UMaterialInterface* TeleportSplineMaterial;
 
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	UStaticMesh* LaserSplineMesh;
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default")
 	UMaterialInterface* LaserSplineMaterial;
+
+	// Timer Handles
+
+    FTimerHandle ControllerBind_TimerHandle;
+
+private:
+
 
 
 };
