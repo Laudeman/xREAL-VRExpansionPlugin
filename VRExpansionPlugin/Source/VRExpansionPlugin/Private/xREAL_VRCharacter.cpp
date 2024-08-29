@@ -23,63 +23,8 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
 {
     bReplicates = true;
     
-    // Initializing variables
-    AlwaysAllowClimbing = true;
-    bThumbPadEffectsSlidingDirection = true;
-
-    FadeinDuration = 0.25f;
-    FadeOutDuration = 0.25f;
+    InitializeDefaults();
     
-    TeleportThumbDeadzone = 0.4f;
-    
-    bTurnModeIsSnap = true;
-    SnapTurnAngle = 45.0f;
-    SmoothTurnSpeed = 50.0f;
-    TurningActivationThreshold = 0.7f;
-    CurrentMovementMode = EVRMovementMode::Teleport;
-    MovementModeRight = EVRMovementMode::Teleport;
-    DPadVelocityScaler = 1.25f;
-    SwingAndRunMagnitude = 2.0f;
-    RunningInPlaceScaler = 2.0f;
-
-    RIPMotionSmoothingSteps = 15;
-    MinimumRIPVelocity = 0.3f;
-    RipMotionLowPassSmoothingSteps = 1;
-    MinimumLowEndRipVelocity = 0.1f;
-
-    bTwoHandMovement = true;
-    
-    PeakVelocityLeft.VelocitySamples = 30;
-    PeakVelocityRight.VelocitySamples = 30;
-
-    ThrowingMassMaximum = 50.0f;
-    MassScalerMin = 0.3f;
-    MaximumThrowingVelocity = 1000.0f;
-
-    bLimitMaxThrowVelocity = true;
-    GripTraceLength = 0.1f;
-    HandStateRight = EGripState::Open;
-    HandStateLeft = EGripState::Open;
-
-    DefaultGripTag = FGameplayTag::RequestGameplayTag(FName("GripType.OnPrimaryGrip"));
-    DefaultDropTag = FGameplayTag::RequestGameplayTag(FName("DropType.OnPrimaryGripRelease"));
-    DefaultSecondaryDropTag = FGameplayTag::RequestGameplayTag(FName("DropType.Secondary.OnPrimaryGripRelease"));
-    DefaultSecondaryGripTag = FGameplayTag::RequestGameplayTag(FName("GripType.Secondary.OnPrimaryGrip"));
-
-    // World Static, World Dynamic, Pawn, Physics Body, Vehicle, Destructible
-    CollisionToCheckDuringGrip = TArray<TEnumAsByte<EObjectTypeQuery>>({UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic), UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic), UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn), UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_PhysicsBody), UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Vehicle), UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Destructible)});
-    ThrowingMassScaleFactor = 10.0f;
-    
-    IsObjectRelative = true;
-    
-    CurrentControllerTypeXR = EBPOpenXRControllerDeviceType::DT_SimpleController;
-    
-    InputConfig = FindFirstObjectSafe<UPlayerMappableInputConfig>(TEXT("/VRExpansionPlugin/VRE/Input/VREInputConfig.VREInputConfig"));
-    
-    HeadsetType = EBPHMDDeviceType::DT_OculusHMD;
-
-    SpawnGraspingHands = true;
-
     // Set up head mesh component
     HeadMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeadMesh"));
     if (HeadMesh)
@@ -143,7 +88,7 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
     if (AttachmentProxyRight)
     {
         AttachmentProxyRight->SetupAttachment(RightMotionController);
-        AttachmentProxyRight->SetRelativeLocation(FVector(1.819078f, 2.2f, 0.02606f));
+        AttachmentProxyRight->SetRelativeLocation(FVector(2.0f, 0.0f, 0.0f));
         AttachmentProxyRight->SetSphereRadius(4.0f);
         AttachmentProxyRight->SetCollisionProfileName(FName(TEXT("NoCollision")));
         AttachmentProxyRight->ComponentTags.Add(FName(TEXT("ATTACHPROXYRIGHT")));
@@ -152,7 +97,7 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
     if (AttachmentProxyLeft)
     {
         AttachmentProxyLeft->SetupAttachment(LeftMotionController);
-        AttachmentProxyLeft->SetRelativeLocation(FVector(-1.0f, -2.2f, -1.0f));
+        AttachmentProxyLeft->SetRelativeLocation(FVector(2.0f, 0.0f, 0.0f));
         AttachmentProxyLeft->SetSphereRadius(4.0f);
         AttachmentProxyLeft->SetCollisionProfileName(FName(TEXT("NoCollision")));
         AttachmentProxyLeft->ComponentTags.Add(FName(TEXT("ATTACHPROXYLEFT")));
@@ -199,7 +144,7 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
     if (GrabSphereRight)
     {
         GrabSphereRight->SetupAttachment(RightMotionController);
-        GrabSphereRight->SetRelativeLocation(FVector(1.819078f, 2.2f, 0.02606f));
+        GrabSphereRight->SetRelativeLocation(FVector(2.0f, 0.0f, 0.0f));
         GrabSphereRight->SetSphereRadius(4.0f);
         GrabSphereRight->SetCollisionProfileName(FName(TEXT("OverlapAllDynamic")));
     }
@@ -207,11 +152,77 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
     if (GrabSphereLeft)
     {
         GrabSphereLeft->SetupAttachment(LeftMotionController);
-        GrabSphereLeft->SetRelativeLocation(FVector(-1.0f, -2.2f, -1.0f));
+        GrabSphereLeft->SetRelativeLocation(FVector(2.0f, 0.0f, 0.0f));
         GrabSphereLeft->SetSphereRadius(4.0f);
         GrabSphereLeft->SetCollisionProfileName(FName(TEXT("OverlapAllDynamic")));
     }
 
+}
+
+void AxREAL_VRCharacter::InitializeDefaults()
+{
+    AlwaysAllowClimbing = true;
+    bThumbPadEffectsSlidingDirection = true;
+
+    FadeinDuration = 0.25f;
+    FadeOutDuration = 0.25f;
+
+    TeleportThumbDeadzone = 0.4f;
+
+    bTurnModeIsSnap = true;
+    SnapTurnAngle = 45.0f;
+    SmoothTurnSpeed = 50.0f;
+    TurningActivationThreshold = 0.7f;
+    CurrentMovementMode = EVRMovementMode::Teleport;
+    MovementModeRight = EVRMovementMode::Teleport;
+    DPadVelocityScaler = 1.25f;
+    SwingAndRunMagnitude = 2.0f;
+    RunningInPlaceScaler = 2.0f;
+
+    RIPMotionSmoothingSteps = 15;
+    MinimumRIPVelocity = 0.3f;
+    RipMotionLowPassSmoothingSteps = 1;
+    MinimumLowEndRipVelocity = 0.1f;
+
+    bTwoHandMovement = true;
+
+    PeakVelocityLeft.VelocitySamples = 30;
+    PeakVelocityRight.VelocitySamples = 30;
+
+    ThrowingMassMaximum = 50.0f;
+    MassScalerMin = 0.3f;
+    MaximumThrowingVelocity = 1000.0f;
+
+    bLimitMaxThrowVelocity = true;
+    GripTraceLength = 0.1f;
+    HandStateRight = EGripState::Open;
+    HandStateLeft = EGripState::Open;
+
+    DefaultGripTag = FGameplayTag::RequestGameplayTag(FName("GripType.OnPrimaryGrip"));
+    DefaultDropTag = FGameplayTag::RequestGameplayTag(FName("DropType.OnPrimaryGripRelease"));
+    DefaultSecondaryDropTag = FGameplayTag::RequestGameplayTag(FName("DropType.Secondary.OnPrimaryGripRelease"));
+    DefaultSecondaryGripTag = FGameplayTag::RequestGameplayTag(FName("GripType.Secondary.OnPrimaryGrip"));
+
+    // World Static, World Dynamic, Pawn, Physics Body, Vehicle, Destructible
+    CollisionToCheckDuringGrip = TArray<TEnumAsByte<EObjectTypeQuery>>({
+        UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic),
+        UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldDynamic),
+        UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn),
+        UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_PhysicsBody),
+        UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Vehicle),
+        UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Destructible)});
+
+    ThrowingMassScaleFactor = 10.0f;
+
+    IsObjectRelative = true;
+
+    CurrentControllerTypeXR = EBPOpenXRControllerDeviceType::DT_SimpleController;
+
+    InputConfig = FindFirstObjectSafe<UPlayerMappableInputConfig>(TEXT("/VRExpansionPlugin/VRE/Input/VREInputConfig.VREInputConfig"));
+
+    HeadsetType = EBPHMDDeviceType::DT_OculusHMD;
+
+    SpawnGraspingHands = true;
 }
 
 void AxREAL_VRCharacter::BeginPlay()
@@ -370,6 +381,23 @@ void AxREAL_VRCharacter::Destroyed()
 {
     Super::Destroyed();
     OnDestroy();
+}
+
+#pragma endregion
+
+#pragma region Gameplay
+
+void AxREAL_VRCharacter::Tick(float DeltaTime)
+{
+    if (IsLocallyControlled())
+    {
+        // Use for movement modes that use relative velocities
+        CalculateRelativeVelocities();
+        // CheckAndHandleClimbingMovement(DeltaTime); This was disconnected in the original blueprint
+        CheckAndHandleGripAnimations();
+        UpdateTeleportRotations();
+        SampleGripVelocities();
+    }
 }
 
 #pragma endregion
@@ -835,18 +863,6 @@ void AxREAL_VRCharacter::GetSmoothedVelocityOfObject(FVector CurRelLocation, UPA
 
 #pragma endregion
 
-void AxREAL_VRCharacter::Tick(float DeltaTime)
-{
-    if (IsLocallyControlled())
-    {
-        // Use for movement modes that use relative velocities
-        CalculateRelativeVelocities();
-        // CheckAndHandleClimbingMovement(DeltaTime); This was disconnected in the original blueprint
-        CheckAndHandleGripAnimations();
-        UpdateTeleportRotations();
-        SampleGripVelocities();
-    }
-}
 
 void AxREAL_VRCharacter::QuitGame()
 {
@@ -1466,6 +1482,7 @@ void AxREAL_VRCharacter::CallCorrectGrabEvent(UObject *ObjectToGrip, EController
 {
     if (ObjectToGrip->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
     {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Calling grab event"));
         if (IsALocalGrip(IVRGripInterface::Execute_GripMovementReplicationType(ObjectToGrip)))
         {
             TryGrabClient(ObjectToGrip, IsSlotGrip, GripTransform, Hand, GripSecondaryTag, OptionalBoneName, SlotName, IsSecondaryGrip);

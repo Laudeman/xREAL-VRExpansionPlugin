@@ -26,6 +26,8 @@ class VREXPANSIONPLUGIN_API AxREAL_VRCharacter : public AVRCharacter
 public:
 
 	AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	
+	void InitializeDefaults();
 
 	// Function for replicating variables
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
