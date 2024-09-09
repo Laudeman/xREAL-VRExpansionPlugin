@@ -2241,8 +2241,6 @@ bool AxREAL_VRCharacter::GripOrDropObjectClean(UGripMotionControllerComponent *C
         return false;
     }
 
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Nearest Object: %s"), *nearestObject->GetName()));
-
     if (canBeClimbed)
     {
         // Attempt climbing if it's not grippable
