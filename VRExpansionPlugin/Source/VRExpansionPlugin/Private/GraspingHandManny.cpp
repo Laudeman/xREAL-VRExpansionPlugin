@@ -25,11 +25,18 @@ AGraspingHandManny::AGraspingHandManny(const FObjectInitializer& ObjectInitializ
     bNetLoadOnClient = false;
 
     // Defaults
-    PrimaryActorTick.bStartWithTickEnabled = false;
+    MaxConstraintDistance = 50.0f;
+    PrimaryActorTick.bStartWithTickEnabled = true; //TODO: Was set to false in blueprint
+    PrimaryActorTick.bCanEverTick = true;
+    SetTickGroup(ETickingGroup::TG_PostPhysics);
     GraspEval_startDispl = -7.0f;
     GraspEval_endDisp = 5.0f;
     BoneName = FName("hand_r");
     Laterality = EControllerHand::Right;
+    
+    // Physics Hand
+    HandAnimState = EHandAnimState::Hand_Animated;
+    ConstraintCheckRate = 0.05f;
     
     // Physics and Collision Settings
     USkeletalMeshComponent* skelMesh = GetSkeletalMeshComponent();
@@ -45,20 +52,64 @@ AGraspingHandManny::AGraspingHandManny(const FObjectInitializer& ObjectInitializ
     {
         skelMesh->SetSkeletalMesh(SkeletalMeshAsset.Object);
     }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to load skeletal mesh for %s"), *GetName());
+    }
 
-    static ConstructorHelpers::FObjectFinder<UClass> AnimBP(TEXT("Class'/VRExpansionPlugin/VRE/Core/GraspingHands/GraspAnimBPManny.GraspAnimBPManny_C'"));
+    static ConstructorHelpers::FObjectFinder<UClass> AnimBP(TEXT("Class'/VRExpansionPlugin/VRE/Core/GraspingHands/GraspAnimBP.GraspAnimBP_C'"));
     if (AnimBP.Succeeded())
     {
         skelMesh->SetAnimClass(AnimBP.Object);
     }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to load animation blueprint for %s"), *GetName());
+    }
+    
+    static ConstructorHelpers::FObjectFinder<UCurveFloat> gripSmoothCurveFloat(TEXT("CurveFloat'/VRExpansionPlugin/VRE/Core/GraspingHands/GripSmoothCurveFloat.GripSmoothCurveFloat'"));    
+    if (gripSmoothCurveFloat.Succeeded())
+    {
+        GripSmoothCurveFloat = gripSmoothCurveFloat.Object;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to load grip smooth curve float for %s"), *GetName());
+    }
+    
+    static ConstructorHelpers::FObjectFinder<UCurveFloat> curlCurveFloat(TEXT("CurveFloat'/VRExpansionPlugin/VRE/Core/GraspingHands/CurlCurveFloat.CurlCurveFloat'"));
+    if (curlCurveFloat.Succeeded())
+    {
+        CurlCurveFloat = curlCurveFloat.Object;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to load curl curve float for %s"), *GetName());
+    }
 
     // Root Physics Component Setup
     RootPhysics = CreateDefaultSubobject<USphereComponent>(TEXT("RootPhysics"));
+    RootPhysics->SetupAttachment(RootComponent);
     RootPhysics->SetSphereRadius(4.0f);
     RootPhysics->SetRelativeLocation(FVector(0.235685f, 7.717347f, -1.996791f));
+    RootPhysics->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    RootPhysics->SetCollisionObjectType(ECC_WorldDynamic);
+    RootPhysics->SetCollisionResponseToAllChannels(ECR_Ignore);
     RootPhysics->SetMassOverrideInKg(NAME_None, 0.001f);
 
     SimulatingHandConstraint = CreateDefaultSubobject<UVREPhysicsConstraintComponent>(TEXT("SimulatingHandConstraint"));
+    SimulatingHandConstraint->SetupAttachment(RootComponent);
+    SimulatingHandConstraint->SetLinearXLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
+    SimulatingHandConstraint->SetLinearYLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
+    SimulatingHandConstraint->SetLinearZLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
+    SimulatingHandConstraint->SetLinearDriveParams(300000.0f, 300000.0f, 300000.0f);
+    SimulatingHandConstraint->SetLinearPositionDrive(true, true, true);
+    SimulatingHandConstraint->SetLinearVelocityDrive(true, true, true);
+    SimulatingHandConstraint->SetAngularDriveParams(700000.0f, 60000.0f, 700000.0f);
+    SimulatingHandConstraint->SetAngularDriveMode(EAngularDriveMode::SLERP);
+    SimulatingHandConstraint->SetOrientationDriveSLERP(true);
+    SimulatingHandConstraint->SetAngularVelocityDriveSLERP(true);
+    
 
     // Finger Capsule Setup
     thumb_03 = SetupFingerCapsule(FName("Thumb_03"), FName("thumb_03_r"), 0.3f, 1.2f, FVector(0.0f, 0.209252f, -1.398646f), FVector(2.0f, 3.352294f, 2.0f));
@@ -96,15 +147,13 @@ void AGraspingHandManny::BeginPlay()
     // Setup Timeline Functions
     if (GripSmoothCurveFloat)
     {
-        FOnTimelineFloat TimelineProgress;
+        FOnTimelineFloat GripSmoothTimelineProgress;
+        FOnTimelineEvent GripSmoothTimelineFinishedEvent;
+        GripSmoothTimelineProgress.BindUFunction(this, FName("OnTimeline_GripSmooth_Update"));
+        GripSmoothTimelineFinishedEvent.BindUFunction(this, FName("OnTimeline_GripSmooth_Finished"));
 
-        TimelineProgress.BindUFunction(this, FName("OnTimeline_GripSmooth_Update"));
-
-        FOnTimelineEvent FinishedEvent;
-        FinishedEvent.BindUFunction(this, FName("OnTimeline_GripSmooth_Finished"));
-
-        GripSmoothTimeline.AddInterpFloat(GripSmoothCurveFloat, TimelineProgress);
-        GripSmoothTimeline.SetTimelineFinishedFunc(FinishedEvent);
+        GripSmoothTimeline.AddInterpFloat(GripSmoothCurveFloat, GripSmoothTimelineProgress);
+        GripSmoothTimeline.SetTimelineFinishedFunc(GripSmoothTimelineFinishedEvent);
     }
     else
     {
@@ -113,15 +162,13 @@ void AGraspingHandManny::BeginPlay()
 
     if (CurlCurveFloat)
     {
-        FOnTimelineFloat TimelineProgress;
+        FOnTimelineFloat CurlTimelineProgress;
+        FOnTimelineEvent CurlTimelineFinishedEvent;
+        CurlTimelineProgress.BindUFunction(this, FName("OnTimeline_Curl_Update"));
+        CurlTimelineFinishedEvent.BindUFunction(this, FName("OnTimeline_Curl_Finished"));
 
-        TimelineProgress.BindUFunction(this, FName("OnTimeline_Curl_Update"));
-
-        FOnTimelineEvent FinishedEvent;
-        FinishedEvent.BindUFunction(this, FName("OnTimeline_Curl_Finished"));
-
-        CurlTimeline.AddInterpFloat(CurlCurveFloat, TimelineProgress);
-        CurlTimeline.SetTimelineFinishedFunc(FinishedEvent);
+        CurlTimeline.AddInterpFloat(CurlCurveFloat, CurlTimelineProgress);
+        CurlTimeline.SetTimelineFinishedFunc(CurlTimelineFinishedEvent);
     }
     else
     {
@@ -139,6 +186,21 @@ void AGraspingHandManny::BeginPlay()
             SetupAfterComponentsAreValid();
         }
     }, .1f, true); 
+}
+
+void AGraspingHandManny::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+    //TODO Continue here, why is this not running? Also might need to change the FTimeline to a UTimelineComponent
+    if (GripSmoothTimeline.IsPlaying())
+    {
+        GripSmoothTimeline.TickTimeline(DeltaTime);
+    }
+    if (CurlTimeline.IsPlaying())
+    {
+        CurlTimeline.TickTimeline(DeltaTime);
+    }
+
 }
 
 void AGraspingHandManny::PostInitializeComponents()
@@ -226,6 +288,8 @@ UCapsuleComponent* AGraspingHandManny::SetupFingerCapsule(FName CapsuleName, FNa
     Capsule->SetRelativeLocation(RelativeLocation);
     Capsule->SetRelativeScale3D(RelativeScale);
     Capsule->SetRelativeRotation(RelativeRotation);
+    Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Capsule->SetCollisionObjectType(ECC_WorldDynamic);
 
     return Capsule;
     
@@ -315,6 +379,8 @@ void AGraspingHandManny::SetFingerOverlapping(bool IsOverlapping, ETriggerIndexe
         FingersOverlapping.Add(Finger, IsOverlapping);
         if (IsOverlapping)
         {
+            // Print which finger is overlapping
+            FString fingerName = UEnum::GetValueAsString(Finger);
             FingersBlocked.Add(Finger, true);
         }
     }
@@ -926,8 +992,8 @@ void AGraspingHandManny::InitGrip(FBPActorGripInformation GripInfo)
     if (IGameplayTagAssetInterface* grippedObjectInterface = Cast<IGameplayTagAssetInterface>(GripInfo.GrippedObject))
     {
         bool hasMatchingTag = grippedObjectInterface->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag("GripSockets.DontAttachHand"));
-        bool notGraspedOrSecondary = !bAlreadyGrasped || bIsSecondaryGrip;
-        if (hasMatchingTag && notGraspedOrSecondary && GripInfo.bIsLerping)
+        bool alreadyGraspedAndNotSecondary = !bIsSecondaryGrip && bAlreadyGrasped;
+        if (!hasMatchingTag && !alreadyGraspedAndNotSecondary && !GripInfo.bIsLerping)
         {
             bAlreadyGrasped = true;
             bIsSecondaryGrip = false;

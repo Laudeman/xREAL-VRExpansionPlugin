@@ -35,6 +35,9 @@ class VREXPANSIONPLUGIN_API AGraspingHandManny : public AOptionalRepGrippableSke
 
 	UFUNCTION()
     virtual void BeginPlay() override;
+	
+	UFUNCTION()
+	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
 	virtual void PostInitializeComponents() override;
@@ -192,13 +195,19 @@ class VREXPANSIONPLUGIN_API AGraspingHandManny : public AOptionalRepGrippableSke
 	UFUNCTION(BlueprintCallable)
 	void SetupClientTransforms();
 
+	UFUNCTION()
 	void OnTimeline_GripSmooth_Update(float Value);
+	UFUNCTION()
 	void OnTimeline_GripSmooth_Finished();
 
+	UFUNCTION()
     void OnTimeline_Curl_Update(float Value);
+	UFUNCTION()
     void OnTimeline_Curl_Finished();
 
+	UFUNCTION()
 	void OnTimeline_LerpBack_Update(float Value);
+	UFUNCTION()
 	void OnTimeline_LerpBack_Finished();
 
 	// Disgusting overlap functions, plz refactor this atrocious code in some way
@@ -302,20 +311,22 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Timeline")
 	UCurveFloat* GripSmoothCurveFloat;
-
+	UPROPERTY()
 	FTimeline GripSmoothTimeline;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Timeline")
 	UCurveFloat* CurlCurveFloat;
-
 	/** Lerp Finger Curls Timeline */
+	UPROPERTY()
 	FTimeline CurlTimeline;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Timeline")
 	UCurveFloat* LerpBackCurveFloat;
-
 	/** Lerp Back Timeline */
+	UPROPERTY()
 	FTimeline LerpBackTimeline;
+	
+
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Default", meta=(MultiLine="true"))

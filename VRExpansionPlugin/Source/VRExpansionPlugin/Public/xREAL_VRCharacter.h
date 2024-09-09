@@ -263,7 +263,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintPure, Category="Movement")
 	USceneComponent* GetCorrectAimComp(UGripMotionControllerComponent* Hand);
 
-	UFUNCTION(BlueprintNativeEvent, Category="Input")
+	UFUNCTION(BlueprintCallable, Category="Input")
 	void MapInput();
 
 	UFUNCTION(BlueprintNativeEvent, Category="Gripping|Velocity")

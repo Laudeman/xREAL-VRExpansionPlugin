@@ -146,7 +146,9 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
         GrabSphereRight->SetupAttachment(RightMotionController);
         GrabSphereRight->SetRelativeLocation(FVector(2.0f, 0.0f, 0.0f));
         GrabSphereRight->SetSphereRadius(4.0f);
-        GrabSphereRight->SetCollisionProfileName(FName(TEXT("OverlapAllDynamic")));
+        GrabSphereRight->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        GrabSphereRight->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
+        GrabSphereRight->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
     }
     GrabSphereLeft = CreateDefaultSubobject<USphereComponent>(TEXT("GrabSphereLeft"));
     if (GrabSphereLeft)
@@ -154,7 +156,9 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
         GrabSphereLeft->SetupAttachment(LeftMotionController);
         GrabSphereLeft->SetRelativeLocation(FVector(2.0f, 0.0f, 0.0f));
         GrabSphereLeft->SetSphereRadius(4.0f);
-        GrabSphereLeft->SetCollisionProfileName(FName(TEXT("OverlapAllDynamic")));
+        GrabSphereLeft->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        GrabSphereLeft->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
+        GrabSphereLeft->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
     }
 
 }
@@ -223,6 +227,7 @@ void AxREAL_VRCharacter::InitializeDefaults()
     HeadsetType = EBPHMDDeviceType::DT_OculusHMD;
 
     SpawnGraspingHands = true;
+    UsePhysicalGraspingHands = false;
 }
 
 void AxREAL_VRCharacter::BeginPlay()
@@ -550,7 +555,6 @@ void AxREAL_VRCharacter::TeleportRight_Started()
 
 void AxREAL_VRCharacter::TeleportRight_Completed()
 {
-    
     if (bRightHandMovement || bTwoHandMovement)
     {
         
@@ -818,7 +822,7 @@ void AxREAL_VRCharacter::WriteToLog(bool Left, FString &Text)
     }
 }
 
-void AxREAL_VRCharacter::MapInput_Implementation()
+void AxREAL_VRCharacter::MapInput()
 {
     // Get Player Controller
     APlayerController* playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -994,9 +998,8 @@ void AxREAL_VRCharacter::TryToGrabObject(UObject *ObjectToTryToGrab, FTransform 
         // Does the other hand hold this already?
         if (OtherHand->GetIsObjectHeld(ObjectToTryToGrab))
         {
-            IVRGripInterface *objectInterface = Cast<IVRGripInterface>(ObjectToTryToGrab);
             // If we do not allow multiple grips, check for hand swap or secondary grip
-            if (!objectInterface || !objectInterface->AllowsMultipleGrips())
+            if (!implementsInterface || !IVRGripInterface::Execute_AllowsMultipleGrips(ObjectToTryToGrab))
             {
                 if (IsSecondaryGrip || !IsSlotGrip)
                 {
@@ -1075,6 +1078,8 @@ void AxREAL_VRCharacter::GetNearestOverlappingObject(UPrimitiveComponent *Overla
         NearestObject = nullptr;
         return;
     }
+    // Draw sphere for debug
+    //DrawDebugSphere(GetWorld(), OverlapComponent->GetComponentLocation(), OverlapComponent->Bounds.SphereRadius, 32, FColor::Green, false, 1.0f);
 
     if (!bForceOverlapOnlyGripChecks)
     {
@@ -1482,7 +1487,6 @@ void AxREAL_VRCharacter::CallCorrectGrabEvent(UObject *ObjectToGrip, EController
 {
     if (ObjectToGrip->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Calling grab event"));
         if (IsALocalGrip(IVRGripInterface::Execute_GripMovementReplicationType(ObjectToGrip)))
         {
             TryGrabClient(ObjectToGrip, IsSlotGrip, GripTransform, Hand, GripSecondaryTag, OptionalBoneName, SlotName, IsSecondaryGrip);
@@ -2237,6 +2241,8 @@ bool AxREAL_VRCharacter::GripOrDropObjectClean(UGripMotionControllerComponent *C
         return false;
     }
 
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Nearest Object: %s"), *nearestObject->GetName()));
+
     if (canBeClimbed)
     {
         // Attempt climbing if it's not grippable
@@ -2345,9 +2351,7 @@ bool AxREAL_VRCharacter::GripOrDropObjectClean(UGripMotionControllerComponent *C
                 // Normal Transform
                 else
                 {
-
                     gripTransform = CallingMotionController->ConvertToControllerRelativeTransform(plainOrBoneTransform);
-
                 }
 
                 CallCorrectGrabEvent(nearestObject, handType, hadSlot, gripTransform, FGameplayTag(), nearestBoneName, slotName, false);
@@ -2582,7 +2586,7 @@ void AxREAL_VRCharacter::SetGripComponents(UPrimitiveComponent *LeftHand, UPrimi
     {
         LeftHandGripComponent = LeftHand;
         //TODO: Uncomment this and make it not run only on FPS
-        //LeftMotionController->SetCustomPivotComponent(LeftHandGripComponent);
+        LeftMotionController->SetCustomPivotComponent(LeftHandGripComponent);
     }
     else
     {
@@ -2593,7 +2597,7 @@ void AxREAL_VRCharacter::SetGripComponents(UPrimitiveComponent *LeftHand, UPrimi
     {
         RightHandGripComponent = RightHand;
         //TODO: Uncomment this and make it not run only on FPS
-        //RightMotionController->SetCustomPivotComponent(RightHandGripComponent);
+        RightMotionController->SetCustomPivotComponent(RightHandGripComponent);
     }
     else
     {
