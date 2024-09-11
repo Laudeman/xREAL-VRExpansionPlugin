@@ -160,7 +160,6 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
         GrabSphereLeft->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
         GrabSphereLeft->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
     }
-
 }
 
 void AxREAL_VRCharacter::InitializeDefaults()
@@ -2583,7 +2582,6 @@ void AxREAL_VRCharacter::SetGripComponents(UPrimitiveComponent *LeftHand, UPrimi
     if (IsValid(LeftHand))
     {
         LeftHandGripComponent = LeftHand;
-        //TODO: Uncomment this and make it not run only on FPS
         LeftMotionController->SetCustomPivotComponent(LeftHandGripComponent);
     }
     else
@@ -2594,7 +2592,6 @@ void AxREAL_VRCharacter::SetGripComponents(UPrimitiveComponent *LeftHand, UPrimi
     if (IsValid(RightHand))
     {
         RightHandGripComponent = RightHand;
-        //TODO: Uncomment this and make it not run only on FPS
         RightMotionController->SetCustomPivotComponent(RightHandGripComponent);
     }
     else

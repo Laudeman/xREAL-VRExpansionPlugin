@@ -86,6 +86,16 @@ AGraspingHandManny::AGraspingHandManny(const FObjectInitializer& ObjectInitializ
     {
         UE_LOG(LogTemp, Warning, TEXT("Failed to load curl curve float for %s"), *GetName());
     }
+    
+    static ConstructorHelpers::FObjectFinder<UCurveFloat> lerpBackCurveFloat(TEXT("CurveFloat'/VRExpansionPlugin/VRE/Core/GraspingHands/LerpBackCurveFloat.LerpBackCurveFloat'"));
+    if (lerpBackCurveFloat.Succeeded())
+    {
+        LerpBackCurveFloat = lerpBackCurveFloat.Object;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Failed to load lerp back curve float for %s"), *GetName());
+    }
 
     // Root Physics Component Setup
     RootPhysics = CreateDefaultSubobject<USphereComponent>(TEXT("RootPhysics"));
@@ -99,10 +109,11 @@ AGraspingHandManny::AGraspingHandManny(const FObjectInitializer& ObjectInitializ
 
     SimulatingHandConstraint = CreateDefaultSubobject<UVREPhysicsConstraintComponent>(TEXT("SimulatingHandConstraint"));
     SimulatingHandConstraint->SetupAttachment(RootComponent);
+    SimulatingHandConstraint->SetRelativeLocation(FVector(8.902467f, 0.000019f, 0.0f));
     SimulatingHandConstraint->SetLinearXLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
     SimulatingHandConstraint->SetLinearYLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
     SimulatingHandConstraint->SetLinearZLimit(ELinearConstraintMotion::LCM_Free, 0.0f);
-    SimulatingHandConstraint->SetLinearDriveParams(300000.0f, 300000.0f, 300000.0f);
+    SimulatingHandConstraint->SetLinearDriveParams(300000.0f, 30000.0f, 300000.0f);
     SimulatingHandConstraint->SetLinearPositionDrive(true, true, true);
     SimulatingHandConstraint->SetLinearVelocityDrive(true, true, true);
     SimulatingHandConstraint->SetAngularDriveParams(700000.0f, 60000.0f, 700000.0f);
@@ -174,6 +185,21 @@ void AGraspingHandManny::BeginPlay()
     {
         UE_LOG(LogTemp, Warning, TEXT("No curl curve float set for %s"), *GetName());
     }
+    
+    if (LerpBackCurveFloat)
+    {
+        FOnTimelineFloat LerpBackTimelineProgress;
+        FOnTimelineEvent LerpBackTimelineFinishedEvent;
+        LerpBackTimelineProgress.BindUFunction(this, FName("OnTimeline_LerpBack_Update"));
+        LerpBackTimelineFinishedEvent.BindUFunction(this, FName("OnTimeline_LerpBack_Finished"));
+        
+        LerpBackTimeline.AddInterpFloat(LerpBackCurveFloat, LerpBackTimelineProgress);
+        LerpBackTimeline.SetTimelineFinishedFunc(LerpBackTimelineFinishedEvent);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No lerp back curve float set for %s"), *GetName());
+    }
 
 
     GetWorldTimerManager().SetTimer(ValidityCheckTimerHandle, [this]()
@@ -191,7 +217,7 @@ void AGraspingHandManny::BeginPlay()
 void AGraspingHandManny::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-    //TODO Continue here, why is this not running? Also might need to change the FTimeline to a UTimelineComponent
+
     if (GripSmoothTimeline.IsPlaying())
     {
         GripSmoothTimeline.TickTimeline(DeltaTime);
@@ -199,6 +225,10 @@ void AGraspingHandManny::Tick(float DeltaTime)
     if (CurlTimeline.IsPlaying())
     {
         CurlTimeline.TickTimeline(DeltaTime);
+    }
+    if (LerpBackTimeline.IsPlaying())
+    {
+        LerpBackTimeline.TickTimeline(DeltaTime);
     }
 
 }
@@ -688,8 +718,8 @@ bool AGraspingHandManny::RemoveAndLerpBack(uint8 GripID, bool ForceDetach)
         {
             RootPhysics->AttachToComponent(skelMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), NAME_None);
             RootPhysics->SetRelativeTransform(OriginalGripTrans);
-            return true;
         }
+        return true;
     }
     return false;
 }
