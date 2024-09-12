@@ -1331,15 +1331,17 @@ void AxREAL_VRCharacter::ClearClimbing(bool BecauseOfStepUp)
 {
     if (IsHandClimbing && IsLocallyControlled())
     {
-        if (BecauseOfStepUp)
+        if (!BecauseOfStepUp)
         {
-            IsHandClimbing = false;
-            ClimbingHand = nullptr;
-            ClimbGripLocation = FTransform::Identity;
-            IsObjectRelative = false;
-            GrippedObject = nullptr;
-            OnClimbingEnded.Broadcast();
+            VRMovementReference->SetClimbingMode(false);
         }
+
+        IsHandClimbing = false;
+        ClimbingHand = nullptr;
+        ClimbGripLocation = FTransform::Identity;
+        IsObjectRelative = false;
+        GrippedObject = nullptr;
+        OnClimbingEnded.Broadcast();
     }
 }
 
