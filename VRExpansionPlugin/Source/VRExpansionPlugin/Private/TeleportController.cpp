@@ -9,6 +9,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "xREAL_VRCharacter.h"
 #include "NavigationSystem.h"
+#include "EnhancedInputComponent.h"
 #include "UObject/ConstructorHelpers.h"
 
 
@@ -165,8 +166,21 @@ void ATeleportController::BindController()
         if (OwningMotionController->IsLocallyControlled())
         {
             EnableInput(playerController);
-            playerController->InputComponent->BindAction("UseHeldObjectLeft", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectLeft);
-            playerController->InputComponent->BindAction("UseHeldObjectRight", IE_Pressed, this, &ATeleportController::StartedUseHeldObjectRight);
+            if (UEnhancedInputComponent* playerInput = Cast<UEnhancedInputComponent>(playerController->InputComponent))
+            {
+                UInputAction* useHeldObjectRight = FindFirstObjectSafe<UInputAction>(TEXT("UseHeldObjectRight"));
+                if (useHeldObjectRight)
+                {
+                    playerInput->BindAction(useHeldObjectRight, ETriggerEvent::Started, this, &ATeleportController::StartedUseHeldObjectRight);
+                }
+                
+                UInputAction* useHeldObjectLeft = FindFirstObjectSafe<UInputAction>(TEXT("UseHeldObjectLeft"));
+                if (useHeldObjectLeft)
+                {
+                    playerInput->BindAction(useHeldObjectLeft, ETriggerEvent::Started, this, &ATeleportController::StartedUseHeldObjectLeft);
+                }
+
+            }
             AVRCharacter* vrCharacter = Cast<AVRCharacter>(OwningMotionController->GetOwner());
             if (vrCharacter)
             {
@@ -631,8 +645,6 @@ void ATeleportController::TossToHand(EControllerHand Hand)
             AxREAL_VRCharacter* vrCharacter = Cast<AxREAL_VRCharacter>(OwningMotionController->GetOwner());
             if (IsValid(vrCharacter))
             {
-                
-                //TODO: Implement the following function in the AxREAL_VRCharacter class
                 vrCharacter->NotifyServerOfTossRequest(Hand == EControllerHand::Left, LaserHighlightingObject);
             }
         }
