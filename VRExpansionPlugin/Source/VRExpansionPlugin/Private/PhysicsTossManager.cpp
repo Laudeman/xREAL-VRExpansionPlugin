@@ -9,7 +9,7 @@ UPhysicsTossManager::UPhysicsTossManager(const FObjectInitializer& ObjectInitial
     PrimaryComponentTick.bStartWithTickEnabled = false;
     PrimaryComponentTick.bCanEverTick = true;
     DistanceToStartSlowing = 100.0f;
-    MinimumSpeed = 200.0f;
+    MinimumSpeed = 100.0f; // Was orignally 200.0f, but this speed might be easier to grab from.
     CancelDistance = 20.0f;
 }
 
@@ -27,16 +27,17 @@ void UPhysicsTossManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UPhysicsTossManager::ServersideToss_Implementation(UPrimitiveComponent* TargetObject, UGripMotionControllerComponent* TargetMotionController)
 {
-    if (!ObjectBeingThrown->IsValidLowLevel())
+    if (!IsValid(ObjectBeingThrown))
     {
-        if (TargetObject->IsValidLowLevel())
+        if (IsValid(TargetObject))
         {
             //IVRGripInterface* objectOwnerGripInterface = Cast<IVRGripInterface>(TargetObject->GetOwner());
-            if (TargetObject->GetOwner()->Implements<UVRGripInterface>())
+            AActor* ownerActor = TargetObject->GetOwner();
+            if (ownerActor && ownerActor->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
             {
                 bool isHeld = false;
                 TArray<FBPGripPair> holdingControllers;
-                IVRGripInterface::Execute_IsHeld(TargetObject->GetOwner(), holdingControllers, isHeld);
+                IVRGripInterface::Execute_IsHeld(ownerActor, holdingControllers, isHeld);
                 if (!isHeld)
                 {
                     OwningMotionController = TargetMotionController;
@@ -55,8 +56,7 @@ void UPhysicsTossManager::RunToss_Implementation(bool IsHeld)
 {
     FVector throwVelocity = OwningMotionController->GetPivotLocation() - ObjectBeingThrown->GetComponentLocation();
     float currentDistanceSQ = throwVelocity.SizeSquared();
-    FVector normalVector = throwVelocity;
-    normalVector.Normalize(0.0001f);
+    FVector normalVector = throwVelocity.GetSafeNormal(0.0001f);
 
     if (currentDistanceSQ > FMath::Square(CancelDistance) && !IsHeld)
     {
@@ -66,11 +66,11 @@ void UPhysicsTossManager::RunToss_Implementation(bool IsHeld)
             
             float vectorLengthSquared = FVector::VectorPlaneProject(outLaunchVelocity, normalVector).SizeSquared();
 
-            float clampedSpeed = FMath::Clamp(FMath::Square(MinimumSpeed) - vectorLengthSquared, 0.0f, MinimumSpeed);
+            float clampedSpeed = FMath::Clamp((FMath::Square(MinimumSpeed) - vectorLengthSquared), 0.0f, MinimumSpeed);
 
-            float rangeSlowDownFloat = FMath::Clamp(1 - FMath::Square(DistanceToStartSlowing) / currentDistanceSQ, 0.8f, 1.0f);
+            float rangeSlowDownFloat = FMath::Clamp(1 - (FMath::Square(DistanceToStartSlowing) / currentDistanceSQ), 0.8f, 1.0f);
 
-            FVector newVelocity = (normalVector * clampedSpeed) + outLaunchVelocity * rangeSlowDownFloat;
+            FVector newVelocity = ((normalVector * clampedSpeed) + outLaunchVelocity) * rangeSlowDownFloat;
 
             ObjectBeingThrown->SetPhysicsLinearVelocity(newVelocity, false);
         }
@@ -87,16 +87,16 @@ void UPhysicsTossManager::RunToss_Implementation(bool IsHeld)
 
 void UPhysicsTossManager::RunThrowing_Implementation()
 {
-    if (ObjectBeingThrown->IsValidLowLevel())
+    if (IsValid(ObjectBeingThrown))
     {
         bool isHeld = false;
         TArray<FBPGripPair> holdingControllers;
         // Use this if you want to check the owner instead but the blueprint implementation didn't do this.
         //if (ObjectBeingThrown->GetOwner()->Implements<UVRGripInterface>())
-        if (ObjectBeingThrown->Implements<UVRGripInterface>())
+        if (ObjectBeingThrown->GetOwner()->GetClass()->ImplementsInterface(UVRGripInterface::StaticClass()))
         {
             //IVRGripInterface::Execute_IsHeld(ObjectBeingThrown->GetOwner(), holdingControllers, isHeld);
-            IVRGripInterface::Execute_IsHeld(ObjectBeingThrown, holdingControllers, isHeld);
+            IVRGripInterface::Execute_IsHeld(ObjectBeingThrown->GetOwner(), holdingControllers, isHeld);
         }
         RunToss(isHeld);
     }
