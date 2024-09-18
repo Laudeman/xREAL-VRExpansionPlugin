@@ -2778,10 +2778,14 @@ void AxREAL_VRCharacter::InitTeleportControllers_Implementation(const APlayerSta
 
         if (!IsLocallyControlled())
         {
-            VOIPTalker->Settings = FVoiceSettings();
-            VOIPTalker->Settings.ComponentToAttachTo = VRReplicatedCamera;
-            VOIPTalker->Settings.AttenuationSettings = AttenuationSettingsForVOIP;
-            VOIPTalker->RegisterWithPlayerState(GetPlayerState());
+            if (AttenuationSettingsForVOIP)
+            {
+                FVoiceSettings VOIPTalkerSettings = FVoiceSettings();
+                VOIPTalkerSettings.ComponentToAttachTo = VRReplicatedCamera;
+                VOIPTalkerSettings.AttenuationSettings = AttenuationSettingsForVOIP;
+                VOIPTalker->Settings = VOIPTalkerSettings;
+                VOIPTalker->RegisterWithPlayerState(GetPlayerState());
+            }
         }
     }
 }
