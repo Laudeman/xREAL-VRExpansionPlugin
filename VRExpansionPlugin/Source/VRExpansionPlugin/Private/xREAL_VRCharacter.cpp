@@ -74,7 +74,7 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
     if (TextL)
     {
         TextL->SetupAttachment(LeftMotionController);
-        TextL->SetRelativeLocation(FVector(10.0f, -0.001764f, 0.060858f));
+        TextL->SetRelativeLocation(FVector(10.0f, -0.001764f, 2.106884f));
         TextL->SetRelativeRotation(FRotator(82.999741f, -179.9993f, 0.0f));
         TextL->SetTextMaterial(FindFirstObjectSafe<UMaterialInterface>(TEXT("DefaultTextMaterialOpaque.DefaultTextMaterialOpaque")));
         TextL->SetText(FText::FromString("L"));
