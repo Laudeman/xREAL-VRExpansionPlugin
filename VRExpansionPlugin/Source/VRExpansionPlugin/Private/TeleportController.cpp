@@ -288,8 +288,9 @@ void ATeleportController::TraceTeleportDestination(bool &Success, TArray<FVector
     Params.StartLocation = worldLocation;
     Params.LaunchVelocity = forwardVector * TeleportLaunchVelocity;
     Params.bTraceWithCollision = true;
+    Params.bTraceWithChannel = false;
     Params.ProjectileRadius = 0.0f; // Set this based on your needs
-    Params.ObjectTypes.Add(EObjectTypeQuery::ObjectTypeQuery1); // Adjust this based on your collision settings
+    Params.ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic)); // Adjust this based on your collision settings
     Params.SimFrequency = 30.0f; // Simulation frequency
     Params.MaxSimTime = 2.0f; // Adjust simulation time as needed
 
@@ -303,7 +304,7 @@ void ATeleportController::TraceTeleportDestination(bool &Success, TArray<FVector
         TracePoints.Add(PointData.Location);
     }
     FVector hitLocation = result.HitResult.Location;
-
+    
     // Project Point to Navigation
     FVector projectedLocation;
     float projectNavExtends = 500.0f;
@@ -667,15 +668,16 @@ void ATeleportController::CreateTeleportationArc()
 
     if (IsValidTeleportDestination)
     {
-
         //Line Trace for Objects
         FHitResult outHitResult;
         FCollisionQueryParams collisionParams;
         collisionParams.AddIgnoredActor(this);
+        TArray<TEnumAsByte<EObjectTypeQuery>> objectTypes;
+        objectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_WorldStatic));
         FVector downwardVector = navMeshLocation + FVector(0.0f, 0.0f, -200.0f);
 
-        bool bHit = GetWorld()->LineTraceSingleByObjectType( outHitResult, navMeshLocation, downwardVector, FCollisionObjectQueryParams::AllStaticObjects, collisionParams);
-
+        bool bHit = GetWorld()->LineTraceSingleByObjectType( outHitResult, navMeshLocation, downwardVector, FCollisionObjectQueryParams(objectTypes), collisionParams);
+        
         if (bHit)
         {
             FVector newCylinderLocation = navMeshLocation;
