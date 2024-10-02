@@ -105,7 +105,6 @@ AGraspingHandManny::AGraspingHandManny(const FObjectInitializer& ObjectInitializ
     RootPhysics->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     RootPhysics->SetCollisionObjectType(ECC_WorldDynamic);
     RootPhysics->SetCollisionResponseToAllChannels(ECR_Ignore);
-    RootPhysics->SetMassOverrideInKg(NAME_None, 0.001f);
 
     SimulatingHandConstraint = CreateDefaultSubobject<UVREPhysicsConstraintComponent>(TEXT("SimulatingHandConstraint"));
     SimulatingHandConstraint->SetupAttachment(RootComponent);
@@ -237,6 +236,7 @@ void AGraspingHandManny::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
     SetupFingerOverlapBindings();
+    RootPhysics->SetMassOverrideInKg(NAME_None, 0.001f);
 }
 
 void AGraspingHandManny::SetupFingerOverlapBindings()
