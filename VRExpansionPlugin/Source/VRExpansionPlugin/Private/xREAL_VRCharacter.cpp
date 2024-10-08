@@ -15,6 +15,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/PlayerState.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "UObject/ConstructorHelpers.h"
 #include "ParentRelativeAttachmentComponent.h"
 
 #pragma region Initialization
@@ -31,7 +32,12 @@ AxREAL_VRCharacter::AxREAL_VRCharacter(const FObjectInitializer& ObjectInitializ
     {
         HeadMesh->SetupAttachment(VRReplicatedCamera);
         HeadMesh->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
-        HeadMesh->SetStaticMesh(FindFirstObjectSafe<UStaticMesh>(TEXT("StaticMesh'/VRExpansionPlugin/VRE/Misc/Meshes/1M_Cube.1M_Cube'")));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh>MeshAsset(TEXT("StaticMesh'/VRExpansionPlugin/VRE/Misc/Meshes/1M_Cube_Chamfer.1M_Cube_Chamfer'"));
+        if (MeshAsset.Object)
+        {
+            HeadMesh->SetStaticMesh(MeshAsset.Object);
+        }
+
         HeadMesh->SetCollisionProfileName(FName(TEXT("NoCollision")));
     }
 
