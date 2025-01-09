@@ -275,6 +275,7 @@ void AGraspingHandManny::SetupAfterComponentsAreValid()
     {
         // Repped to end clients
         BaseRelativeTransform = UKismetMathLibrary::MakeRelativeTransform(skelMesh->GetComponentTransform(), OwningController->GetComponentTransform());
+        UE_LOG(LogTemp, Warning, TEXT("BaseRelativeTransform: %s"), *BaseRelativeTransform.ToString());
     }
 
     if (IsValid(OwningController->CustomPivotComponent))
@@ -283,7 +284,7 @@ void AGraspingHandManny::SetupAfterComponentsAreValid()
     }
 
     SetFingerCapsules(); 
-    //AddTickPrerequisiteComponent(this) Blueprint had this but nothing was passed in
+    //AddTickPrerequisiteComponent(this); Blueprint had this but nothing was passed in
     skelMesh->SetTickGroup(ETickingGroup::TG_PrePhysics);
 
     if (AxREAL_VRCharacter* owningChar = Cast<AxREAL_VRCharacter>(OwningController->GetOwner()))
@@ -299,7 +300,8 @@ void AGraspingHandManny::SetupAfterComponentsAreValid()
     }
     else
     {
-        SetupClientTransforms();
+        // Not all transforms were replicated yet so had to add delay
+        GetWorldTimerManager().SetTimer(ClientTransformTimerHandle, this, &AGraspingHandManny::SetupClientTransforms, .01f, false);
     }
 
     if (!OwningController->HasGrippedObjects())
@@ -841,6 +843,7 @@ void AGraspingHandManny::GetOrSpawnAttachmentProxy()
             AttachmentProxy->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
             AttachmentProxy->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
             AttachmentProxy->SetAllMassScale(0.0f);
+            UE_LOG(LogTemp, Warning, TEXT("Attachment Proxy Attach to component running"));
             AttachmentProxy->AttachToComponent(RootPhysics, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, false), NAME_None);
         }
 
@@ -895,8 +898,7 @@ void AGraspingHandManny::OnGrippedObject(UPARAM(ref) const FBPActorGripInformati
     InitGrip(GripInfo);
 }
 
-void AGraspingHandManny::OnGripTransformChanged(UPARAM(ref) const FBPActorGripInformation& GripInfo)
-{
+void AGraspingHandManny::OnGripTransformChanged(UPARAM(ref) const FBPActorGripInformation& GripInfo){
     if (GripInfo.GripID == GraspID)
     {
         InitializeAndAttach(GripInfo, bIsSecondaryGrip, true);
@@ -1121,7 +1123,7 @@ void AGraspingHandManny::SetupClientTransforms()
 {
     if (!OwningController->HasGrippedObjects())
     {
-        GetSkeletalMeshComponent()->SetWorldTransform(OwningController->GetComponentTransform() * BaseRelativeTransform);
+        GetSkeletalMeshComponent()->SetWorldTransform(BaseRelativeTransform * OwningController->GetComponentTransform());
     }
 
     OwningController->CustomPivotComponent->SetRelativeTransform(OriginalPivotTrans);

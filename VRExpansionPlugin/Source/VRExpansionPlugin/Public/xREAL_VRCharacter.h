@@ -55,7 +55,10 @@ public:
 
     void SetControllerProfile(EBPOpenXRControllerDeviceType ControllerType);
 
+	UFUNCTION(BlueprintNativeEvent)
     void SetupMotionControllers();
+	virtual void SetupMotionControllers_Implementation();
+
 
 	bool IsALocalGrip(EGripMovementReplicationSettings GripRepType);
 

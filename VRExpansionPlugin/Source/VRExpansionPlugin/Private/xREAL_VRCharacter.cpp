@@ -937,12 +937,13 @@ void AxREAL_VRCharacter::SetControllerProfile(EBPOpenXRControllerDeviceType Cont
     }
 }
 
-void AxREAL_VRCharacter::SetupMotionControllers()
+void AxREAL_VRCharacter::SetupMotionControllers_Implementation()
 {
     SetGripComponents(GrabSphereLeft, GrabSphereRight);
 
     if (IsLocallyControlled())
     {
+
         // Don't think this works on VR headset -> might need to use a different fade method
         UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->StartCameraFade(1.0f, 0.0f, 1.0f, FLinearColor::Black, false, false);
 
@@ -960,14 +961,13 @@ void AxREAL_VRCharacter::SetupMotionControllers()
     spawnParams.Owner = this;
     spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     spawnParams.TransformScaleMethod = ESpawnActorScaleMethod::OverrideRootScale;
-
     TeleportControllerLeft = GetWorld()->SpawnActor<ATeleportController>(ATeleportController::StaticClass(), FTransform::Identity, spawnParams);
-    TeleportControllerLeft->bIsLocal = true;
+    TeleportControllerLeft->bIsLocal = IsLocallyControlled();
     TeleportControllerLeft->OwningMotionController = LeftMotionController;
     TeleportControllerLeft->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 
     TeleportControllerRight = GetWorld()->SpawnActor<ATeleportController>(ATeleportController::StaticClass(), FTransform::Identity, spawnParams);
-    TeleportControllerRight->bIsLocal = true;
+    TeleportControllerRight->bIsLocal = IsLocallyControlled();
     TeleportControllerRight->OwningMotionController = RightMotionController;
     TeleportControllerRight->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 

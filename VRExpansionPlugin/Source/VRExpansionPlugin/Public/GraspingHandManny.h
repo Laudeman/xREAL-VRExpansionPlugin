@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Misc/OptionalRepSkeletalMeshActor.h"
 #include "Components/TimelineComponent.h"
+#include "Net/UnrealNetwork.h"
 #include "GraspingHandManny.generated.h"
 
 // Forward declarations
@@ -53,7 +54,7 @@ class VREXPANSIONPLUGIN_API AGraspingHandManny : public AOptionalRepGrippableSke
 
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION()
     void InitPhysicsSetup();
@@ -486,6 +487,9 @@ public:
 
 	UPROPERTY()
     FTimerHandle ValidityCheckTimerHandle;
+
+	UPROPERTY()
+	FTimerHandle ClientTransformTimerHandle;
 
 	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="PhysicsHand", meta=(MultiLine="true"))
