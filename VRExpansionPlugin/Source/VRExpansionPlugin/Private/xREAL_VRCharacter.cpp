@@ -381,7 +381,7 @@ void AxREAL_VRCharacter::InitTeleportControllers_Event_Implementation()
     }
 }
 
-void AxREAL_VRCharacter::OnPlayerStateReplicated(const APlayerState* NewPlayerState)
+void AxREAL_VRCharacter::OnPlayerStateReplicated_Implementation(const APlayerState* NewPlayerState)
 {
     OnPlayerStateReplicated_Bind.RemoveDynamic(this, &AxREAL_VRCharacter::OnPlayerStateReplicated);
     InitTeleportControllers(NewPlayerState);
@@ -2080,7 +2080,7 @@ bool AxREAL_VRCharacter::HasValidGripCollision(UPrimitiveComponent* Component)
     }
 }
 
-void AxREAL_VRCharacter::SetVehicleMode(bool IsInVehicleMode, bool &IsVR)
+void AxREAL_VRCharacter::SetVehicleMode_Implementation(bool IsInVehicleMode, bool &IsVR)
 {
     if (IsLocallyControlled())
     {

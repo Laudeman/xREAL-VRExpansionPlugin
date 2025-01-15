@@ -127,6 +127,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void SwitchOutOfBodyCamera(bool SwitchToOutOfBody);
 
+protected:
+	virtual void SwitchOutOfBodyCamera_Implementation(bool SwitchToOutOfBody);
+
 	void SetTeleporterActive(EControllerHand Hand, bool Active);
 
 	UFUNCTION(Server, Reliable, Category="Teleport")
@@ -160,6 +163,7 @@ public:
 
 	void CycleMovementModes(bool IsLeft);
 
+	UFUNCTION(BlueprintCallable)
 	void DropItems(UGripMotionControllerComponent* Hand, FGameplayTagContainer GameplayTags);
 
 	void DropItem(UGripMotionControllerComponent* Hand, FBPActorGripInformation GripInfo, FGameplayTagContainer GameplayTags);
@@ -181,9 +185,13 @@ public:
 
 	bool HasValidGripCollision(UPrimitiveComponent* Component);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent)
 	void SetVehicleMode(bool IsInVehicleMode, bool& IsVR);
 
+protected:
+	virtual void SetVehicleMode_Implementation(bool IsInVehicleMode, bool& IsVR);
+
+public:
 	void SetVehicleMode(bool IsInVehicleMode);
 
 	bool ShouldGripComponent(UPrimitiveComponent* ComponentToCheck, uint8 GripPrioToCheckAgainst, bool bCheckAgainstPrior, FName BoneName, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent* CallingController, UObject*& ObjectToGrip, bool& ObjectImplementsInterface, FTransform& ObjectsWorldTransform, uint8& GripPrio);
@@ -200,6 +208,9 @@ public:
 	/// @return If the tag is matched or is the default tag
 	bool ValidateGameplayTagContainer(FGameplayTag BaseTag, UObject* Object, FGameplayTag DefaultTag, FGameplayTagContainer GameplayTags);
 
+	// Crazy Style
+	// Load bearing code ^
+	UFUNCTION(BlueprintCallable)
 	void DropSecondaryAttachment(UGripMotionControllerComponent* CallingMotionController, UGripMotionControllerComponent* OtherController, FGameplayTagContainer GameplayTags, bool& DroppedSecondary, bool& HadSecondary);
 
 	void SelectObjectFromHitArray(UPARAM(ref) TArray<FHitResult>& Hits, FGameplayTagContainer RelevantGameplayTags, UGripMotionControllerComponent* Hand, bool& bShouldGrip, bool& ObjectImplementsInterface, UObject*& ObjectToGrip, FTransform& WorldTransform, UPrimitiveComponent*& FirstPrimitiveHit, FName& BoneName, FVector& ImpactPoint);
@@ -232,8 +243,13 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void InitTeleportControllers_Event();
 	   
-	UFUNCTION()
-    void OnPlayerStateReplicated(const APlayerState* NewPlayerState);
+	UFUNCTION(BlueprintNativeEvent)
+	void OnPlayerStateReplicated(const APlayerState* NewPlayerState);
+
+protected:
+	virtual void OnPlayerStateReplicated_Implementation(const APlayerState* NewPlayerState);
+
+public:
 
 	/** Initialize controllers and setup voice */
 	UFUNCTION(BlueprintNativeEvent)
