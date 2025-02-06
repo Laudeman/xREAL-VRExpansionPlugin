@@ -16,6 +16,7 @@
 #include "GameFramework/PlayerState.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "UObject/ConstructorHelpers.h"
+#include "WristMenuActor.h"
 #include "ParentRelativeAttachmentComponent.h"
 
 #pragma region Initialization
@@ -233,6 +234,10 @@ void AxREAL_VRCharacter::InitializeDefaults()
 
     SpawnGraspingHands = true;
     UsePhysicalGraspingHands = false;
+
+    // Wrist Menu Defaults
+    bUseWristMenu = false;
+    bWristMenuOnRightHand = false;
 }
 
 void AxREAL_VRCharacter::BeginPlay()
@@ -240,11 +245,13 @@ void AxREAL_VRCharacter::BeginPlay()
     Super::BeginPlay();
     if (!HasAuthority())
     {
-        SetupMotionControllers();
+        CharacterSetup(); //Runs in PossessedBy function on the server since BeginPlay runs before possession on server.
     }
+    
 
     RightMotionController->OnGrippedObject.AddDynamic(this, &AxREAL_VRCharacter::OnRightMotionControllerGripped);
     LeftMotionController->OnGrippedObject.AddDynamic(this, &AxREAL_VRCharacter::OnLeftMotionControllerGripped);
+
 }
 
 void AxREAL_VRCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) 
@@ -433,17 +440,19 @@ void AxREAL_VRCharacter::PossessedBy(AController *NewController)
     }
     else
     {
+
         // Called on client side
         OnPossessed();
 
         bWasAlreadyPossessed = true;
         // Servers don't use begin play for setup on the character, because it can be called before possession is done.
-        SetupMotionControllers();
+        CharacterSetup();
     }
 }
 
 void AxREAL_VRCharacter::OnPossessed_Implementation()
 {
+    
     // Delete if statement if not using a child FPS pawn, this is just here so that this logic isn't ran if we aren't in VR or a packaged build.
     if (UVRExpansionFunctionLibrary::IsInVREditorPreviewOrGame())
     {
@@ -934,6 +943,19 @@ void AxREAL_VRCharacter::SetControllerProfile(EBPOpenXRControllerDeviceType Cont
             break;
         default:
             break;
+    }
+}
+
+void AxREAL_VRCharacter::CharacterSetup_Implementation()
+{
+    SetupMotionControllers();
+
+	if (IsLocallyControlled())
+	{
+		if (bUseWristMenu)
+		{
+			SpawnWristMenu();
+		}
     }
 }
 
@@ -1682,6 +1704,50 @@ void AxREAL_VRCharacter::SwitchOutOfBodyCamera_Implementation(bool SwitchToOutOf
             UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetViewTargetWithBlend(this);
             VRReplicatedCamera->bSetPositionDuringTick = false;
         }
+    }
+}
+
+void AxREAL_VRCharacter::SpawnWristMenu()
+{
+    if (!WristMenuActor)
+    {
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = this;
+        SpawnParams.Instigator = GetInstigator();
+
+        if (!WristMenuActorClass)
+        {
+			UE_LOG(LogTemp, Warning, TEXT("WristMenuActor not spawned, WristMenuActorClass not set in VRCharacter!"));
+            return;
+        }
+		WristMenuActor = GetWorld()->SpawnActor<AWristMenuActor>(WristMenuActorClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+		if (bWristMenuOnRightHand && RightMotionController)
+		{
+			WristMenuActor->AttachToComponent(RightMotionController, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			//WristMenuActor->SetActorRelativeLocation(FVector(0,0,-50));
+            WristMenuActor->SetActorRelativeRotation(FRotator(0, 0, 180));
+			
+		}
+		else if (!bWristMenuOnRightHand && LeftMotionController)
+		{
+			WristMenuActor->AttachToComponent(LeftMotionController, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			//WristMenuActor->SetActorRelativeLocation(FVector(0,0,-50));
+            WristMenuActor->SetActorRelativeRotation(FRotator(0, 0, 180));
+
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("WristMenuActor not spawned, no valid motion controller to attach to!"));
+		}
+
+    }
+}
+
+void AxREAL_VRCharacter::SetWristMenuEnabled(bool bEnabled)
+{
+    if (WristMenuActor)
+    {
+        WristMenuActor->SetWristMenuEnabled(bEnabled);
     }
 }
 

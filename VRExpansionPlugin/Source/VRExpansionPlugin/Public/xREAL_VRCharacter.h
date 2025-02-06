@@ -18,6 +18,7 @@ class UNoRepSphereComponent;
 class UTextRenderComponent;
 class UVOIPTalker;
 class UInputAction;
+class AWristMenuActor;
 
 UCLASS(Blueprintable, BlueprintType)
 class VREXPANSIONPLUGIN_API AxREAL_VRCharacter : public AVRCharacter
@@ -54,6 +55,10 @@ public:
 	void GetControllerTypeLoop();
 
     void SetControllerProfile(EBPOpenXRControllerDeviceType ControllerType);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void CharacterSetup();
+	virtual void CharacterSetup_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent)
     void SetupMotionControllers();
@@ -129,6 +134,11 @@ public:
 
 protected:
 	virtual void SwitchOutOfBodyCamera_Implementation(bool SwitchToOutOfBody);
+
+	void SpawnWristMenu();
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void SetWristMenuEnabled(bool bEnabled);
 
 	void SetTeleporterActive(EControllerHand Hand, bool Active);
 
@@ -409,6 +419,18 @@ protected:
 	void OnLeftMotionControllerGripped(const FBPActorGripInformation& GripInfo);
 
 public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	bool bUseWristMenu;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	bool bWristMenuOnRightHand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<AWristMenuActor> WristMenuActorClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
+	AWristMenuActor* WristMenuActor;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category="Movement")
 	double MinimumLowEndRipVelocity;
