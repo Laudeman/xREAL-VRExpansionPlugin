@@ -132,6 +132,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void SwitchOutOfBodyCamera(bool SwitchToOutOfBody);
 
+	UFUNCTION(BlueprintCallable)
+	void ExecuteTeleportation(ATeleportController* MotionController, EVRMovementMode MovementMode, EControllerHand Hand);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetTeleporterActive(EControllerHand Hand, bool Active);
+
 protected:
 	virtual void SwitchOutOfBodyCamera_Implementation(bool SwitchToOutOfBody);
 
@@ -140,15 +146,12 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void SetWristMenuEnabled(bool bEnabled);
 
-	void SetTeleporterActive(EControllerHand Hand, bool Active);
 
 	UFUNCTION(Server, Reliable, Category="Teleport")
 	void NotifyTeleportActive_Server(EControllerHand Hand, bool State);
 
 	UFUNCTION(NetMulticast, Reliable, Category="Teleport")
 	void TeleportActive_Multicast(EControllerHand Hand, bool State);
-
-	void ExecuteTeleportation(ATeleportController* MotionController, EVRMovementMode MovementMode, EControllerHand Hand);
 
 	virtual void NavigationMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
